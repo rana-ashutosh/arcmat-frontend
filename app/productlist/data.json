@@ -1,0 +1,184 @@
+[
+    {
+        "id": 1,
+        "brand": "Sherwin-Williams",
+        "name": "Emerald Interior",
+        "subtitle": "Acrylic Latex Paint",
+        "heading": "Premium Interior Paint Solution",
+        "price": "$89.99",
+        "description": "Sherwin-Williams Emerald Interior Acrylic Latex Paint delivers exceptional performance and stunning aesthetics. This premium paint offers superior coverage, excellent hide, and a smooth, luxurious finish. Designed for both residential and commercial applications, it provides long-lasting durability and easy maintenance. The advanced formula ensures excellent color retention and resistance to stains and scuffs.",
+        "keyFeatures": [
+            "Superior coverage with excellent hide",
+            "Advanced stain and scuff resistance",
+            "Low VOC formula for healthier indoor air quality",
+            "Exceptional color retention and durability",
+            "Easy application and smooth finish",
+            "Available in 30+ color variants"
+        ],
+        "dimensions": [
+            "Container: 1 Gallon (3.78 L)",
+            "Coverage: 400-450 sq ft per gallon",
+            "Weight: 11 lbs (4.99 kg)"
+        ],
+        "tags": [
+            "Interior Paint",
+            "Low VOC",
+            "Premium",
+            "Acrylic Latex",
+            "Residential",
+            "Commercial"
+        ],
+        "images": [
+            "/Images/ProductList/Sherwin-Williams.png",
+            "/Images/ProductList/Bedrosians Tile & Stone.png",
+            "/Images/ProductList/Porcelanosa.png"
+        ],
+        "isNew": true,
+        "moreVariants": "+30"
+    },
+    {
+        "id": 2,
+        "brand": "Bedrosians Tile & Stone",
+        "name": "Cloe Tile",
+        "subtitle": "Ceramic Wall Tile",
+        "heading": "Elegant Ceramic Wall Tile Collection",
+        "price": "$12.99/sq ft",
+        "description": "The Cloe Tile collection from Bedrosians Tile & Stone brings timeless elegance to any space. These ceramic wall tiles feature a beautiful finish and precise dimensions, making them perfect for bathrooms, kitchens, and feature walls. The durable ceramic construction ensures long-lasting beauty and easy maintenance, while the versatile design complements both modern and traditional interiors.",
+        "keyFeatures": [
+            "High-quality ceramic construction",
+            "Precise dimensions for easy installation",
+            "Water and stain resistant surface",
+            "Suitable for wet areas including bathrooms",
+            "Easy to clean and maintain",
+            "Available in 6+ design variants"
+        ],
+        "dimensions": [
+            "Tile Size: 12\" x 24\" (30.5 cm x 61 cm)",
+            "Thickness: 10mm",
+            "Coverage: 16 sq ft per box"
+        ],
+        "tags": [
+            "Ceramic Tile",
+            "Wall Tile",
+            "Bathroom",
+            "Kitchen",
+            "Water Resistant",
+            "Easy Maintenance"
+        ],
+        "images": [
+            "/Images/ProductList/Bedrosians Tile & Stone.png",
+            "/Images/ProductList/Tarkett.png"
+        ],
+        "isNew": false,
+        "moreVariants": "+6"
+    },
+    {
+        "id": 3,
+        "brand": "Porcelanosa",
+        "name": "Airslate",
+        "subtitle": "Natural Stone Fabric",
+        "heading": "Authentic Natural Stone Elegance",
+        "price": "$24.99/sq ft",
+        "description": "Porcelanosa's Airslate Natural Stone Fabric combines the timeless beauty of natural stone with modern manufacturing precision. This premium material features authentic stone textures and natural color variations, creating a unique and sophisticated aesthetic. Ideal for both interior and exterior applications, Airslate offers exceptional durability and a luxurious appearance that enhances any architectural design.",
+        "keyFeatures": [
+            "Authentic natural stone appearance",
+            "Unique color and texture variations",
+            "Suitable for interior and exterior use",
+            "Exceptional durability and longevity",
+            "Resistant to weathering and wear",
+            "Premium quality craftsmanship"
+        ],
+        "dimensions": [
+            "Panel Size: 48\" x 96\" (122 cm x 244 cm)",
+            "Thickness: 6mm",
+            "Weight: 8.5 lbs/sq ft"
+        ],
+        "tags": [
+            "Natural Stone",
+            "Premium",
+            "Interior",
+            "Exterior",
+            "Durable",
+            "Luxury"
+        ],
+        "images": [
+            "/Images/ProductList/Porcelanosa.png"
+        ],
+        "isNew": true,
+        "moreVariants": ""
+    },
+    {
+        "id": 4,
+        "brand": "Tarkett",
+        "name": "Johnsonite",
+        "subtitle": "Rubber Flooring",
+        "heading": "Commercial-Grade Rubber Flooring",
+        "price": "$8.49/sq ft",
+        "description": "Tarkett's Johnsonite Rubber Flooring is engineered for high-traffic commercial environments where durability and performance are paramount. This premium rubber flooring solution offers excellent slip resistance, sound absorption, and comfort underfoot. The resilient material withstands heavy use while maintaining its appearance, making it ideal for healthcare facilities, educational institutions, and commercial spaces.",
+        "keyFeatures": [
+            "Commercial-grade durability",
+            "Excellent slip resistance for safety",
+            "Superior sound absorption properties",
+            "Comfortable and ergonomic underfoot",
+            "Easy to clean and maintain",
+            "Resistant to heavy foot traffic"
+        ],
+        "dimensions": [
+            "Tile Size: 24\" x 24\" (61 cm x 61 cm)",
+            "Thickness: 2.5mm",
+            "Coverage: 4 sq ft per tile"
+        ],
+        "tags": [
+            "Rubber Flooring",
+            "Commercial",
+            "Slip Resistant",
+            "Sound Absorption",
+            "Healthcare",
+            "Educational"
+        ],
+        "images": [
+            "/Images/ProductList/Tarkett.png"
+        ],
+        "isNew": false,
+        "moreVariants": ""
+    },
+    {
+        "id": 5,
+        "brand": "Arper",
+        "name": "Cila Chair",
+        "subtitle": "Seating Collection",
+        "heading": "Contemporary Seating Design",
+        "price": "$425.00",
+        "description": "The Cila Chair by Arper represents the perfect fusion of contemporary design and functional comfort. This versatile seating collection features clean lines, ergonomic design, and premium materials. Suitable for both residential and commercial settings, the Cila Chair offers exceptional comfort and style. The thoughtful design ensures long-lasting durability while maintaining a lightweight and stackable form factor.",
+        "keyFeatures": [
+            "Contemporary ergonomic design",
+            "Premium quality materials and construction",
+            "Lightweight and stackable for easy storage",
+            "Suitable for residential and commercial use",
+            "Multiple finish and upholstery options",
+            "Available in 2+ configuration variants"
+        ],
+        "dimensions": [
+            "Overall: L 400 x W 160 x H 80 cm (Overall: 157.48\" L x 62.99\" W x 31 1/2\" H)",
+            "Seat H 45cm x W 80 cm (Seat: 17 3/4\" H x 31 1/2\" W)"
+        ],
+        "tags": [
+            "Seating",
+            "Chair",
+            "Contemporary",
+            "Ergonomic",
+            "Stackable",
+            "Commercial",
+            "Residential"
+        ],
+        "images": [
+            "/Images/ProductList/Bedrosians Tile & Stone.png",
+            "/Images/ProductList/Sherwin-Williams.png",
+            "/Images/ProductList/Bedrosians Tile & Stone.png",
+            "/Images/ProductList/Porcelanosa.png",
+            "/Images/ProductList/Porcelanosa.png"
+        ],
+        "isNew": true,
+        "moreVariants": "+2"
+    }
+]

@@ -1,0 +1,14 @@
+<svg width="600" height="100" viewBox="0 0 600 100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-weight: 100; /* Uses a very thin weight to match the original */
+      font-size: 80px;
+      letter-spacing: -1px; /* Slight tightening of letters */
+    }
+  </style>
+  
+  <text x="10" y="80" fill="#000000">
+    dreamz<tspan fill="#D01C1C">unwired</tspan>.
+  </text>
+</svg>

@@ -1,0 +1,66 @@
+[
+    {
+        "id": 1,
+        "company": "Arcmat",
+        "category": "Kitchen",
+        "image": "/Images/Kitchen.png",
+        "description": "Materials and Equipment for Functional Cooking Spaces",
+        "link": "/not-found"
+    },
+    {
+        "id": 2,
+        "company": "Arcmat",
+        "category": "Hospitality",
+        "image": "/Images/Hospitality.jpg",
+        "description": "Materials and Furniture for Customer-Focused Spaces",
+        "link": "/not-found"
+    },
+    {
+        "id": 3,
+        "company": "Arcmat",
+        "category": "Workspaces",
+        "image": "/Images/Workspaces.png",
+        "description": "Materials and Furniture for Productive Workspaces",
+        "link": "/not-found"
+    },
+    {
+        "id": 4,
+        "company": "Arcmat",
+        "category": "Residence",
+        "image": "/Images/Residence.png",
+        "description": "Materials, Furniture, and Finishes for Everyday Living",
+        "link": "/not-found"
+    },
+        {
+        "id": 5,
+        "company": "Arcmat",
+        "category": "Kitchen",
+        "image": "/Images/4.png",
+        "description": "Materials and Equipment for Functional Cooking Spaces",
+        "link": "/not-found"
+    },
+    {
+        "id": 6,
+        "company": "Arcmat",
+        "category": "Hospitality",
+        "image": "/Images/5.png",
+        "description": "Materials and Furniture for Customer-Focused Spaces",
+        "link": "/not-found"
+    },
+    {
+        "id": 7,
+        "company": "Arcmat",
+        "category": "Workspaces",
+        "image": "/Images/9.png",
+        "description": "Materials and Furniture for Productive Workspaces",
+        "link": "/not-found"
+    },
+    {
+        "id": 8,
+        "company": "Arcmat",
+        "category": "Residence",
+        "image": "/Images/10.png",
+        "description": "Materials, Furniture, and Finishes for Everyday Living",
+        "link": "/not-found"
+    }
+]

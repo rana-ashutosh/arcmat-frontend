@@ -1,0 +1,194 @@
+[
+    {
+        "id": 1,
+        "company": "Kitchen Master",
+        "category": "Kitchen",
+        "image": "/Images/Kitchen.png",
+        "images": [
+            "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&q=80",
+            "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
+        ],
+        "description": "Premium kitchen design with marble islands.",
+        "link": "/not-found"
+    },
+    {
+        "id": 2,
+        "company": "SleepWell Designs",
+        "category": "Bedroom",
+        "image": "/Images/Residence.png",
+        "images": [
+            "https://images.unsplash.com/photo-1766600608362-b774d67eea65?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=800&q=80"
+        ],
+        "description": "Cozy bedroom with ambient lighting.",
+        "link": "/not-found"
+    },
+    {
+        "id": 3,
+        "company": "Modern Living",
+        "category": "Furniture",
+        "image": "/Images/Workspaces.png",
+        "images": [
+            "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80",
+            "https://images.unsplash.com/photo-1501045661006-fcebe0257c3f?w=800&q=80"
+        ],
+        "description": "Ergonomic furniture for modern homes.",
+        "link": "/not-found"
+    },
+    {
+        "id": 4,
+        "company": "Artistic Decor",
+        "category": "Decor",
+        "image": "/Images/Hospitality.jpg",
+        "images": [
+            "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80",
+            "https://images.unsplash.com/photo-1615529182904-14819c35db37?w=800&q=80"
+        ],
+        "description": "Unique decor pieces for every room.",
+        "link": "/not-found"
+    },
+    {
+        "id": 5,
+        "company": "Lumina",
+        "category": "Lighting",
+        "image": "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1550985616-10810253b84d?w=800&q=80",
+            "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&q=80"
+        ],
+        "description": "Architectural lighting solutions.",
+        "link": "/not-found"
+    },
+    {
+        "id": 6,
+        "company": "Pure Finishes",
+        "category": "Finishes",
+        "image": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1604709177225-055f99402ea3?w=800&q=80",
+            "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80"
+        ],
+        "description": "High-end wall and floor finishes.",
+        "link": "/not-found"
+    },
+    {
+        "id": 7,
+        "company": "AquaLuxury",
+        "category": "Bathware",
+        "image": "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1620626011761-996317b8d101?w=800&q=80",
+            "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&q=80"
+        ],
+        "description": "Modern bathware and spa solutions.",
+        "link": "/not-found"
+    },
+    {
+        "id": 8,
+        "company": "Elite Kitchens",
+        "category": "Kitchen",
+        "image": "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1556912173-3bb406ef7e77?w=800&q=80",
+            "https://images.unsplash.com/photo-1556912998-c57cc6b63cd7?w=800&q=80"
+        ],
+        "description": "Traditional kitchen aesthetics with modern tech.",
+        "link": "/not-found"
+    },
+    {
+        "id": 9,
+        "company": "Dream Bedrooms",
+        "category": "Bedroom",
+        "image": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80",
+            "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80"
+        ],
+        "description": "Minimalist bedroom layout.",
+        "link": "/not-found"
+    },
+    {
+        "id": 10,
+        "company": "Global Furniture",
+        "category": "Furniture",
+        "image": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80",
+            "https://images.unsplash.com/photo-1493666438817-866a91353ca9?w=800&q=80"
+        ],
+        "description": "Sustainable wood furniture collections.",
+        "link": "/not-found"
+    },
+    {
+        "id": 11,
+        "company": "Home Accents",
+        "category": "Decor",
+        "image": "https://images.unsplash.com/photo-1615529182904-14819c35db37?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1615874959474-d609969a20ed?w=800&q=80",
+            "https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=800&q=80"
+        ],
+        "description": "Vibrant decor for seasonal refreshes.",
+        "link": "/not-found"
+    },
+    {
+        "id": 12,
+        "company": "Bright Spaces",
+        "category": "Lighting",
+        "image": "https://images.unsplash.com/photo-1550985616-10810253b84d?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+            "https://images.unsplash.com/photo-1600566752229-450a5b17aa03?w=800&q=80"
+        ],
+        "description": "Smart lighting for office setups.",
+        "link": "/not-found"
+    },
+    {
+        "id": 13,
+        "company": "Texture Co.",
+        "category": "Finishes",
+        "image": "https://images.unsplash.com/photo-1604709177225-055f99402ea3?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80",
+            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80"
+        ],
+        "description": "Textured finishes for feature walls.",
+        "link": "/not-found"
+    },
+    {
+        "id": 14,
+        "company": "Clean Bath",
+        "category": "Bathware",
+        "image": "https://images.unsplash.com/photo-1620626011761-996317b8d101?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&q=80",
+            "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&q=80"
+        ],
+        "description": "Compact bathroom designs.",
+        "link": "/not-found"
+    },
+    {
+        "id": 15,
+        "company": "Culinary Hub",
+        "category": "Kitchen",
+        "image": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1556912173-3bb406ef7e77?w=800&q=80",
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80"
+        ],
+        "description": "Spacious kitchens for foodies.",
+        "link": "/not-found"
+    },
+    {
+        "id": 16,
+        "company": "Rest & Relax",
+        "category": "Bedroom",
+        "image": "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80",
+        "images": [
+            "https://images.unsplash.com/photo-1505693314127-0d443867891c?w=800&q=80",
+            "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=800&q=80"
+        ],
+        "description": "Luxury suites with panoramic views.",
+        "link": "/not-found"
+    }
+]

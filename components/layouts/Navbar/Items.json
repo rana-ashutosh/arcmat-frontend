@@ -1,0 +1,51 @@
+[
+  {
+    "id": 1,
+    "name": "New",
+    "highlight": true
+  },
+  {
+    "id": 2,
+    "name": "Construction"
+  },
+  {
+    "id": 3,
+    "name": "Finishes"
+  },
+  {
+    "id": 4,
+    "name": "Door & Windows"
+  },
+  {
+    "id": 5,
+    "name": "Lighting"
+  },
+  {
+    "id": 6,
+    "name": "Furniture"
+  },
+  {
+    "id": 7,
+    "name": "Appliances"
+  },
+  {
+    "id": 8,
+    "name": "Decor"
+  },
+  {
+    "id": 9,
+    "name": "Bathware"
+  },
+  {
+    "id": 10,
+    "name": "Sustainable"
+  },
+  {
+    "id": 11,
+    "name": "Smart"
+  },
+  {
+    "id": 12,
+    "name": "Protection"
+  }
+]

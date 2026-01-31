@@ -1,0 +1,37 @@
+// app/dashboard/layout.jsx
+import Sidebar from '@/components/dashboard/sidebar/Sidebar';
+import RoleGuard from '@/components/auth/RoleGaurd';
+import Footer from '@/components/layouts/Footer';
+import Header from '@/components/layouts/Header';
+
+export const metadata = {
+  title: 'Dashboard - arcmat',
+  description: 'Manage your projects and boards',
+};
+
+export default function DashboardLayout({ children }) {
+  return (
+    <RoleGuard allowedRoles={['vendor', 'customer', 'user']}>
+      <div className="flex flex-col min-h-screen bg-white">
+        {/* Header: Explicitly set variant to 'dashboard' */}
+        <Header variant="dashboard" />
+
+        {/* Main Content Area */}
+        <div className="flex flex-1">
+          {/* Sidebar */}
+          <Sidebar />
+
+          {/* Main Content */}
+          <main className="flex-1 overflow-y-auto bg-gray-50 flex flex-col">
+            <div className="flex-1">
+              {children}
+            </div>
+          </main>
+        </div>
+
+        {/* Footer */}
+        <Footer />
+      </div>
+    </RoleGuard>
+  );
+}

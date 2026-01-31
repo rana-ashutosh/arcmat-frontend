@@ -1,0 +1,55 @@
+{
+    "VENDOR_MENU_ITEMS": [
+        {
+            "id": "products-list",
+            "label": "Products List",
+            "icon": "Package",
+            "href": "/dashboard/products-list",
+            "requiresAuth": true
+        },
+        {
+            "id": "attributes",
+            "label": "Attribute",
+            "icon": "Tags",
+            "href": "/dashboard/attributes"
+        },
+        {
+            "id": "categories",
+            "label": "Categories",
+            "icon": "Layers",
+            "href": "/dashboard/categories"
+        },
+        {
+            "id": "profile",
+            "label": "Profile",
+            "icon": "User",
+            "href": "/profile"
+        },
+        {
+            "id": "help",
+            "label": "Help",
+            "icon": "HelpCircle",
+            "href": "/dashboard/help"
+        }
+    ],
+    "USER_MENU_ITEMS": [
+        {
+            "id": "my-orders",
+            "label": "My Orders",
+            "icon": "ShoppingBag",
+            "href": "/dashboard/orders"
+        },
+        {
+            "id": "wishlist",
+            "label": "Wishlist",
+            "icon": "Heart",
+            "href": "/dashboard/wishlist"
+        },
+        {
+            "id": "help",
+            "label": "Help",
+            "icon": "HelpCircle",
+            "href": "/dashboard/help"
+        }
+    ]
+}
