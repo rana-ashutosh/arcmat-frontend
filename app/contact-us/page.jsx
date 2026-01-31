@@ -62,7 +62,7 @@ export default function ContactUsPage() {
 
                         <div className="grid sm:grid-cols-2 gap-6 mb-10">
                             <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">Email Us</h3>
+                                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">Email</h3>
                                 <a href="mailto:info@arcmat.in" className="text-base text-gray-700 hover:text-[#d9a88a] transition-colors">
                                     info@arcmat.in
                                 </a>
