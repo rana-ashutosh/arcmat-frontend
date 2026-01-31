@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
 import authService from '@/services/authService';
 import useAuthStore from '@/store/useAuthStore';
 
+import { toast } from '@/components/ui/Toast';
 import { useLoader } from '@/context/LoaderContext';
 
 const setAuthState = (userData, token) => {
@@ -105,11 +105,6 @@ export const useVerifyOtpMutation = () => {
 
             setAuthState(user, token);
 
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem('token', token);
-                sessionStorage.setItem('user', JSON.stringify(user));
-            }
-
             setLoading(true);
 
             if (flow === 'reset') {
@@ -135,20 +130,14 @@ export const useRegisterMutation = () => {
 
     return useMutation({
         mutationFn: (userData) => authService.register(userData),
-        onSuccess: (data) => {
-            const newUser = data.data;
-            setAuthState(newUser, data.token);
-
-            const role = newUser?.role;
-            if (role === 'vendor') {
-                setLoading(true);
-                router.push('/dashboard');
-            } else {
-                setLoading(true);
-                router.push('/');
-            }
+        onSuccess: (data, variables) => {
+            toast.success("Verification code sent to email.", "Account Created");
+            const email = variables.email || data?.email;
+            router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
         },
         onError: (error) => {
+            const message = error?.response?.data?.message || "Registration failed";
+            toast.error(message, "Registration Error");
         }
     });
 };
@@ -169,6 +158,7 @@ export const useLoginMutation = () => {
             };
 
             setAuthState(user, responseData.token);
+            toast.success("Successfully logged in!", "Welcome Back");
 
             let finalRole = user?.role;
 
@@ -190,6 +180,9 @@ export const useLoginMutation = () => {
             }
         },
         onError: (error) => {
+            const is401 = error.message?.includes('401') || error.response?.status === 401;
+            const message = is401 ? 'Invalid email or password' : (error.message || 'Login failed');
+            toast.error(message, 'Login Failed');
         }
     });
 };
@@ -213,6 +206,19 @@ export const useResetPasswordMutation = () => {
         onSuccess: () => {
             clearAuthState();
             router.push('/auth/login');
+        }
+    });
+};
+
+export const useChangePasswordMutation = () => {
+    return useMutation({
+        mutationFn: (data) => authService.changePassword(data),
+        onSuccess: (data, variables, context) => {
+            toast.success("Your password has been updated successfully.", "Password Updated");
+        },
+        onError: (error) => {
+            const message = error?.response?.data?.message || error.message || "Failed to update password";
+            toast.error(message, "Update Failed");
         }
     });
 };

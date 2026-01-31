@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from '../ui/Toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -75,15 +74,7 @@ export default function RegisterForm() {
       profileUrl = 'www.' + profileUrl;
     }
 
-    registerMutation.mutate({ ...finalData, profile: profileUrl, role: assignedRole }, {
-      onSuccess: () => {
-        toast.success(`Verification code sent to email.`, 'Account Created');
-        router.push(`/verify-otp?email=${encodeURIComponent(finalData.email)}`);
-      },
-      onError: (error) => {
-        toast.error('Registration failed', 'Registration Error');
-      }
-    });
+    registerMutation.mutate({ ...finalData, profile: profileUrl, role: assignedRole });
   };
 
   return (

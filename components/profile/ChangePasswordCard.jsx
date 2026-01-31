@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Lock } from 'lucide-react';
+import { useChangePasswordMutation } from '@/hooks/useAuth';
+import clsx from 'clsx';
+import { Loader2, Lock } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 
@@ -10,7 +12,7 @@ const ChangePasswordCard = () => {
         confirmPassword: ''
     });
 
-    const [isLoading, setIsLoading] = useState(false);
+    const changePasswordMutation = useChangePasswordMutation();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,22 +22,23 @@ const ChangePasswordCard = () => {
         e.preventDefault();
 
         if (formData.newPassword !== formData.confirmPassword) {
-            toast.error("New passwords don't match");
+            toast.error("New passwords don't match", "Validation Error");
             return;
         }
 
         if (formData.newPassword.length < 6) {
-            toast.error("Password must be at least 6 characters");
+            toast.error("Password must be at least 6 characters", "Validation Error");
             return;
         }
 
-        setIsLoading(true);
-        //  API call here
-        setTimeout(() => {
-            setIsLoading(false);
-            toast.success("Password updated successfully");
-            setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        }, 1500);
+        changePasswordMutation.mutate({
+            oldPassword: formData.currentPassword,
+            newPassword: formData.newPassword
+        }, {
+            onSuccess: () => {
+                setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            }
+        });
     };
 
     return (
@@ -58,9 +61,10 @@ const ChangePasswordCard = () => {
                                     name="currentPassword"
                                     value={formData.currentPassword}
                                     onChange={handleChange}
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-[#e09a74] focus:border-[#e09a74]"
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-[#e09a74] focus:border-[#e09a74] disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder="Enter current password"
                                     required
+                                    disabled={changePasswordMutation.isPending}
                                 />
                             </div>
                         </div>
@@ -76,9 +80,10 @@ const ChangePasswordCard = () => {
                                     name="newPassword"
                                     value={formData.newPassword}
                                     onChange={handleChange}
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-[#e09a74] focus:border-[#e09a74]"
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-[#e09a74] focus:border-[#e09a74] disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder="Enter new password"
                                     required
+                                    disabled={changePasswordMutation.isPending}
                                 />
                             </div>
                         </div>
@@ -94,9 +99,10 @@ const ChangePasswordCard = () => {
                                     name="confirmPassword"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-[#e09a74] focus:border-[#e09a74]"
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-[#e09a74] focus:border-[#e09a74] disabled:bg-gray-50 disabled:text-gray-500"
                                     placeholder="Confirm new password"
                                     required
+                                    disabled={changePasswordMutation.isPending}
                                 />
                             </div>
                         </div>
@@ -104,10 +110,20 @@ const ChangePasswordCard = () => {
 
                     <div className="mt-6">
                         <Button
-                            text={isLoading ? "Updating..." : "Update Password"}
-                            className="bg-[#e09a74] hover:bg-white hover:text-[#e09a74] hover:border-[#e09a74] border text-white px-6 py-2 "
-                            disabled={isLoading}
-                        />
+                            type="submit"
+                            disabled={changePasswordMutation.isPending}
+                            className={clsx(
+                                "bg-[#e09a74] text-white px-6 py-2 transition-all",
+                                changePasswordMutation.isPending ? "opacity-70 cursor-not-allowed" : "hover:bg-white hover:text-[#e09a74] hover:border-[#e09a74] border"
+                            )}
+                        >
+                            {changePasswordMutation.isPending ? (
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="animate-spin" size={18} />
+                                    <span>Updating...</span>
+                                </div>
+                            ) : "Update Password"}
+                        </Button>
                     </div>
                 </form>
             </div>

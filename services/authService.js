@@ -49,6 +49,11 @@ const authService = {
     resetPassword: async (data) => {
         const response = await api.post('/user/reset-password', data);
         return response.data;
+    },
+
+    changePassword: async (data) => {
+        const response = await api.patch('/user/change-password', data);
+        return response.data;
     }
 };
 

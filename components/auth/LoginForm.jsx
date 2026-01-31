@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { toast } from '../ui/Toast';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,16 +35,7 @@ export default function LoginForm() {
   const loginMutation = useLoginMutation();
 
   const onSubmit = (data) => {
-    loginMutation.mutate(data, {
-      onSuccess: () => {
-        toast.success('Successfully logged in!', 'Welcome Back');
-      },
-      onError: (error) => {
-        const is401 = error.message?.includes('401') || error.response?.status === 401;
-        const message = is401 ? 'Invalid email or password' : (error.message || 'Login failed');
-        toast.error(message, 'Login Failed');
-      },
-    });
+    loginMutation.mutate(data);
   };
 
   return (
