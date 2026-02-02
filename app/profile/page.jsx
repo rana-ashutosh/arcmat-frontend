@@ -8,7 +8,8 @@ import Sidebar from '@/components/dashboard/sidebar/Sidebar';
 import BasicInfoCard from '@/components/profile/BasicInfoCard';
 import ChangePasswordCard from '@/components/profile/ChangePasswordCard';
 import BusinessProfileTab from '@/components/profile/BusinessProfileTab';
-import { User, Building2, Lock } from 'lucide-react';
+import { User, Building2, Lock, MapPin } from 'lucide-react';
+import AddressList from '@/components/profile/AddressList';
 
 const ProfilePage = () => {
     const { user } = useAuth();
@@ -18,6 +19,7 @@ const ProfilePage = () => {
 
     const tabs = [
         { id: 'basic', label: 'Basic Information', icon: User },
+        { id: 'address', label: 'Manage Addresses', icon: MapPin },
         ...(isVendorRole ? [{ id: 'business', label: 'Business Profile', icon: Building2 }] : []),
         { id: 'password', label: 'Change Password', icon: Lock },
     ];
@@ -58,6 +60,7 @@ const ProfilePage = () => {
                             {/* Tab Content */}
                             <div className="transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
                                 {activeTab === 'basic' && <BasicInfoCard user={user} />}
+                                {activeTab === 'address' && <AddressList />}
                                 {activeTab === 'business' && isVendorRole && <BusinessProfileTab />}
                                 {activeTab === 'password' && <ChangePasswordCard />}
                             </div>
