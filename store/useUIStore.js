@@ -18,13 +18,14 @@ export const useUIStore = create((set) => ({
   isBulkUploadModalOpen: false,
   isProductFormModalOpen: false,
   editingProduct: null,
+  isAddVariantModalOpen: false,
+  newProductIdForVariant: null,
+  parentProductForVariant: null,
 
   // Actions
   setSearchQuery: (query) => set({ searchQuery: query, currentPage: 1 }),
   setSelectedCategories: (categories) => set({ selectedCategories: categories, currentPage: 1 }),
   setSelectedVendors: (vendors) => set({ selectedVendors: vendors, currentPage: 1 }),
-
-
 
   setPriceRange: (range) => set({ priceRange: range, currentPage: 1 }),
   setStockFilter: (filter) => set({ stockFilter: filter, currentPage: 1 }),
@@ -50,4 +51,17 @@ export const useUIStore = create((set) => ({
     set({ isProductFormModalOpen: true, editingProduct: product }),
   closeProductFormModal: () =>
     set({ isProductFormModalOpen: false, editingProduct: null }),
+
+  openAddVariantModal: (productId, parentProduct = null) =>
+    set({
+      isAddVariantModalOpen: true,
+      newProductIdForVariant: productId,
+      parentProductForVariant: parentProduct
+    }),
+  closeAddVariantModal: () =>
+    set({
+      isAddVariantModalOpen: false,
+      newProductIdForVariant: null,
+      parentProductForVariant: null
+    }),
 }));

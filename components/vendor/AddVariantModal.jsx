@@ -69,12 +69,14 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
             // Handle previews for editing
             if (editingVariant) {
                 const baseImgUrl = 'http://localhost:8000/api/public/uploads/variant/';
-                const serverImages = [
-                    editingVariant.product_image1,
-                    editingVariant.product_image2,
-                    editingVariant.product_image3,
-                    editingVariant.product_image4
-                ].filter(Boolean);
+                const serverImages = editingVariant.variant_images && editingVariant.variant_images.length > 0
+                    ? editingVariant.variant_images
+                    : [
+                        editingVariant.product_image1,
+                        editingVariant.product_image2,
+                        editingVariant.product_image3,
+                        editingVariant.product_image4
+                    ].filter(Boolean);
 
                 setExistingImages(serverImages);
                 const serverPreviews = serverImages.map(img =>

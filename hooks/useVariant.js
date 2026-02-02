@@ -33,13 +33,18 @@ export const useCreateVariant = (productId) => {
     });
 };
 
-export const useUpdateVariant = (productId) => {
+export const useUpdateVariant = (productId, variantId) => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }) => variantService.updateVariant(id, data),
+        mutationFn: ({ id, variantId: mId, data }) => variantService.updateVariant(id || mId || variantId, data),
         onSuccess: (data, variables) => {
-            queryClient.invalidateQueries({ queryKey: VARIANT_KEYS.list(productId) });
-            queryClient.invalidateQueries({ queryKey: VARIANT_KEYS.detail(variables.id) });
+            if (productId) {
+                queryClient.invalidateQueries({ queryKey: VARIANT_KEYS.list(productId) });
+            }
+            const vId = variables.id || variables.variantId || variantId;
+            if (vId) {
+                queryClient.invalidateQueries({ queryKey: VARIANT_KEYS.detail(vId) });
+            }
         },
     });
 };

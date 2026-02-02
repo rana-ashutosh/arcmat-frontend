@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useRouter, useParams } from 'next/navigation';
 import { useProductStore } from '@/store/useProductStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useDeleteProduct, useUpdateProduct } from '@/hooks/useProduct';
@@ -15,7 +15,10 @@ import BulkActionsBar from './BulkActionsBar';
 import BulkUploadModal from './BulkUploadModal';
 
 export default function VendorProductTable({ products = [] }) {
+  const router = useRouter();
+  const { vendorId } = useParams();
   const { user } = useAuth();
+  const effectiveVendorId = vendorId || user?._id || user?.id;
   const { data: categoryData } = useGetCategories();
   const categoriesList = categoryData?.data || [];
   const {
@@ -183,7 +186,7 @@ export default function VendorProductTable({ products = [] }) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                     <button
-                      onClick={() => openProductFormModal(product)}
+                      onClick={() => router.push(`/dashboard/products-list/${effectiveVendorId}/edit/${id}`)}
                       className="text-[#e09a74] hover:text-[#d08963] transition-colors"
                     >
                       Edit

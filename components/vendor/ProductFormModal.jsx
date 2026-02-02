@@ -5,6 +5,7 @@ import { toast } from '@/components/ui/Toast';
 
 export default function ProductFormModal() {
   const {
+    openAddVariantModal,
     isProductFormModalOpen,
     closeProductFormModal,
     editingProduct
@@ -19,11 +20,19 @@ export default function ProductFormModal() {
         const id = editingProduct._id || editingProduct.id;
         await updateProduct.mutateAsync({ id, data: formData });
         toast.success("Product updated successfully");
+        closeProductFormModal();
       } else {
-        await createProduct.mutateAsync(formData);
+        const response = await createProduct.mutateAsync(formData);
         toast.success("Product created successfully");
+        closeProductFormModal();
+
+        // Trigger variant modal
+        const newProduct = response?.data || response;
+        const productId = newProduct?._id || newProduct?.id;
+        if (productId) {
+          openAddVariantModal(productId, newProduct);
+        }
       }
-      closeProductFormModal();
     } catch (e) {
       const msg = e.response?.data?.message?.message || e.message || "Failed to save product";
       toast.error(msg);
@@ -35,7 +44,7 @@ export default function ProductFormModal() {
   if (!isProductFormModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-150 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">

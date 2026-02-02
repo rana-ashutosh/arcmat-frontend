@@ -10,7 +10,7 @@ export const productService = {
     // Get single product by ID
     getProductById: async (id) => {
         const response = await api.get(`/product/${id}`);
-        return response.data;
+        return response.data.data.data;
     },
 
     // Create a new product

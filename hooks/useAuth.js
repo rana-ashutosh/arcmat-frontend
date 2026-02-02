@@ -173,7 +173,7 @@ export const useLoginMutation = () => {
 
             if (finalRole === 'vendor') {
                 setLoading(true);
-                router.push('/dashboard');
+                router.push(`/dashboard/products-list/${user.id}`);
             } else {
                 setLoading(true);
                 router.push('/');

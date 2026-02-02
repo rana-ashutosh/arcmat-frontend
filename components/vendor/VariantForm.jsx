@@ -1,0 +1,333 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useCreateVariant, useUpdateVariant } from '@/hooks/useVariant';
+import { toast } from '@/components/ui/Toast';
+import { Upload, X, Save, Plus, Trash2 } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import clsx from 'clsx';
+
+export default function VariantForm({ productId, vendorId, onComplete, editingVariant = null, onCancel }) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        weight_type: 'kg',
+        weight: '',
+        stock: '0',
+        skucode: '',
+        mrp_price: '',
+        selling_price: '',
+        product_name: '', // Added for variants
+    });
+
+    const [attributes, setAttributes] = useState([{ key: '', value: '' }]);
+    const [existingImages, setExistingImages] = useState([]); // Stores filenames of images already on server
+    const [newImages, setNewImages] = useState([]); // Stores File objects of newly uploaded images
+    const [previewImages, setPreviewImages] = useState([]); // Stores URLs for all images (existing and new) for display
+
+    const createVariantMutation = useCreateVariant(productId);
+    const variantId = editingVariant?._id || editingVariant?.id;
+    const updateVariantMutation = useUpdateVariant(productId, variantId);
+
+    useEffect(() => {
+        if (editingVariant) {
+            setFormData({
+                weight_type: editingVariant.weight_type || 'kg',
+                weight: editingVariant.weight || '',
+                stock: editingVariant.stock || '0',
+                skucode: editingVariant.skucode || '',
+                mrp_price: editingVariant.mrp_price || '',
+                selling_price: editingVariant.selling_price || '',
+                product_name: editingVariant.product_name || '',
+            });
+
+            // Handle attributes
+            if (editingVariant.dynamicAttributes && editingVariant.dynamicAttributes.length > 0) {
+                setAttributes(editingVariant.dynamicAttributes);
+            } else {
+                const legacyAttrs = [];
+                if (editingVariant.size) legacyAttrs.push({ key: 'Size', value: editingVariant.size });
+                if (editingVariant.color) legacyAttrs.push({ key: 'Color', value: editingVariant.color });
+                if (editingVariant.brand) legacyAttrs.push({ key: 'Brand', value: editingVariant.brand });
+                setAttributes(legacyAttrs.length > 0 ? legacyAttrs : [{ key: '', value: '' }]);
+            }
+
+            // Handle images
+            const imgs = editingVariant.variant_images && editingVariant.variant_images.length > 0
+                ? editingVariant.variant_images
+                : [
+                    editingVariant.product_image1,
+                    editingVariant.product_image2,
+                    editingVariant.product_image3,
+                    editingVariant.product_image4
+                ].filter(Boolean);
+
+            setExistingImages(imgs);
+
+            const previews = imgs.map(img =>
+                img.startsWith('http') ? img : `http://localhost:8000/api/public/uploads/variant/${img}`
+            );
+            setPreviewImages(previews);
+        } else {
+            // Reset form for new variant if editingVariant becomes null
+            setFormData({
+                weight_type: 'kg',
+                weight: '',
+                stock: '0',
+                skucode: '',
+                mrp_price: '',
+                selling_price: '',
+                product_name: '',
+            });
+            setAttributes([{ key: '', value: '' }]);
+            setExistingImages([]);
+            setNewImages([]);
+            setPreviewImages([]);
+        }
+    }, [editingVariant]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleAttributeChange = (index, field, value) => {
+        const updated = [...attributes];
+        updated[index][field] = value;
+        setAttributes(updated);
+    };
+
+    const addAttribute = () => setAttributes([...attributes, { key: '', value: '' }]);
+    const removeAttribute = (index) => setAttributes(attributes.filter((_, i) => i !== index));
+
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            setNewImages(prev => [...prev, ...files]);
+            const newPreviews = files.map(file => URL.createObjectURL(file));
+            setPreviewImages(prev => [...prev, ...newPreviews]);
+        }
+    };
+
+    const removeImage = (indexToRemove) => {
+        // Determine if it's an existing image or a newly added one
+        if (indexToRemove < existingImages.length) {
+            // It's an existing image, remove from existingImages and previewImages
+            setExistingImages(prev => prev.filter((_, i) => i !== indexToRemove));
+            setPreviewImages(prev => prev.filter((_, i) => i !== indexToRemove));
+        } else {
+            // It's a new image, remove from newImages and previewImages
+            const newImageIndex = indexToRemove - existingImages.length;
+            setNewImages(prev => prev.filter((_, i) => i !== newImageIndex));
+            setPreviewImages(prev => prev.filter((_, i) => i !== indexToRemove));
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (newImages.length === 0 && existingImages.length === 0) {
+            toast.error("At least one variant image is required");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const submissionData = new FormData();
+            submissionData.append('productId', productId);
+
+            Object.keys(formData).forEach(key => {
+                submissionData.append(key, formData[key]);
+            });
+
+            // Handle attributes
+            const validAttributes = attributes.filter(a => a.key && a.value);
+            if (validAttributes.length > 0) {
+                submissionData.append('dynamicAttributes', JSON.stringify(validAttributes));
+
+                validAttributes.forEach(attr => {
+                    if (attr.key.toLowerCase() === 'size') submissionData.append('size', attr.value);
+                    if (attr.key.toLowerCase() === 'color') submissionData.append('color', attr.value);
+                });
+            }
+
+            // Append existing images (filenames) for update
+            if (editingVariant) {
+                submissionData.append('existingImages', JSON.stringify(existingImages));
+            }
+
+            // Append new images (File objects)
+            newImages.forEach(image => {
+                submissionData.append('variant_images', image);
+            });
+
+            if (editingVariant) {
+                await updateVariantMutation.mutateAsync({ id: variantId, data: submissionData });
+                toast.success('Variant updated successfully!');
+            } else {
+                await createVariantMutation.mutateAsync(submissionData);
+                toast.success('Variant created successfully!');
+            }
+
+            if (onComplete) onComplete();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to save variant');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="mb-8 border-b pb-4">
+                <h2 className="text-2xl font-bold text-gray-900">{editingVariant ? 'Edit Variant Details' : 'Step 2: Variant Details'}</h2>
+                <p className="text-gray-500 mt-1">Add pricing, stock and variation details for this product.</p>
+                <p className="text-xs font-mono text-gray-400 mt-2">Product ID: {productId}</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Pricing & Stock */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">MRP Price *</label>
+                        <input
+                            name="mrp_price"
+                            type="number"
+                            value={formData.mrp_price}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] transition-all"
+                            placeholder="0.00"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Selling Price *</label>
+                        <input
+                            name="selling_price"
+                            type="number"
+                            value={formData.selling_price}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] transition-all"
+                            placeholder="0.00"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Stock *</label>
+                        <input
+                            name="stock"
+                            type="number"
+                            value={formData.stock}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] transition-all"
+                            required
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-bold text-gray-700 mb-2">SKU Code *</label>
+                        <input
+                            name="skucode"
+                            value={formData.skucode}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] transition-all"
+                            placeholder="e.g. CHAIR-WOOD-RED"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Weight</label>
+                        <div className="flex gap-2">
+                            <input
+                                name="weight"
+                                type="number"
+                                value={formData.weight}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] flex-1"
+                                placeholder="Value"
+                            />
+                            <select
+                                name="weight_type"
+                                value={formData.weight_type}
+                                onChange={handleChange}
+                                className="w-24 rounded-xl border border-gray-200 bg-gray-50 text-sm px-2"
+                            >
+                                <option value="kg">kg</option>
+                                <option value="gm">gm</option>
+                                <option value="ml">ml</option>
+                                <option value="litre">litre</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Attributes */}
+                <div className="space-y-4 pt-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Attributes</h3>
+                        <button type="button" onClick={addAttribute} className="text-[#e09a74] hover:text-[#d08963] text-sm font-bold flex items-center gap-1">
+                            <Plus className="w-4 h-4" /> Add Attribute
+                        </button>
+                    </div>
+                    <div className="space-y-3">
+                        {attributes.map((attr, idx) => (
+                            <div key={idx} className="flex gap-3 items-center">
+                                <input
+                                    placeholder="Key (e.g. Color)"
+                                    value={attr.key}
+                                    onChange={(e) => handleAttributeChange(idx, 'key', e.target.value)}
+                                    className="flex-1 px-4 py-2 rounded-lg border border-gray-100 bg-gray-50/50 focus:ring-2 focus:ring-[#e09a74] text-sm"
+                                />
+                                <input
+                                    placeholder="Value (e.g. Red)"
+                                    value={attr.value}
+                                    onChange={(e) => handleAttributeChange(idx, 'value', e.target.value)}
+                                    className="flex-1 px-4 py-2 rounded-lg border border-gray-100 bg-gray-50/50 focus:ring-2 focus:ring-[#e09a74] text-sm"
+                                />
+                                <button type="button" onClick={() => removeAttribute(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Media */}
+                <div className="space-y-4 pt-4">
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Variant Images *</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <label className="aspect-square border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-all group">
+                            <Upload className="w-6 h-6 text-gray-300 group-hover:text-[#e09a74] transition-colors" />
+                            <span className="text-[10px] font-bold text-gray-400 mt-2">Upload</span>
+                            <input type="file" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
+                        </label>
+                        {previewImages.map((src, idx) => (
+                            <div key={idx} className="aspect-square rounded-2xl border border-gray-100 relative overflow-hidden group">
+                                <img src={src} className="w-full h-full object-cover" alt="" />
+                                <button
+                                    type="button"
+                                    onClick={() => removeImage(idx)}
+                                    className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="pt-8 border-t flex justify-end gap-4">
+                    <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
+                    <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="bg-[#e09a74] text-white px-10 py-3 font-bold rounded-xl hover:bg-white hover:text-[#e09a74] hover:border-[#e09a74] border transition-all shadow-lg shadow-orange-100"
+                    >
+                        {isSubmitting ? 'Saving...' : 'Save & Finish'}
+                    </Button>
+                </div>
+            </form>
+        </div>
+    );
+}

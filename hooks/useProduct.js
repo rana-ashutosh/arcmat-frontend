@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productService } from '../services/productService';
+import { toast } from '@/components/ui/Toast';
 
 // Keys for cache management
 export const PRODUCT_KEYS = {
@@ -37,6 +38,10 @@ export const useGetProduct = (id) => {
         queryKey: PRODUCT_KEYS.detail(id),
         queryFn: () => productService.getProductById(id),
         enabled: !!id,
+        onSuccess(data){
+            console.log('Product fetched successfully!',data);
+            return data
+        }
     });
 };
 
@@ -47,7 +52,6 @@ export const useCreateProduct = () => {
     return useMutation({
         mutationFn: productService.createProduct,
         onSuccess: () => {
-            // Invalidate list to trigger refetch
             queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.lists() });
         },
     });
