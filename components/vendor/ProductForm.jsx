@@ -12,7 +12,7 @@ import { useGetVariants, useDeleteVariant } from '@/hooks/useVariant';
 
 const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) => {
   const { user } = useAuth();
-  const { data: categoryData } = useGetCategories(user?._id);
+  const { data: categoryData } = useGetCategories(); // Fetch all categories to allow shared classification
   const { data: attributeData } = useGetAttributes();
 
   const [isAttributeModalOpen, setIsAttributeModalOpen] = useState(false);
@@ -75,14 +75,22 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
         meta_description: initialData.meta_description || '',
       });
 
+      const catId = initialData.categoryId?._id || initialData.categoryId || '';
+      const subCatId = initialData.subcategoryId?._id || initialData.subcategoryId || '';
+      const subSubCatId = initialData.subsubcategoryId?._id || initialData.subsubcategoryId || '';
+
       if (initialData.parent_category && initialData.parent_category.length >= 3) {
         setSelectedCategories({
-          l1: initialData.parent_category[0],
-          l2: initialData.parent_category[1],
-          l3: initialData.parent_category[2]
+          l1: initialData.parent_category[0]?._id || initialData.parent_category[0],
+          l2: initialData.parent_category[1]?._id || initialData.parent_category[1],
+          l3: initialData.parent_category[2]?._id || initialData.parent_category[2]
         });
-      } else if (initialData.categoryId) {
-        setSelectedCategories(prev => ({ ...prev, l3: initialData.categoryId }));
+      } else if (subSubCatId) {
+        setSelectedCategories({
+          l1: catId,
+          l2: subCatId,
+          l3: subSubCatId
+        });
       }
 
       if (initialData.dynamicAttributes) {
@@ -210,9 +218,7 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     const newErrors = {};
     if (!formData.product_name) newErrors.product_name = "Product name is required";
     if (!formData.product_url) newErrors.product_url = "Product URL is required";
-    if (!formData.mrp_price) newErrors.mrp_price = "MRP is required";
-    if (!formData.selling_price) newErrors.selling_price = "Selling price is required";
-    if (!formData.stock) newErrors.stock = "Stock is required";
+    if (!formData.skucode) newErrors.skucode = "SKU Code is required";
     if (!formData.sort_description) newErrors.sort_description = "Short description is required";
     if (!formData.description) newErrors.description = "Description is required";
 
@@ -238,7 +244,7 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     });
 
     if (selectedCategories.l3) {
-      submissionData.append('categoryId', selectedCategories.l3);
+      submissionData.append('subsubcategoryId', selectedCategories.l3);
       const parentCategoryArray = [selectedCategories.l1, selectedCategories.l2, selectedCategories.l3].filter(Boolean);
       submissionData.append('parent_category', JSON.stringify(parentCategoryArray));
     }
@@ -275,6 +281,11 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
               <label className="block text-sm font-semibold text-gray-700 mb-2">Product URL (Slug) *</label>
               <input name="product_url" value={formData.product_url} onChange={handleChange} className={clsx("w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#d9a88a] outline-none bg-gray-50", errors.product_url ? "border-red-500" : "border-gray-200")} placeholder="e.g. modern-sofa" />
             </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">SKU Code *</label>
+              <input name="skucode" value={formData.skucode} onChange={handleChange} className={clsx("w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#d9a88a] outline-none", errors.skucode ? "border-red-500" : "border-gray-200")} placeholder="e.g. PRD-001" />
+              {errors.skucode && <p className="text-red-500 text-xs mt-1">{errors.skucode}</p>}
+            </div>
             <div className="col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Short Description *</label>
               <textarea name="sort_description" value={formData.sort_description} onChange={handleChange} rows={2} className={clsx("w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#d9a88a] outline-none", errors.sort_description ? "border-red-500" : "border-gray-200")} placeholder="Brief summary..." />
@@ -287,44 +298,6 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 border-b pb-2">Pricing & Inventory</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">MRP Price *</label>
-              <input type="number" name="mrp_price" value={formData.mrp_price} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Selling Price *</label>
-              <input type="number" name="selling_price" value={formData.selling_price} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity *</label>
-              <input type="number" name="stock" value={formData.stock} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">SKU Code</label>
-              <input type="text" name="skucode" value={formData.skucode} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Weight</label>
-              <div className="flex">
-                <input type="number" name="weight" value={formData.weight} onChange={handleChange} className="w-full px-4 py-2 border border-r-0 border-gray-200 rounded-l-lg outline-none" placeholder="0" />
-                <select name="weight_type" value={formData.weight_type} onChange={handleChange} className="bg-gray-50 border border-gray-200 rounded-r-lg px-3 py-2 outline-none">
-                  <option value="ml">ml</option>
-                  <option value="g">g</option>
-                  <option value="kg">kg</option>
-                  <option value="l">l</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-              <select name="status" value={formData.status} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none">
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -333,18 +306,27 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
           <div className="mb-8">
             <label className="block text-sm font-semibold text-gray-700 mb-3">Category Classification *</label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <select value={selectedCategories.l1} onChange={(e) => handleCategoryChange('l1', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none">
-                <option value="">Select Root</option>
-                {l1Categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </select>
-              <select value={selectedCategories.l2} onChange={(e) => handleCategoryChange('l2', e.target.value)} disabled={!selectedCategories.l1} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none disabled:bg-gray-50">
-                <option value="">Select Sub</option>
-                {l2Categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </select>
-              <select value={selectedCategories.l3} onChange={(e) => handleCategoryChange('l3', e.target.value)} disabled={!selectedCategories.l2} className={clsx("w-full px-4 py-2 border rounded-lg outline-none disabled:bg-gray-50", errors.category ? "border-red-500" : "border-gray-200")}>
-                <option value="">Select Leaf</option>
-                {l3Categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </select>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-gray-400">Category</label>
+                <select value={selectedCategories.l1} onChange={(e) => handleCategoryChange('l1', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none">
+                  <option value="">Select Category</option>
+                  {l1Categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-gray-400">Sub-Category</label>
+                <select value={selectedCategories.l2} onChange={(e) => handleCategoryChange('l2', e.target.value)} disabled={!selectedCategories.l1} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none disabled:bg-gray-50">
+                  <option value="">Select Sub-Category</option>
+                  {l2Categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-gray-400">Sub-Sub-Category</label>
+                <select value={selectedCategories.l3} onChange={(e) => handleCategoryChange('l3', e.target.value)} disabled={!selectedCategories.l2} className={clsx("w-full px-4 py-2 border rounded-lg outline-none disabled:bg-gray-50", errors.category ? "border-red-500" : "border-gray-200")}>
+                  <option value="">Select Sub-Sub-Category</option>
+                  {l3Categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                </select>
+              </div>
             </div>
             {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
           </div>

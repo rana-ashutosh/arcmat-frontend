@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Upload } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductStore } from '@/store/useProductStore';
 import { useGetProducts } from '@/hooks/useProduct';
@@ -26,19 +27,29 @@ import BulkUploadModal from '@/components/vendor/BulkUploadModal';
 // Product List Page
 export default function ProductsListPage() {
   const { user, loading: authLoading } = useAuth();
+  const { vendorId } = useParams();
   const { getPublicProducts } = useProductStore();
   const { openProductFormModal, openBulkUploadModal } = useUIStore();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [orderBy, setOrderBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('DESC');
+
+  // Use vendorId from URL if available, otherwise fallback to user ID
+  const effectiveVendorId = vendorId || user?._id || user?.id;
 
   const { data: apiResponse, isLoading: productsLoading } = useGetProducts({
-    userId: user?._id || user?.id,
+    userId: effectiveVendorId,
     page: currentPage,
     limit: pageSize,
     search: searchTerm,
-    enabled: !!user && !authLoading
+    status: statusFilter,
+    orderby: orderBy,
+    order: sortOrder,
+    enabled: !!effectiveVendorId && !authLoading
   });
 
   const apiProducts = apiResponse?.data?.data || apiResponse?.data || apiResponse?.products || [];
@@ -116,7 +127,7 @@ export default function ProductsListPage() {
               Bulk Upload
             </Button>
             <Link
-              href="/dashboard/products-list/add"
+              href={`/dashboard/products-list/${effectiveVendorId}/add`}
               className="flex items-center rounded-full bg-[#e09a74] text-white cursor-pointer hover:bg-[#d08963] min-w-[120px] py-2 px-4 hover:border-[#e09a74] border hover:text-[#e09a74] hover:bg-white duration-300"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -134,15 +145,45 @@ export default function ProductsListPage() {
           <AttributeCompletionBanner />
 
           <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search your inventory..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] transition-colors"
-              />
+            <div className="flex flex-col md:flex-row gap-4 items-center flex-1">
+              <div className="relative w-full md:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by name or SKU..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] transition-colors"
+                />
+              </div>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
+              >
+                <option value="all">All Status</option>
+                <option value="1">Active Only</option>
+                <option value="0">Inactive Only</option>
+              </select>
+
+              <select
+                value={orderBy}
+                onChange={(e) => { setOrderBy(e.target.value); setCurrentPage(1); }}
+                className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
+              >
+                <option value="createdAt">Date Created</option>
+                <option value="product_name">Product Name</option>
+              </select>
+
+              <select
+                value={sortOrder}
+                onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}
+                className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
+              >
+                <option value="DESC">Descending</option>
+                <option value="ASC">Ascending</option>
+              </select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">Total: {totalItems} products</span>

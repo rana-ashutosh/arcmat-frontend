@@ -64,7 +64,17 @@ export default function Sidebar() {
   // Determine menu items based on role
   const isVendor = user?.role === 'vendor';
   const menuItems = isVendor ? VENDOR_MENU_ITEMS : USER_MENU_ITEMS;
-  const visibleItems = menuItems.filter(item => !item.requiresAuth || isAuthenticated);
+  const visibleItems = menuItems
+    .filter(item => !item.requiresAuth || isAuthenticated)
+    .map(item => {
+      if (item.id === 'products-list' && isVendor && (user?._id || user?.id)) {
+        return {
+          ...item,
+          href: `/dashboard/products-list/${user._id || user.id}`
+        };
+      }
+      return item;
+    });
 
   return (
     <>

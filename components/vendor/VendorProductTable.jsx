@@ -31,10 +31,16 @@ export default function VendorProductTable({ products = [] }) {
 
   const [selectAll, setSelectAll] = useState(false);
 
-  const getCategoryName = (categoryId) => {
-    if (!categoryId) return 'N/A';
-    const cat = categoriesList.find((c) => (c._id || c.id) === categoryId);
-    return cat?.name || categoryId;
+  const getCategoryName = (category) => {
+    if (!category) return 'N/A';
+
+    if (typeof category === 'object') {
+      return category.name || category.category_name || 'N/A';
+    }
+
+    const cat = categoriesList.find((c) => (c._id || c.id) === category);
+    if (!cat) return category;
+    return cat.name;
   };
 
   const handleSelectAll = () => {
@@ -64,10 +70,11 @@ export default function VendorProductTable({ products = [] }) {
 
   const handleToggleStatus = async (productId, currentStatus) => {
     try {
-      const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+      const isActive = currentStatus === 'Active' || currentStatus === 1;
+      const newStatus = isActive ? 0 : 1;
       await updateProductMutation.mutateAsync({ id: productId, data: { status: newStatus } });
       toast.success(
-        newStatus === 'Inactive'
+        newStatus === 0
           ? 'Product deactivated successfully'
           : 'Product activated successfully'
       );
@@ -91,19 +98,19 @@ export default function VendorProductTable({ products = [] }) {
                 />
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                Product
+                Image
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                Category
+                Product Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                Attr. Status
+                SKU Code
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                Price
+                Date Created
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
-                Stock
+                Short Description
               </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
                 Status
@@ -121,8 +128,8 @@ export default function VendorProductTable({ products = [] }) {
               const description = product.sort_description || product.description;
               const price = product.selling_price ?? product.price;
               const stock = product.stock ?? product.stockQuantity;
-              const isActive = product.status === 'Active' || product.isActive === true;
-              const status = product.status || (isActive ? 'Active' : 'Inactive');
+              const isActive = product.status === 1 || product.status === 'Active' || product.isActive === true;
+              const status = product.status ?? (isActive ? 'Active' : 'Inactive');
 
               return (
                 <tr key={id} className="hover:bg-gray-50">
@@ -134,89 +141,56 @@ export default function VendorProductTable({ products = [] }) {
                       className="h-4 w-4 text-[#d9a88a] focus:ring-[#d9a88a] border-gray-300 rounded"
                     />
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 shrink-0 bg-gray-100 rounded">
-                        {images?.[0] ? (
-                          <img
-                            src={images[0].startsWith('http') ? images[0] : `http://localhost:8000/api/public/uploads/product/${images[0]}`}
-                            alt={name}
-                            className="h-10 w-10 rounded object-cover"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 flex items-center justify-center">
-                            <svg
-                              className="w-6 h-6 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {name}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="h-12 w-12 bg-gray-100 rounded overflow-hidden">
+                      {images?.[0] ? (
+                        <img
+                          src={images[0].startsWith('http') ? images[0] : `http://localhost:8000/api/public/uploads/product/${images[0]}`}
+                          alt={name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-gray-400">
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
                         </div>
-                        <div className="text-sm text-gray-600 line-clamp-1">
-                          {description}
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {/* Show shorter category or leaf node for space */}
-
-                    {product.categoryPath ? product.categoryPath.split(' > ').pop() : getCategoryName(product.categoryId)}
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-semibold text-gray-900 line-clamp-2 min-w-[150px]">
+                      {name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-mono">
+                    {product.skucode || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {product.createdAt ? new Date(product.createdAt).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    }) : '-'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-600 line-clamp-2 max-w-xs">
+                      {description}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                      -
-                    </span>
+                    <StatusBadge status={isActive ? 'active' : 'inactive'} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ₹{price?.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={clsx(
-                        'text-sm font-medium',
-                        stock > 0 ? 'text-green-700' : 'text-red-700'
-                      )}
-                    >
-                      {stock} units
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge
-                      status={isActive ? 'active' : 'inactive'}
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                     <button
                       onClick={() => openProductFormModal(product)}
-                      className="text-[#d9a88a] hover:text-[#c99775] font-semibold"
+                      className="text-[#e09a74] hover:text-[#d08963] transition-colors"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() =>
-                        handleToggleStatus(id, status)
-                      }
-                      className="text-blue-700 hover:text-blue-900"
-                    >
-                      {isActive ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button
                       onClick={() => handleDelete(id, name)}
-                      className="text-red-700 hover:text-red-900"
+                      className="text-red-500 hover:text-red-700 transition-colors"
                     >
                       Delete
                     </button>

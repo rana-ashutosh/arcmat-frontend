@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
+import { useAuth } from '@/hooks/useAuth';
 import Header from "@/components/layouts/Header";
 import Footer from "@/components/layouts/Footer";
 import Container from '@/components/ui/Container';
@@ -10,6 +11,7 @@ import Button from '@/components/ui/Button';
 import BackLink from '@/components/ui/BackLink';
 
 export default function ContactUsPage() {
+    const { user } = useAuth();
     const [selectedTopic, setSelectedTopic] = useState('');
     const [isFormVisible, setIsFormVisible] = useState(false);
 
@@ -63,8 +65,11 @@ export default function ContactUsPage() {
                         <div className="grid sm:grid-cols-2 gap-6 mb-10">
                             <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
                                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">Email Us</h3>
-                                <a href="mailto:info@arcmat.in" className="text-base text-gray-700 hover:text-[#d9a88a] transition-colors">
-                                    info@arcmat.in
+                                <a
+                                    href={`mailto:${user?.role === 'vendor' ? 'partnerships@arcmat.in' : 'info@arcmat.in'}`}
+                                    className="text-base text-gray-700 hover:text-[#d9a88a] transition-colors"
+                                >
+                                    {user?.role === 'vendor' ? 'partnerships@arcmat.in' : 'info@arcmat.in'}
                                 </a>
                             </div>
                             <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">

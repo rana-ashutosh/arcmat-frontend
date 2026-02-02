@@ -178,7 +178,7 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                                 <div className="mb-4">
                                     {product.brand && (
                                         <Link href="#" className="text-2xl font-extrabold text-gray-600 hover:text-[#e09a74] transition-colors mb-2 inline-block">
-                                            {product.brand}
+                                            {typeof product.brand === 'object' ? (product.brand.name || product.brand.brand_name) : product.brand}
                                         </Link>
                                     )}
                                     {/* BADGES SECTION */}
@@ -285,7 +285,7 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                             <section className="bg-white rounded-xl border border-gray-100 p-5">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Overview</h3>
                                 <div className="text-sm md:text-base text-gray-600 leading-relaxed whitespace-pre-line wrap-break-word overflow-hidden"
-                                    dangerouslySetInnerHTML={{ __html: description || `Premium quality ${subtitle?.toLowerCase() || ''} from ${product.brand || 'Arcmat'}.` }}
+                                    dangerouslySetInnerHTML={{ __html: description || `Premium quality ${subtitle?.toLowerCase() || ''} from ${typeof product.brand === 'object' ? (product.brand.name || product.brand.brand_name) : (product.brand || 'Arcmat')}.` }}
                                 />
                             </section>
 

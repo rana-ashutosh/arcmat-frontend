@@ -104,7 +104,9 @@ const RequestInfo = ({ product, initialRequest = {}, onClose, isModal = false })
                             <div className="flex items-center gap-4 pb-6 border-b border-gray-300">
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Get directly in touch with</p>
-                                    <h3 className="text-xl font-bold text-gray-900">{product.brand || 'GHIDINI1961'}</h3>
+                                    <h3 className="text-xl font-bold text-gray-900">
+                                        {typeof product.brand === 'object' ? (product.brand.name || product.brand.brand_name) : (product.brand || 'GHIDINI1961')}
+                                    </h3>
                                 </div>
                             </div>
                             <div className="flex flex-col md:flex-row justify-between gap-4 py-2">
@@ -284,7 +286,7 @@ const RequestInfo = ({ product, initialRequest = {}, onClose, isModal = false })
                                     className="w-4 h-4 mt-1 rounded border-gray-300 text-[#e09a74] focus:ring-[#e09a74]"
                                 />
                                 <span className="text-xs text-gray-600 leading-relaxed">
-                                    I consent to the transfer of my data to {product.brand || 'GHIDINI1961'} and the brands featured on Archiproducts for marketing purposes
+                                    I consent to the transfer of my data to {typeof product.brand === 'object' ? (product.brand.name || product.brand.brand_name) : (product.brand || 'GHIDINI1961')} and the brands featured on Archiproducts for marketing purposes
                                 </span>
                             </label>
                             <p className="text-xs text-gray-500 mt-2 ml-6">
