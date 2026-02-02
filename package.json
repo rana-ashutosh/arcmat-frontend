@@ -27,6 +27,7 @@
     "react-hook-form": "^7.53.0",
     "react-spinners": "^0.14.1",
     "socket.io-client": "^4.8.1",
+    "sonner": "^2.0.7",
     "swiper": "^11.1.5",
     "xlsx": "^0.18.5",
     "zod": "^3.25.76",

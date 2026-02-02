@@ -4,11 +4,13 @@ import { useGetCategories } from '@/hooks/useCategory';
 import { useGetAttributes } from '@/hooks/useAttribute';
 import { useAuth } from '@/hooks/useAuth';
 import Button from '@/components/ui/Button';
-import { Upload, X, Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Upload, X, Plus, Trash2, ArrowLeft, Pencil } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import clsx from 'clsx';
 import VariantForm from './VariantForm';
 import { useGetVariants, useDeleteVariant } from '@/hooks/useVariant';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import { generateSlug, getProductImageUrl, getVariantImageUrl, parseAttributes, formatCurrency, formatSKU } from '@/lib/productUtils';
 
 const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) => {
   const { user } = useAuth();
@@ -17,6 +19,8 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
 
   const [editingVariant, setEditingVariant] = useState(null);
   const [isVariantFormOpen, setIsVariantFormOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [variantToDelete, setVariantToDelete] = useState(null);
   const productId = initialData?._id || initialData?.id;
   const { data: variantsData, isLoading: isLoadingVariants } = useGetVariants(productId);
   const deleteVariantMutation = useDeleteVariant(productId);
@@ -33,17 +37,13 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     stock: '',
     weight: '',
     weight_type: 'ml',
-    // status: 'Active',
     skucode: '',
     meta_title: '',
     meta_keywords: '',
     meta_description: '',
-  });
-
-  const [selectedCategories, setSelectedCategories] = useState({
-    l1: '',
-    l2: '',
-    l3: ''
+    categoryId: '',
+    subcategoryId: '',
+    subsubcategoryId: '',
   });
 
   const [productAttributes, setProductAttributes] = useState([]);
@@ -75,56 +75,63 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
       const subCatId = initialData.subcategoryId?._id || initialData.subcategoryId || '';
       const subSubCatId = initialData.subsubcategoryId?._id || initialData.subsubcategoryId || '';
 
-      if (initialData.parent_category && initialData.parent_category.length >= 3) {
-        setSelectedCategories({
-          l1: initialData.parent_category[0]?._id || initialData.parent_category[0],
-          l2: initialData.parent_category[1]?._id || initialData.parent_category[1],
-          l3: initialData.parent_category[2]?._id || initialData.parent_category[2]
-        });
-      } else if (subSubCatId) {
-        setSelectedCategories({
-          l1: catId,
-          l2: subCatId,
-          l3: subSubCatId
-        });
-      }
+      setFormData(prev => ({
+        ...prev,
+        categoryId: catId,
+        subcategoryId: subCatId,
+        subsubcategoryId: subSubCatId
+      }));
 
       if (initialData.dynamicAttributes) {
-        setProductAttributes(JSON.parse(JSON.stringify(initialData.dynamicAttributes)));
+        setProductAttributes(parseAttributes(initialData.dynamicAttributes));
       }
 
       if (initialData.product_images && initialData.product_images.length > 0) {
         setExistingImages(initialData.product_images);
-        const existingPreviews = initialData.product_images.map(img =>
-          img.startsWith('http') ? img : `http://localhost:8000/api/public/uploads/product/${img}`
-        );
+        const existingPreviews = initialData.product_images.map(getProductImageUrl);
         setPreviewImages(existingPreviews);
       }
     }
   }, [initialData]);
 
+  // Scroll to top when switching between product and variant forms
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [isVariantFormOpen]);
+
   const categories = useMemo(() => categoryData?.data || [], [categoryData]);
   const l1Categories = useMemo(() => categories.filter(c => c.level === 1), [categories]);
-  const l2Categories = useMemo(() => categories.filter(c => c.level === 2 && c.parentId === selectedCategories.l1), [categories, selectedCategories.l1]);
-  const l3Categories = useMemo(() => categories.filter(c => c.level === 3 && c.parentId === selectedCategories.l2), [categories, selectedCategories.l2]);
+  const l2Categories = useMemo(() => categories.filter(c => c.level === 2 && c.parentId === formData.categoryId), [categories, formData.categoryId]);
+  const l3Categories = useMemo(() => categories.filter(c => c.level === 3 && c.parentId === formData.subcategoryId), [categories, formData.subcategoryId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'skucode' ? formatSKU(value) : value
+    }));
 
-    if (name === 'product_name' && !formData.product_url && !initialData) {
+    if (name === "product_name" && !initialData) {
       setFormData(prev => ({
         ...prev,
-        product_url: value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        product_url: generateSlug(value)
       }));
     }
   };
 
   const handleCategoryChange = (level, value) => {
-    setSelectedCategories(prev => {
-      const next = { ...prev, [level]: value };
-      if (level === 'l1') { next.l2 = ''; next.l3 = ''; }
-      if (level === 'l2') { next.l3 = ''; }
+    setFormData(prev => {
+      const next = { ...prev };
+      if (level === 'categoryId') {
+        next.categoryId = value;
+        next.subcategoryId = '';
+        next.subsubcategoryId = '';
+      } else if (level === 'subcategoryId') {
+        next.subcategoryId = value;
+        next.subsubcategoryId = '';
+      } else if (level === 'subsubcategoryId') {
+        next.subsubcategoryId = value;
+      }
       return next;
     });
   };
@@ -160,15 +167,21 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     setIsVariantFormOpen(true);
   };
 
-  const handleDeleteVariant = async (id, e) => {
+  const handleDeleteVariant = (id, e) => {
     if (e) e.preventDefault();
-    if (confirm('Are you sure you want to delete this variant?')) {
-      try {
-        await deleteVariantMutation.mutateAsync(id);
-        toast.success('Variant deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete variant');
-      }
+    setVariantToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteVariant = async () => {
+    if (!variantToDelete) return;
+    try {
+      await deleteVariantMutation.mutateAsync(variantToDelete);
+      toast.success('Variant deleted successfully');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete variant');
+    } finally {
+      setVariantToDelete(null);
     }
   };
 
@@ -180,7 +193,7 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     if (!formData.sort_description) newErrors.sort_description = "Short description is required";
     if (!formData.description) newErrors.description = "Description is required";
 
-    if (!selectedCategories.l3 && !initialData) newErrors.category = "Category selection is required";
+    if (!formData.subsubcategoryId && !initialData) newErrors.category = "Category selection is required";
     if (existingImages.length === 0 && newImages.length === 0 && !initialData) newErrors.images = "At least one image is required";
 
     setErrors(newErrors);
@@ -198,12 +211,6 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     Object.keys(formData).forEach(key => {
       submissionData.append(key, formData[key]);
     });
-
-    if (selectedCategories.l3) {
-      submissionData.append('subsubcategoryId', selectedCategories.l3);
-      const parentCategoryArray = [selectedCategories.l1, selectedCategories.l2, selectedCategories.l3].filter(Boolean);
-      submissionData.append('parent_category', JSON.stringify(parentCategoryArray));
-    }
 
     if (productAttributes.length > 0) {
       submissionData.append('dynamicAttributes', JSON.stringify(productAttributes));
@@ -268,15 +275,15 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-bold text-gray-900 mb-6 border-b pb-2">Organization</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <select value={selectedCategories.l1} onChange={(e) => handleCategoryChange('l1', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none">
+              <select value={formData.categoryId} onChange={(e) => handleCategoryChange('categoryId', e.target.value)} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none">
                 <option value="">Select Category</option>
                 {l1Categories.map(c => <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>)}
               </select>
-              <select value={selectedCategories.l2} onChange={(e) => handleCategoryChange('l2', e.target.value)} disabled={!selectedCategories.l1} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none disabled:bg-gray-50">
+              <select value={formData.subcategoryId} onChange={(e) => handleCategoryChange('subcategoryId', e.target.value)} disabled={!formData.categoryId} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none disabled:bg-gray-50">
                 <option value="">Select Sub-Category</option>
                 {l2Categories.map(c => <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>)}
               </select>
-              <select value={selectedCategories.l3} onChange={(e) => handleCategoryChange('l3', e.target.value)} disabled={!selectedCategories.l2} className={clsx("w-full px-4 py-2 border rounded-lg outline-none disabled:bg-gray-50", errors.category ? "border-red-500" : "border-gray-200")}>
+              <select value={formData.subsubcategoryId} onChange={(e) => handleCategoryChange('subsubcategoryId', e.target.value)} disabled={!formData.subcategoryId} className={clsx("w-full px-4 py-2 border rounded-lg outline-none disabled:bg-gray-50", errors.category ? "border-red-500" : "border-gray-200")}>
                 <option value="">Select Sub-Sub-Category</option>
                 {l3Categories.map(c => <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>)}
               </select>
@@ -337,14 +344,14 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
                               <div className="w-10 h-10 rounded bg-gray-100 overflow-hidden shrink-0">
                                 {v.variant_images && v.variant_images[0] && (
                                   <img
-                                    src={v.variant_images[0].startsWith('http') ? v.variant_images[0] : `http://localhost:8000/api/public/uploads/variant/${v.variant_images[0]}`}
+                                    src={getVariantImageUrl(v.variant_images[0])}
                                     className="w-full h-full object-cover"
                                     alt=""
                                   />
                                 )}
                                 {!v.variant_images?.[0] && v.product_image1 && (
                                   <img
-                                    src={v.product_image1.startsWith('http') ? v.product_image1 : `http://localhost:8000/api/public/uploads/variant/${v.product_image1}`}
+                                    src={getVariantImageUrl(v.product_image1)}
                                     className="w-full h-full object-cover"
                                     alt=""
                                   />
@@ -359,12 +366,26 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
                               {v.color && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full">Color: {v.color}</span>}
                             </div>
                           </td>
-                          <td className="px-4 py-4 text-sm font-bold">₹{v.selling_price}</td>
+                          <td className="px-4 py-4 text-sm font-bold">{formatCurrency(v.selling_price)}</td>
                           <td className="px-4 py-4 text-sm">{v.stock} units</td>
                           <td className="px-4 py-4 text-right">
-                            <div className="flex justify-end gap-3">
-                              <button type="button" onClick={(e) => handleEditVariant(v, e)} className="text-[#e09a74] hover:text-[#d08963] text-xs font-bold uppercase">Edit</button>
-                              <button type="button" onClick={(e) => handleDeleteVariant(v._id || v.id, e)} className="text-red-500 hover:text-red-700 text-xs font-bold uppercase">Delete</button>
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => handleEditVariant(v, e)}
+                                className="p-2 text-[#e09a74] hover:bg-orange-50 rounded-lg transition-all"
+                                title="Edit Variant"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteVariant(v._id || v.id, e)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                title="Delete Variant"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -384,6 +405,10 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
                 <input name="meta_title" value={formData.meta_title} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
               </div>
               <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Meta Keywords</label>
+                <input name="meta_keywords" value={formData.meta_keywords} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
+              </div>
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Meta Description</label>
                 <textarea name="meta_description" value={formData.meta_description} onChange={handleChange} rows={3} className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none" />
               </div>
@@ -392,12 +417,22 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
 
           <div className="flex justify-end gap-3 pt-6">
             <Button variant="outline" type="button" onClick={() => onCancel ? onCancel() : window.history.back()}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-[#e09a74] text-white hover:bg-[#d08963] min-w-[120px]">
+            <Button type="submit" disabled={isSubmitting} className="bg-[#e09a74] px-4 py-2 text-white hover:bg-[#d08963] ">
               {isSubmitting ? 'Saving...' : initialData ? 'Save Changes' : 'Create Product'}
             </Button>
           </div>
         </form>
       )}
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteVariant}
+        title="Delete Variant"
+        message="Are you sure you want to delete this variant? This action cannot be undone."
+        confirmText="Delete"
+        type="danger"
+      />
     </>
   );
 };

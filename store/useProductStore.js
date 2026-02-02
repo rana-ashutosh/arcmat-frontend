@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { MOCK_PRODUCTS } from '@/lib/mockData/products';
 import { getMissingAttributes, calculateAttributeStatus } from '@/lib/attributeSchema';
+import { generateSlug } from '@/lib/productUtils';
 
 export const useProductStore = create((set, get) => ({
   products: MOCK_PRODUCTS,
@@ -54,10 +55,7 @@ export const useProductStore = create((set, get) => ({
       const rawProduct = {
         ...productData,
         id: Date.now(),
-        slug: productData.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, ''),
+        slug: generateSlug(productData.name),
         isActive: true, // Auto-published
         isHidden: false,
         isFlagged: false,
@@ -86,10 +84,7 @@ export const useProductStore = create((set, get) => ({
           ...data,
           // Add index to timestamp to ensure unique IDs for batch uploads
           id: timestamp + index,
-          slug: data.name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, ''),
+          slug: generateSlug(data.name),
           isActive: true,
           isHidden: false,
           isFlagged: false,

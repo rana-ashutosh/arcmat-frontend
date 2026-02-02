@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useCreateVariant, useUpdateVariant } from '@/hooks/useVariant';
 import { toast } from '@/components/ui/Toast';
-import { X, Upload, Save, Info, Settings, Tag, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Save, Info, Settings, Tag, Image as ImageIcon, ChevronDown } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import clsx from 'clsx';
+import { getVariantImageUrl, generateSlug, formatSKU } from '@/lib/productUtils';
+import { useGetAttributes } from '@/hooks/useAttribute';
 
 export default function AddVariantModal({ isOpen, onClose, productId, parentProduct, editingVariant = null }) {
     const [activeTab, setActiveTab] = useState('basic');
@@ -40,6 +42,8 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
 
     const createVariantMutation = useCreateVariant(productId);
     const updateVariantMutation = useUpdateVariant(productId);
+    const { data: allAttributesResponse } = useGetAttributes();
+    const allAttributes = allAttributesResponse?.data || [];
 
     useEffect(() => {
         if (editingVariant) {
@@ -79,9 +83,7 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
                     ].filter(Boolean);
 
                 setExistingImages(serverImages);
-                const serverPreviews = serverImages.map(img =>
-                    img.startsWith('http') ? img : `${baseImgUrl}${img}`
-                );
+                const serverPreviews = serverImages.map(getVariantImageUrl);
                 setPreviewImages(serverPreviews);
             }
         } else if (parentProduct) {
@@ -101,7 +103,13 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            const next = { ...prev, [name]: name === 'skucode' ? formatSKU(value) : value };
+            if (name === 'product_name' && !editingVariant) {
+                next.product_url = generateSlug(value);
+            }
+            return next;
+        });
     };
 
     const handleImageChange = (e) => {
@@ -110,6 +118,7 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
             setNewImages(prev => [...prev, ...files]);
             const newPreviews = files.map(file => URL.createObjectURL(file));
             setPreviewImages(prev => [...prev, ...newPreviews]);
+            toast.success(`${files.length} image(s) added`);
         }
     };
 
@@ -121,6 +130,7 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
             const newIdx = index - existingImages.length;
             setNewImages(prev => prev.filter((_, i) => i !== newIdx));
         }
+        toast.info("Image removed");
     };
 
     const handleSubmit = async (e) => {
@@ -136,10 +146,6 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
                 submissionData.append(key, formData[key]);
             });
 
-            // Append Categories from parent if available
-            if (parentProduct?.parent_category) {
-                submissionData.append('parent_category', JSON.stringify(parentProduct.parent_category));
-            }
 
             // Append Images logic
             if (editingVariant) {
@@ -174,7 +180,7 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
     ];
 
     return (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-300 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div
                 className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-100"
                 onClick={(e) => e.stopPropagation()}
@@ -350,32 +356,83 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Size</label>
-                                    <input
-                                        name="size"
-                                        value={formData.size}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm"
-                                        placeholder="e.g. XL, 42, Large"
-                                    />
+                                    {allAttributes.find(a => a.attributeName.toLowerCase() === 'size') ? (
+                                        <div className="relative">
+                                            <select
+                                                name="size"
+                                                value={formData.size}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] appearance-none bg-white"
+                                            >
+                                                <option value="">Select Size</option>
+                                                {allAttributes.find(a => a.attributeName.toLowerCase() === 'size').attributeValues.map(v => (
+                                                    <option key={v} value={v}>{v}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                        </div>
+                                    ) : (
+                                        <input
+                                            name="size"
+                                            value={formData.size}
+                                            onChange={handleChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm"
+                                            placeholder="e.g. XL, 42, Large"
+                                        />
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Color</label>
-                                    <input
-                                        name="color"
-                                        value={formData.color}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm"
-                                        placeholder="e.g. Royal Blue"
-                                    />
+                                    {allAttributes.find(a => a.attributeName.toLowerCase() === 'color') ? (
+                                        <div className="relative">
+                                            <select
+                                                name="color"
+                                                value={formData.color}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] appearance-none bg-white"
+                                            >
+                                                <option value="">Select Color</option>
+                                                {allAttributes.find(a => a.attributeName.toLowerCase() === 'color').attributeValues.map(v => (
+                                                    <option key={v} value={v}>{v}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                        </div>
+                                    ) : (
+                                        <input
+                                            name="color"
+                                            value={formData.color}
+                                            onChange={handleChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm"
+                                            placeholder="e.g. Royal Blue"
+                                        />
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Brand</label>
-                                    <input
-                                        name="brand"
-                                        value={formData.brand}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm"
-                                    />
+                                    {allAttributes.find(a => a.attributeName.toLowerCase() === 'brand') ? (
+                                        <div className="relative">
+                                            <select
+                                                name="brand"
+                                                value={formData.brand}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] appearance-none bg-white"
+                                            >
+                                                <option value="">Select Brand</option>
+                                                {allAttributes.find(a => a.attributeName.toLowerCase() === 'brand').attributeValues.map(v => (
+                                                    <option key={v} value={v}>{v}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                        </div>
+                                    ) : (
+                                        <input
+                                            name="brand"
+                                            value={formData.brand}
+                                            onChange={handleChange}
+                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm"
+                                        />
+                                    )}
                                 </div>
                             </div>
 

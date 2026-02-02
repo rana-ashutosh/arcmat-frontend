@@ -5,6 +5,7 @@ import { X, Upload, Image as ImageIcon, Check } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import clsx from 'clsx';
+import { generateSlug } from '@/lib/productUtils';
 
 export default function AddCategoryModal({ isOpen, onClose, onAdd, existingCategories = [] }) {
     const [step, setStep] = useState(1); // 1: Root, 2: Level 2, 3: Level 3
@@ -45,11 +46,7 @@ export default function AddCategoryModal({ isOpen, onClose, onAdd, existingCateg
 
     useEffect(() => {
         if (categoryData.category_name) {
-            const slug = categoryData.category_name
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/(^-|-$)+/g, '');
-            setCategoryData(prev => ({ ...prev, category_url: slug }));
+            setCategoryData(prev => ({ ...prev, category_url: generateSlug(categoryData.category_name) }));
         }
     }, [categoryData.category_name]);
 

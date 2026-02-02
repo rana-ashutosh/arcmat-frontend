@@ -13,6 +13,9 @@ import clsx from 'clsx';
 import Button from '../ui/Button';
 import BulkActionsBar from './BulkActionsBar';
 import BulkUploadModal from './BulkUploadModal';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import { getProductImageUrl } from '@/lib/productUtils';
+import { Pencil, Trash2 } from 'lucide-react';
 
 export default function VendorProductTable({ products = [] }) {
   const router = useRouter();
@@ -33,6 +36,8 @@ export default function VendorProductTable({ products = [] }) {
   const { openProductFormModal, openBulkUploadModal } = useUIStore();
 
   const [selectAll, setSelectAll] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const getCategoryName = (category) => {
     if (!category) return 'N/A';
@@ -60,14 +65,20 @@ export default function VendorProductTable({ products = [] }) {
     setSelectAll(!selectAll);
   };
 
-  const handleDelete = async (productId, productName) => {
-    if (confirm(`Are you sure you want to delete "${productName}"?`)) {
-      try {
-        await deleteProductMutation.mutateAsync(productId);
-        toast.success('Product deleted successfully');
-      } catch (error) {
-        toast.error("Failed to delete product");
-      }
+  const handleDelete = (productId, productName) => {
+    setProductToDelete({ id: productId, name: productName });
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete) return;
+    try {
+      await deleteProductMutation.mutateAsync(productToDelete.id);
+      toast.success(`Product "${productToDelete.name}" deleted successfully`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || `Failed to delete product "${productToDelete.name}"`);
+    } finally {
+      setProductToDelete(null);
     }
   };
 
@@ -148,7 +159,7 @@ export default function VendorProductTable({ products = [] }) {
                     <div className="h-12 w-12 bg-gray-100 rounded overflow-hidden">
                       {images?.[0] ? (
                         <img
-                          src={images[0].startsWith('http') ? images[0] : `http://localhost:8000/api/public/uploads/product/${images[0]}`}
+                          src={getProductImageUrl(images[0])}
                           alt={name}
                           className="h-full w-full object-cover"
                         />
@@ -184,18 +195,20 @@ export default function VendorProductTable({ products = [] }) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <StatusBadge status={isActive ? 'active' : 'inactive'} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
                       onClick={() => router.push(`/dashboard/products-list/${effectiveVendorId}/edit/${id}`)}
-                      className="text-[#e09a74] hover:text-[#d08963] transition-colors"
+                      className="p-2 text-[#e09a74] hover:bg-orange-50 rounded-lg transition-all"
+                      title="Edit Product"
                     >
-                      Edit
+                      <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(id, name)}
-                      className="text-red-500 hover:text-red-700 transition-colors"
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      title="Delete Product"
                     >
-                      Delete
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>
@@ -274,6 +287,16 @@ export default function VendorProductTable({ products = [] }) {
       )}
       <BulkActionsBar products={products} />
       <BulkUploadModal />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteProduct}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${productToDelete?.name}"? This will also remove all its variants.`}
+        confirmText="Delete"
+        type="danger"
+      />
     </div>
   );
 }

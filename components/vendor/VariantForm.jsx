@@ -6,6 +6,8 @@ import { toast } from '@/components/ui/Toast';
 import { Upload, X, Save, Plus, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import clsx from 'clsx';
+import { getVariantImageUrl, formatSKU } from '@/lib/productUtils';
+import { useGetAttributes } from '@/hooks/useAttribute';
 
 export default function VariantForm({ productId, vendorId, onComplete, editingVariant = null, onCancel }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,6 +25,9 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
     const [existingImages, setExistingImages] = useState([]); // Stores filenames of images already on server
     const [newImages, setNewImages] = useState([]); // Stores File objects of newly uploaded images
     const [previewImages, setPreviewImages] = useState([]); // Stores URLs for all images (existing and new) for display
+
+    const { data: allAttributesResponse } = useGetAttributes();
+    const allAttributes = allAttributesResponse?.data || [];
 
     const createVariantMutation = useCreateVariant(productId);
     const variantId = editingVariant?._id || editingVariant?.id;
@@ -63,9 +68,7 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
 
             setExistingImages(imgs);
 
-            const previews = imgs.map(img =>
-                img.startsWith('http') ? img : `http://localhost:8000/api/public/uploads/variant/${img}`
-            );
+            const previews = imgs.map(getVariantImageUrl);
             setPreviewImages(previews);
         } else {
             // Reset form for new variant if editingVariant becomes null
@@ -87,7 +90,10 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({
+            ...prev,
+            [name]: name === 'skucode' ? formatSKU(value) : value
+        }));
     };
 
     const handleAttributeChange = (index, field, value) => {
@@ -271,25 +277,47 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                         </button>
                     </div>
                     <div className="space-y-3">
-                        {attributes.map((attr, idx) => (
-                            <div key={idx} className="flex gap-3 items-center">
-                                <input
-                                    placeholder="Key (e.g. Color)"
-                                    value={attr.key}
-                                    onChange={(e) => handleAttributeChange(idx, 'key', e.target.value)}
-                                    className="flex-1 px-4 py-2 rounded-lg border border-gray-100 bg-gray-50/50 focus:ring-2 focus:ring-[#e09a74] text-sm"
-                                />
-                                <input
-                                    placeholder="Value (e.g. Red)"
-                                    value={attr.value}
-                                    onChange={(e) => handleAttributeChange(idx, 'value', e.target.value)}
-                                    className="flex-1 px-4 py-2 rounded-lg border border-gray-100 bg-gray-50/50 focus:ring-2 focus:ring-[#e09a74] text-sm"
-                                />
-                                <button type="button" onClick={() => removeAttribute(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        ))}
+                        {attributes.map((attr, idx) => {
+                            const selectedAttr = allAttributes.find(a => a.attributeName === attr.key);
+                            const availableValues = selectedAttr?.attributeValues || [];
+
+                            // Get keys selected in OTHER rows
+                            const otherSelectedKeys = attributes
+                                .filter((_, i) => i !== idx)
+                                .map(a => a.key)
+                                .filter(Boolean);
+
+                            return (
+                                <div key={idx} className="flex gap-3 items-center">
+                                    <select
+                                        value={attr.key}
+                                        onChange={(e) => handleAttributeChange(idx, 'key', e.target.value)}
+                                        className="flex-1 px-4 py-2 rounded-lg border border-gray-100 bg-gray-50/50 focus:ring-2 focus:ring-[#e09a74] text-sm appearance-none"
+                                    >
+                                        <option value="">Select Attribute</option>
+                                        {allAttributes
+                                            .filter(a => !otherSelectedKeys.includes(a.attributeName))
+                                            .map(a => (
+                                                <option key={a._id} value={a.attributeName}>{a.attributeName}</option>
+                                            ))}
+                                    </select>
+                                    <select
+                                        value={attr.value}
+                                        onChange={(e) => handleAttributeChange(idx, 'value', e.target.value)}
+                                        className="flex-1 px-4 py-2 rounded-lg border border-gray-100 bg-gray-50/50 focus:ring-2 focus:ring-[#e09a74] text-sm appearance-none disabled:opacity-50"
+                                        disabled={!attr.key}
+                                    >
+                                        <option value="">Select Value</option>
+                                        {availableValues.map(v => (
+                                            <option key={v} value={v}>{v}</option>
+                                        ))}
+                                    </select>
+                                    <button type="button" onClick={() => removeAttribute(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
