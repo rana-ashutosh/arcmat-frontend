@@ -38,8 +38,8 @@ export const useGetProduct = (id) => {
         queryKey: PRODUCT_KEYS.detail(id),
         queryFn: () => productService.getProductById(id),
         enabled: !!id,
-        onSuccess(data){
-            console.log('Product fetched successfully!',data);
+        onSuccess(data) {
+            console.log('Product fetched successfully!', data);
             return data
         }
     });
@@ -82,12 +82,12 @@ export const useDeleteProduct = () => {
     });
 };
 
-// Hook to bulk import products
+// Hook to bulk import products/variants
 export const useBulkImportProduct = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (file) => productService.bulkImport(file),
+        mutationFn: ({ file, type, productId }) => productService.bulkImport(file, type, productId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: PRODUCT_KEYS.lists() });
         },

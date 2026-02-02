@@ -1,239 +1,320 @@
 'use client';
 
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { useProductStore } from '@/store/useProductStore';
-import useAuthStore from '@/store/useAuthStore';
-import AttributeEditModal from '@/components/vendor/AttributeEditModal';
-import { Filter, Search, CheckCircle, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+    Plus,
+    Pencil,
+    Trash2,
+    Search,
+    Settings,
+    Tag,
+    AlertTriangle,
+    CheckCircle2,
+    X
+} from 'lucide-react';
+import {
+    useGetAttributes,
+    useCreateAttribute,
+    useUpdateAttribute,
+    useDeleteAttribute
+} from '@/hooks/useAttribute';
+import { toast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import clsx from 'clsx';
 
 export default function AttributesPage() {
-    const { user, currentVendorId } = useAuthStore();
-    const { products, getProductsWithMissingAttributes, updateProduct } = useProductStore();
+    const { data: attributesResponse, isLoading } = useGetAttributes();
+    const createMutation = useCreateAttribute();
+    const updateMutation = useUpdateAttribute();
+    const deleteMutation = useDeleteAttribute();
 
-    const [items, setItems] = useState([]);
+    const attributes = attributesResponse?.data || [];
+
+    const [formData, setFormData] = useState({
+        attributeName: '',
+        attributeValues: '',
+        status: 1
+    });
     const [editingId, setEditingId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [attributeToDelete, setAttributeToDelete] = useState(null);
 
-    // Separate mock data for demonstration purposes as requested
-    const DEMO_INCOMPLETE_PRODUCTS = [
-        {
-            id: 101,
-            name: 'Modern 3-Seater Sofa - Grey',
-            categoryPath: 'Furniture > Sofas and armchairs > Sofas',
-            vendorId: 2,
-            attributes: { color: "Grey" }, // Missing upholstery, seating_capacity
-            missingAttributes: ["upholstery", "seating_capacity"]
-        },
-        {
-            id: 102,
-            name: 'Interior Wall Primer',
-            categoryPath: 'Finishes > Paints > Emulsion',
-            vendorId: 2,
-            attributes: { volume: "4L" }, // Missing finish, surfaces
-            missingAttributes: ["finish", "surfaces"]
-        },
-        {
-            id: 103,
-            name: 'Industrial Oak Dining Table',
-            categoryPath: 'Furniture > Tables and chairs > Dining tables',
-            vendorId: 2,
-            attributes: { material: "Solid Wood", shape: "Rectangular" }, // Missing seating_capacity
-            missingAttributes: ["seating_capacity"]
-        },
-        {
-            id: 104,
-            name: 'Herringbone Oak Flooring',
-            categoryPath: 'Flooring > Wood > Engineered Wood',
-            vendorId: 2,
-            attributes: { thickness: "14mm", finish: "Lacquered" }, // Missing material
-            missingAttributes: ["material"]
-        },
-        {
-            id: 105,
-            name: 'Carrara Marble Wall Tile',
-            categoryPath: 'Construction > Tiles > Wall Tiles',
-            vendorId: 2,
-            attributes: { size: "300x300mm", material: "Marble" }, // Missing finish, application
-            missingAttributes: ["finish", "application"]
-        }
-    ];
-
-    useEffect(() => {
-        // Use demo data directly
-        setItems(DEMO_INCOMPLETE_PRODUCTS);
-    }, []);
-
-    const handleEdit = (id) => {
-        setEditingId(id);
-    };
-
-    const handleSave = (id, updates) => {
-        updateProduct(id, updates);
-
-        // Optimistic update locally to remove from list or update progress
-        setItems(prev => prev.map(item =>
-            item.id === id ? { ...item, ...updates } : item
-        ).filter(item => {
-            // If we want to remove completed items immediately:
-            // Check if strictly requires reload or if we can calc specificaitons length
-            // For now, let's keep it simple: refetch happens on next render via effect dependency
-            return true;
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: name === 'status' ? Number(value) : value
         }));
+    };
 
-        // Find next ID
-        const currentIndex = items.findIndex(i => i.id === id);
-        if (currentIndex !== -1 && currentIndex < items.length - 1) {
-            setEditingId(items[currentIndex + 1].id);
-        } else {
-            setEditingId(null);
+    const handleEdit = (attr) => {
+        setEditingId(attr._id || attr.id);
+        setFormData({
+            attributeName: attr.attributeName,
+            attributeValues: attr.attributeValues.join(', '),
+            status: attr.status ?? 1
+        });
+        // Scroll to form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const resetForm = () => {
+        setEditingId(null);
+        setFormData({
+            attributeName: '',
+            attributeValues: '',
+            status: 1
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!formData.attributeName.trim()) {
+            toast.error("Attribute name is required");
+            return;
+        }
+
+        try {
+            if (editingId) {
+                await updateMutation.mutateAsync({
+                    id: editingId,
+                    data: formData
+                });
+                toast.success("Attribute updated successfully");
+            } else {
+                await createMutation.mutateAsync(formData);
+                toast.success("Attribute created successfully");
+            }
+            resetForm();
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Something went wrong");
         }
     };
 
-    // Filter items
-    const filteredItems = items.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const handleDeleteClick = (attr) => {
+        setAttributeToDelete(attr);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!attributeToDelete) return;
+        try {
+            await deleteMutation.mutateAsync(attributeToDelete._id || attributeToDelete.id);
+            toast.success(`Attribute "${attributeToDelete.attributeName}" deleted`);
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to delete attribute");
+        } finally {
+            setIsDeleteModalOpen(false);
+            setAttributeToDelete(null);
+        }
+    };
+
+    const filteredAttributes = attributes.filter(attr =>
+        attr.attributeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        attr.attributeValues.some(v => String(v).toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    const totalVendorProducts = products.filter(p => p.vendorId === currentVendorId).length;
-    // Ensure denominator is at least items.length to avoid > 100% missing (leading to negative completion)
-    // In demo mode with mock items, the total might be small in the store, so maxing ensures sanity.
-    const effectiveTotal = Math.max(totalVendorProducts, items.length, 1);
-
-    const completionPercentage = items.length === 0
-        ? 100
-        : Math.max(0, Math.round(100 - (items.length / effectiveTotal) * 100));
-
     return (
-        <Container className="py-6">
-
-            {/* HEADER */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">Add Missing Attributes</h1>
-                <p className="text-gray-500 mt-2">Complete product details to improve search visibility and sales conversions.</p>
+        <Container className="py-8">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <Settings className="w-6 h-6 text-[#e09a74]" />
+                        Attribute Management
+                    </h1>
+                    <p className="text-gray-500 mt-1">Define and manage product specifications and variants attributes.</p>
+                </div>
             </div>
 
-            {/* PROGRESS */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700">Attribute Completion</span>
-                    <span className="text-sm font-bold text-green-600">{completionPercentage}% Completed</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Form Section */}
+                <div className="lg:col-span-1">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-8">
+                        <div className="bg-[#e09a74]/5 px-6 py-4 border-b border-[#e09a74]/10">
+                            <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                                {editingId ? (
+                                    <><Pencil className="w-4 h-4" /> Edit Attribute</>
+                                ) : (
+                                    <><Plus className="w-4 h-4" /> Create Attribute</>
+                                )}
+                            </h2>
+                        </div>
+                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Attribute Key (Name)</label>
+                                <div className="relative">
+                                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 font-bold" />
+                                    <input
+                                        name="attributeName"
+                                        value={formData.attributeName}
+                                        onChange={handleChange}
+                                        placeholder="e.g. Color, Size, Material"
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] focus:border-transparent outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Attribute Values</label>
+                                <textarea
+                                    name="attributeValues"
+                                    value={formData.attributeValues}
+                                    onChange={handleChange}
+                                    placeholder="Enter values separated by commas (e.g. Red, Blue, Green)"
+                                    rows={4}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] focus:border-transparent outline-none transition-all resize-none"
+                                />
+                                <p className="text-[10px] text-gray-400 mt-2 italic">Values will be automatically cleaned and categorized.</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Status</label>
+                                <select
+                                    name="status"
+                                    value={formData.status}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] outline-none appearance-none bg-white font-semibold"
+                                >
+                                    <option value={1}>Active</option>
+                                    <option value={0}>Inactive</option>
+                                </select>
+                            </div>
+
+                            <div className="pt-2 flex gap-3">
+                                <Button
+                                    type="submit"
+                                    disabled={createMutation.isPending || updateMutation.isPending}
+                                    className="flex-1 bg-[#e09a74] text-white hover:bg-white hover:text-[#e09a74] border border-[#e09a74] rounded-xl font-bold py-3 transition-all cursor-pointer shadow-lg shadow-orange-100"
+                                >
+                                    {editingId ? "Update Attribute" : "Create Attribute"}
+                                </Button>
+                                {editingId && (
+                                    <Button
+                                        type="button"
+                                        onClick={resetForm}
+                                        variant="outline"
+                                        className="rounded-xl px-4 cursor-pointer hover:border-red-500 hover:text-red-500"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </Button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                        className="bg-green-600 h-2.5 rounded-full transition-all duration-500"
-                        style={{ width: `${completionPercentage}%` }}>
+
+                {/* List Section */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Search Bar */}
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search attributes or values..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] focus:border-transparent outline-none shadow-sm transition-all"
+                        />
+                    </div>
+
+                    {/* Attributes Table/List */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-gray-50/50 border-b border-gray-100">
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Attribute Key</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Values</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {isLoading ? (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-20 text-center">
+                                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#e09a74] border-t-transparent"></div>
+                                                <p className="mt-2 text-gray-500 font-medium">Loading attributes...</p>
+                                            </td>
+                                        </tr>
+                                    ) : filteredAttributes.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-20 text-center text-gray-400 italic">
+                                                No attributes found. Create your first one!
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredAttributes.map(attr => (
+                                            <tr key={attr._id || attr.id} className="hover:bg-gray-50/50 transition-colors group">
+                                                <td className="px-6 py-5">
+                                                    <div className="font-bold text-gray-900">{attr.attributeName}</div>
+                                                    <div className="text-[10px] text-gray-400 font-mono mt-0.5">{attr._id || attr.id}</div>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <div className="flex flex-wrap gap-1.5 max-w-sm">
+                                                        {attr.attributeValues.map((val, i) => (
+                                                            <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[11px] font-medium rounded-full border border-gray-200">
+                                                                {val}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <span className={clsx(
+                                                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold",
+                                                        attr.status === 0 || attr.status === 'Inactive'
+                                                            ? "bg-red-50 text-red-600"
+                                                            : "bg-green-50 text-green-600"
+                                                    )}>
+                                                        {attr.status === 0 || attr.status === 'Inactive' ? (
+                                                            <><AlertTriangle className="w-3 h-3" /> Inactive</>
+                                                        ) : (
+                                                            <><CheckCircle2 className="w-3 h-3" /> Active</>
+                                                        )}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-5 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleEdit(attr)}
+                                                            className="p-2 text-[#e09a74] hover:bg-orange-50 rounded-xl transition-all cursor-pointer"
+                                                            title="Edit Attribute"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteClick(attr)}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                                                            title="Delete Attribute"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* FILTERS */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search products..."
-                        className="pl-10 w-full border-gray-300 rounded-lg focus:ring-black focus:border-black py-2 text-gray-900 placeholder:text-gray-500 bg-white"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:gap-2 gap-1">
-                    <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
-                        <Filter className="h-4 w-4" />
-                        Category
-                    </Button>
-                    <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
-                        <Filter className="h-4 w-4" />
-                        Missing Fields
-                    </Button>
-                    {/* Bulk Edit Placeholder */}
-                    <Button
-                        variant="outline"
-                        disabled
-                        className="flex items-center gap-2 opacity-50 cursor-not-allowed w-full sm:w-auto"
-                    >
-                        Bulk Edit (Coming Soon)
-                    </Button>
-                </div>
-
-            </div>
-
-            {/* LIST */}
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-                {/* Make table horizontally scrollable on small screens */}
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing Attributes</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredItems.length > 0 ? filteredItems.map((product) => (
-                                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap max-w-[150px]">
-                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
-                                            <div className="text-sm font-medium text-gray-900 truncate">{product.name}</div>
-                                            <div className="text-sm text-gray-500">ID: {product.id}</div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                            {product.categoryPath ? product.categoryPath.split(" > ").pop() : 'General'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-wrap gap-1">
-                                            {product.missingAttributes?.map(attr => (
-                                                <span key={attr} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                                    {attr}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button
-                                            onClick={() => handleEdit(product.id)}
-                                            className="text-black hover:text-gray-700 font-semibold"
-                                        >
-                                            Edit
-                                        </button>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="4" className="px-6 py-10 text-center text-gray-500">
-                                        <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-3" />
-                                        <p className="text-lg font-medium text-gray-900">All caught up!</p>
-                                        <p>No products with missing attributes found.</p>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-
-            {/* MODAL */}
-            {editingId && (
-                <AttributeEditModal
-                    isOpen={!!editingId}
-                    onClose={() => setEditingId(null)}
-                    product={items.find(i => i.id === editingId)}
-                    onSave={handleSave}
-                    hasNext={items.findIndex(i => i.id === editingId) < items.length - 1}
-                />
-            )}
-
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Delete Attribute"
+                message={`Are you sure you want to delete the "${attributeToDelete?.attributeName}" attribute? This action cannot be undone if used by products.`}
+                confirmText="Delete Attribute"
+                type="danger"
+            />
         </Container>
     );
 }

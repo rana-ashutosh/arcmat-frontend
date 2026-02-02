@@ -1,8 +1,7 @@
 'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Upload } from 'lucide-react';
+import { Plus, Search, Upload, Download } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductStore } from '@/store/useProductStore';
@@ -10,6 +9,9 @@ import { useGetProducts } from '@/hooks/useProduct';
 import { useUIStore } from '@/store/useUIStore';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
+import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
+import { productService } from '@/services/productService';
 
 
 // Components
@@ -37,6 +39,7 @@ export default function ProductsListPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [orderBy, setOrderBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('DESC');
+  const [isExporting, setIsExporting] = useState(false);
 
   // Use vendorId from URL if available, otherwise fallback to user ID
   const effectiveVendorId = vendorId || user?._id || user?.id;
@@ -69,15 +72,90 @@ export default function ProductsListPage() {
 
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const isLoading = authLoading || productsLoading;
 
-  if (!mounted || authLoading) return <div className="p-6">Loading...</div>;
+  const handleExport = async (format = 'xlsx') => {
+    if (!effectiveVendorId) return;
+    setIsExporting(true);
+    try {
+      // Fetch ALL products matching current filters for export
+      const response = await productService.getAllProducts({
+        userid: effectiveVendorId,
+        user_id: effectiveVendorId,
+        page: 1,
+        limit: 10000, // Fetch up to 10k items for export
+        search: searchTerm,
+        status: statusFilter,
+        orderby: orderBy,
+        order: sortOrder,
+      });
+
+      const productsToExport = response?.data?.data || response?.data || response?.products || [];
+
+      if (productsToExport.length === 0) {
+        toast.error("No products to export");
+        return;
+      }
+
+      // Format data for Export
+      const exportData = productsToExport.map(p => {
+        // Flatten Variant Data
+        const minPrice = p.minPrice || (p.variants?.length ? Math.min(...p.variants.map(v => v.selling_price || 0)) : 0);
+        const maxPrice = p.maxPrice || (p.variants?.length ? Math.max(...p.variants.map(v => v.selling_price || 0)) : 0);
+        const totalStock = p.totalStock || (p.variants?.length ? p.variants.reduce((sum, v) => sum + (v.stock || 0), 0) : 0);
+
+        return {
+          'Product Name': p.product_name,
+          'SKU Code': p.skucode || '',
+          'Product URL': p.product_url,
+
+          // Category Hierarchy
+          'Category (L1)': p.categoryId?.name || '',
+          'Sub Category (L2)': p.subcategoryId?.name || '',
+          'Sub-Sub Category (L3)': p.subsubcategoryId?.name || '',
+
+          // Pricing & Stock
+          'Price Range': minPrice === maxPrice ? minPrice : `${minPrice} - ${maxPrice}`,
+          'Total Stock': totalStock,
+
+          // Details
+          'Brand': p.brand?.name || p.brand || '', // Handle populated object or ID string
+          'Short Description': p.sort_description || '',
+          'Description': p.description || '',
+
+          // SEO
+          'Meta Title': p.meta_title || '',
+          'Meta Keywords': p.meta_keywords || '',
+          'Meta Description': p.meta_description || '',
+
+          // Status & Metadata
+          'Status': p.status === 1 ? 'Active' : 'Inactive',
+          'Created At': p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '',
+          'Updated At': p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : '',
+
+          // Images
+          'Images': (p.product_images || []).join(', ')
+        };
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws, "Products");
+
+      const ext = format === 'csv' ? 'csv' : 'xlsx';
+      XLSX.writeFile(wb, `Products_Export_${new Date().toISOString().split('T')[0]}.${ext}`);
+
+      toast.success(`Successfully exported ${productsToExport.length} products as ${format.toUpperCase()}`);
+    } catch (error) {
+      console.error("Export failed", error);
+      toast.error("Failed to export products");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+
+  if (authLoading) return <div className="p-6">Loading...</div>;
 
   const isVendor = user?.role === 'vendor';
   const productsToDisplay = isVendor ? apiProducts : getPublicProducts();
@@ -102,6 +180,7 @@ export default function ProductsListPage() {
 
       {/* Invisible Modals */}
       <ProductFormModal />
+      <BulkUploadModal />
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -119,16 +198,36 @@ export default function ProductsListPage() {
         {/* VENDOR ADD BUTTON */}
         {isVendor && (
           <div className="flex gap-3">
+            <div className="flex bg-white rounded-full border border-green-600 overflow-hidden h-[42px] items-center">
+              <button
+                onClick={() => handleExport('xlsx')}
+                disabled={isExporting}
+                className="px-4 py-2 hover:bg-green-50 text-green-700 text-sm font-medium transition-colors disabled:opacity-50 flex items-center h-full"
+                title="Export as Excel"
+              >
+                {isExporting ? <span className="animate-spin mr-1">⏳</span> : <Download className="w-4 h-4 mr-1" />}
+                Excel
+              </button>
+              <div className="w-px h-6 bg-green-200"></div>
+              <button
+                onClick={() => handleExport('csv')}
+                disabled={isExporting}
+                className="px-4 py-2 hover:bg-green-50 text-green-700 text-sm font-medium transition-colors disabled:opacity-50 h-full"
+                title="Export as CSV"
+              >
+                CSV
+              </button>
+            </div>
             <Button
               onClick={() => openBulkUploadModal()}
               className="flex items-center rounded-full bg-white text-[#e09a74] cursor-pointer hover:bg-gray-50 min-w-[120px] py-2 px-4 border border-[#e09a74] duration-300"
             >
               <Upload className="w-4 h-4 mr-2" />
-              Bulk Upload
+              Bulk Import
             </Button>
             <Link
               href={`/dashboard/products-list/${effectiveVendorId}/add`}
-              className="flex items-center rounded-full bg-[#e09a74] text-white cursor-pointer hover:bg-[#d08963] min-w-[120px] py-2 px-4 hover:border-[#e09a74] border hover:text-[#e09a74] hover:bg-white duration-300"
+              className="flex items-center rounded-full bg-[#e09a74] text-white cursor-pointer min-w-[120px] py-2 px-4 border border-[#e09a74] hover:bg-white hover:text-[#e09a74] duration-300"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Product
@@ -189,6 +288,8 @@ export default function ProductsListPage() {
               <span className="text-sm text-gray-500">Total: {totalItems} products</span>
             </div>
           </div>
+
+          <BulkActionsBar products={apiProducts} />
 
           {/* 2. TABLE VIEW (Now at the top) */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

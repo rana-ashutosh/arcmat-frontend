@@ -40,10 +40,14 @@ export const productService = {
         return response.data;
     },
 
-    // Bulk Import Products
-    bulkImport: async (file) => {
+    // Bulk Import Products/Variants
+    bulkImport: async (file, type = 'product', productId = null) => {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('type', type);
+        if (productId) {
+            formData.append('productId', productId);
+        }
         const response = await api.post('/product/bulk-import', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',

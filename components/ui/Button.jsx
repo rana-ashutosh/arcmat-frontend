@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import React from 'react';
 
-const Button = ({ text, onClick, className, children, href }) => {
-    if (href) {
+const Button = ({ text, onClick, className, children, href, ...rest }) => {
+  if (href) {
     return (
       <Link
         href={href}
@@ -12,10 +12,12 @@ const Button = ({ text, onClick, className, children, href }) => {
       </Link>
     );
   }
-  return(
+  return (
     <button
       onClick={onClick}
-      className={`rounded-full transition duration-200 whitespace-nowrap font-normal ${className}`}>
+      className={`rounded-full transition duration-200 whitespace-nowrap font-normal ${className}`}
+      {...rest}
+    >
       {children}
       {text}
     </button>

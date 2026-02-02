@@ -11,4 +11,14 @@ export const attributeService = {
         const response = await api.post('/attribute', attributeData);
         return response.data;
     },
+    // Update existing attribute
+    updateAttribute: async ({ id, data }) => {
+        const response = await api.patch(`/attribute/${id}`, data);
+        return response.data;
+    },
+    // Delete attribute
+    deleteAttribute: async (id) => {
+        const response = await api.delete(`/attribute/${id}`);
+        return response.data;
+    },
 };

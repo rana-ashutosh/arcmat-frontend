@@ -22,3 +22,23 @@ export const useCreateAttribute = () => {
         },
     });
 };
+
+export const useUpdateAttribute = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }) => attributeService.updateAttribute({ id, data }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ATTRIBUTE_KEYS.list() });
+        },
+    });
+};
+
+export const useDeleteAttribute = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: attributeService.deleteAttribute,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ATTRIBUTE_KEYS.list() });
+        },
+    });
+};
