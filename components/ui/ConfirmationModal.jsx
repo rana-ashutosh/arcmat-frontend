@@ -13,7 +13,7 @@ export default function ConfirmationModal({
     message = "Are you sure you want to proceed?",
     confirmText = "Confirm",
     cancelText = "Cancel",
-    type = 'danger' // 'danger', 'warning', 'info'
+    type = 'danger'
 }) {
     if (!isOpen) return null;
 
@@ -58,7 +58,7 @@ export default function ConfirmationModal({
                     <Button
                         variant="outline"
                         onClick={onClose}
-                        className="text-sm font-semibold"
+                        className="text-sm font-semibold cursor-pointer hover:text-gray-500"
                     >
                         {cancelText}
                     </Button>
@@ -67,7 +67,7 @@ export default function ConfirmationModal({
                             onConfirm();
                             onClose();
                         }}
-                        className={clsx("text-sm font-semibold px-6", confirmButtonStyles[type])}
+                        className={clsx("text-sm font-semibold py-2 px-4 cursor-pointer", confirmButtonStyles[type])}
                     >
                         {confirmText}
                     </Button>

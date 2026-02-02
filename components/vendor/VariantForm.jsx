@@ -18,13 +18,13 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
         skucode: '',
         mrp_price: '',
         selling_price: '',
-        product_name: '', // Added for variants
+        product_name: '',
     });
 
     const [attributes, setAttributes] = useState([{ key: '', value: '' }]);
-    const [existingImages, setExistingImages] = useState([]); // Stores filenames of images already on server
-    const [newImages, setNewImages] = useState([]); // Stores File objects of newly uploaded images
-    const [previewImages, setPreviewImages] = useState([]); // Stores URLs for all images (existing and new) for display
+    const [existingImages, setExistingImages] = useState([]);
+    const [newImages, setNewImages] = useState([]);
+    const [previewImages, setPreviewImages] = useState([]);
 
     const { data: allAttributesResponse } = useGetAttributes();
     const allAttributes = allAttributesResponse?.data || [];
@@ -45,7 +45,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                 product_name: editingVariant.product_name || '',
             });
 
-            // Handle attributes
             if (editingVariant.dynamicAttributes && editingVariant.dynamicAttributes.length > 0) {
                 setAttributes(editingVariant.dynamicAttributes);
             } else {
@@ -56,7 +55,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                 setAttributes(legacyAttrs.length > 0 ? legacyAttrs : [{ key: '', value: '' }]);
             }
 
-            // Handle images
             const imgs = editingVariant.variant_images && editingVariant.variant_images.length > 0
                 ? editingVariant.variant_images
                 : [
@@ -71,7 +69,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
             const previews = imgs.map(getVariantImageUrl);
             setPreviewImages(previews);
         } else {
-            // Reset form for new variant if editingVariant becomes null
             setFormData({
                 weight_type: 'kg',
                 weight: '',
@@ -115,13 +112,10 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
     };
 
     const removeImage = (indexToRemove) => {
-        // Determine if it's an existing image or a newly added one
         if (indexToRemove < existingImages.length) {
-            // It's an existing image, remove from existingImages and previewImages
             setExistingImages(prev => prev.filter((_, i) => i !== indexToRemove));
             setPreviewImages(prev => prev.filter((_, i) => i !== indexToRemove));
         } else {
-            // It's a new image, remove from newImages and previewImages
             const newImageIndex = indexToRemove - existingImages.length;
             setNewImages(prev => prev.filter((_, i) => i !== newImageIndex));
             setPreviewImages(prev => prev.filter((_, i) => i !== indexToRemove));
@@ -145,7 +139,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                 submissionData.append(key, formData[key]);
             });
 
-            // Handle attributes
             const validAttributes = attributes.filter(a => a.key && a.value);
             if (validAttributes.length > 0) {
                 submissionData.append('dynamicAttributes', JSON.stringify(validAttributes));
@@ -156,12 +149,10 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                 });
             }
 
-            // Append existing images (filenames) for update
             if (editingVariant) {
                 submissionData.append('existingImages', JSON.stringify(existingImages));
             }
 
-            // Append new images (File objects)
             newImages.forEach(image => {
                 submissionData.append('variant_images', image);
             });
@@ -191,7 +182,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Pricing & Stock */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">MRP Price *</label>
@@ -268,7 +258,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                     </div>
                 </div>
 
-                {/* Attributes */}
                 <div className="space-y-4 pt-4">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Attributes</h3>
@@ -281,7 +270,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                             const selectedAttr = allAttributes.find(a => a.attributeName === attr.key);
                             const availableValues = selectedAttr?.attributeValues || [];
 
-                            // Get keys selected in OTHER rows
                             const otherSelectedKeys = attributes
                                 .filter((_, i) => i !== idx)
                                 .map(a => a.key)
@@ -321,7 +309,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                     </div>
                 </div>
 
-                {/* Media */}
                 <div className="space-y-4 pt-4">
                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Variant Images *</h3>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -346,11 +333,11 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                 </div>
 
                 <div className="pt-8 border-t flex justify-end gap-4">
-                    <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
+                    <Button variant="outline" type="button" className="cursor-pointer hover:text-red-500" onClick={() => window.history.back()}>Cancel</Button>
                     <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-[#e09a74] text-white px-10 py-3 font-bold rounded-xl hover:bg-white hover:text-[#e09a74] hover:border-[#e09a74] border transition-all shadow-lg shadow-orange-100"
+                        className="bg-[#e09a74] text-white px-10 py-3 font-bold rounded-full hover:bg-white hover:text-[#e09a74] hover:border-[#e09a74] border transition-all cursor-pointer shadow-lg shadow-orange-100"
                     >
                         {isSubmitting ? 'Saving...' : 'Save & Finish'}
                     </Button>
