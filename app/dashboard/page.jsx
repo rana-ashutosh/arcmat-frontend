@@ -92,7 +92,7 @@ export default function DashboardPage() {
 
     const { data: usersData } = useGetUsers({
         enabled: isAdmin,
-        limit: 1 
+        limit: 1
     });
     const totalUsers = usersData?.pagination?.totalRecords || usersData?.users?.length || 0;
 
@@ -189,7 +189,11 @@ export default function DashboardPage() {
                             <Link href={`/dashboard/products-list/${user?._id}`} className="text-sm text-[#d9a88a] hover:underline">View All</Link>
                         </div>
                         <div className="space-y-4">
-                            {recentProducts.length > 0 ? (
+                            {isLoadingAll ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d9a88a]"></div>
+                                </div>
+                            ) : recentProducts.length > 0 ? (
                                 recentProducts.map((product) => (
                                     <div key={product._id} className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors border-b border-gray-50 last:border-0 pb-3">
                                         <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
@@ -227,7 +231,11 @@ export default function DashboardPage() {
                             <Link href="/dashboard/orders" className="text-sm text-[#d9a88a] hover:underline">View All</Link>
                         </div>
                         <div className="space-y-4">
-                            {recentOrders.length > 0 ? (
+                            {isLoadingOrders ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d9a88a]"></div>
+                                </div>
+                            ) : recentOrders.length > 0 ? (
                                 recentOrders.map((order) => (
                                     <div key={order._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                                         <div>

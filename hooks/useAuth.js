@@ -125,7 +125,7 @@ export const useVerifyOtpMutation = () => {
 
             const role = user?.role;
             if (role === 'vendor') {
-                router.push('/dashboard/products-list');
+                router.push('/dashboard');
             } else {
                 router.push('/');
             }
@@ -182,9 +182,9 @@ export const useLoginMutation = () => {
             } catch (error) {
             }
 
-            if (finalRole === 'vendor') {
+            if (finalRole === 'vendor'||finalRole === 'admin') {
                 setLoading(true);
-                router.push(`/dashboard/products-list/${user.id}`);
+                router.push(`/dashboard`);
             } else {
                 setLoading(true);
                 router.push('/');

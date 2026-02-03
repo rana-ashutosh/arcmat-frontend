@@ -14,7 +14,8 @@ import {
   Heart,
   ShoppingBag,
   User,
-  LayoutDashboard
+  LayoutDashboard,
+  Image
 } from 'lucide-react';
 import clsx from 'clsx';
 import useAuthStore from '@/store/useAuthStore';
@@ -31,7 +32,8 @@ const ICON_MAP = {
   ShoppingBag,
   Heart,
   User,
-  LayoutDashboard
+  LayoutDashboard,
+  Image
 };
 
 const mapIcons = (items) => items.map(item => ({

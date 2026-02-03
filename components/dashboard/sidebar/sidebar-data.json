@@ -26,6 +26,12 @@
             "href": "/dashboard/categories"
         },
         {
+            "id": "banners",
+            "label": "Banners",
+            "icon": "Image",
+            "href": "/dashboard/banners"
+        },
+        {
             "id": "profile",
             "label": "Profile",
             "icon": "User",
