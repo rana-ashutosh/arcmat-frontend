@@ -1,10 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import vendorService from '@/services/vendorService';
 
-export const useGetVendors = () => {
+export const useGetVendors = ({ enabled = true, ...params } = {}) => {
     return useQuery({
-        queryKey: ['vendors'],
-        queryFn: vendorService.getAllVendors,
+        queryKey: ['vendors', params],
+        queryFn: async () => {
+            const response = await vendorService.getAllVendors(params);
+            return response.data || response;
+        },
+        enabled
     });
 };
 

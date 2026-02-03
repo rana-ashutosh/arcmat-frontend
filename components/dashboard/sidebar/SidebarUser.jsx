@@ -25,6 +25,8 @@ const SidebarUser = memo(({ isCollapsed, mounted }) => {
                 return 'Vendor';
             case 'customer':
                 return 'Professional';
+            case 'admin':
+                return 'Admin';
             default:
                 return 'User';
         }

@@ -99,7 +99,7 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [isVariantFormOpen]);
 
-  const categories = useMemo(() => categoryData?.data || [], [categoryData]);
+  const categories = useMemo(() => Array.isArray(categoryData) ? categoryData : (categoryData?.data || []), [categoryData]);
   const l1Categories = useMemo(() => categories.filter(c => c.level === 1), [categories]);
   const l2Categories = useMemo(() => categories.filter(c => c.level === 2 && c.parentId === formData.categoryId), [categories, formData.categoryId]);
   const l3Categories = useMemo(() => categories.filter(c => c.level === 3 && c.parentId === formData.subcategoryId), [categories, formData.subcategoryId]);

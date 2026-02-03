@@ -6,8 +6,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import clsx from 'clsx';
-import useAuthStore from '@/store/useAuthStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import Container from '@/components/ui/Container';
+import { useGetProducts } from '@/hooks/useProduct';
+import { useGetOrders } from '@/hooks/useOrder';
+import { useGetVariants } from '@/hooks/useVariant';
+import { useGetUsers } from '@/hooks/useAuth';
+import { useGetVendors } from '@/hooks/useVendor';
+import { useGetCategories } from '@/hooks/useCategory';
+import { getProductImageUrl } from '@/lib/productUtils';
+import { Package } from 'lucide-react';
 
 const SEARCH_CATEGORIES = [
     { id: 'tiles', label: 'Tiles' },
@@ -49,14 +57,9 @@ export default function DashboardPage() {
     const [mounted, setMounted] = useState(false);
 
     // Handle Redirection based on user role
-    // useEffect(() => {
-    //     setMounted(true);
-    //     if (user?.role === 'vendor') {
-    //         router.push('/dashboard/products-list');
-    //     } else if (user?.role === 'customer' || user?.role === 'user') {
-    //         router.push('/dashboard/products-list');
-    //     }
-    // }, [user, router]);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Helper to get First Name safely
     const getFirstName = () => {
@@ -64,20 +67,278 @@ export default function DashboardPage() {
         return user.fullName.split(' ')[0];
     };
 
+    const { data: allProductsData, isLoading: isLoadingAll } = useGetProducts({
+        userId: user?.role === 'vendor' ? user?._id : undefined,
+        limit: 1000,
+        status: 'all',
+        enabled: mounted && (user?.role === 'vendor' || user?.role === 'admin')
+    });
+
+    const allProducts = allProductsData?.data?.data || allProductsData?.data || [];
+    const activeProducts = allProducts.filter(p => p.status === 1 || p.status === '1');
+    const inactiveProducts = allProducts.filter(p => p.status === 0 || p.status === '0');
+
+    const recentProducts = [...allProducts]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+
+    const { data: ordersData, isLoading: isLoadingOrders } = useGetOrders({
+        limit: 5,
+        enabled: mounted && (user?.role === 'vendor' || user?.role === 'admin')
+    });
+    const recentOrders = ordersData?.data?.data || ordersData?.data || [];
+
+    const isAdmin = mounted && user?.role === 'admin';
+
+    const { data: usersData } = useGetUsers({
+        enabled: isAdmin,
+        limit: 1 
+    });
+    const totalUsers = usersData?.pagination?.totalRecords || usersData?.users?.length || 0;
+
+    const { data: vendorsData } = useGetVendors({
+        enabled: isAdmin,
+        limit: 1
+    });
+    const totalVendors = vendorsData?.pagination?.total || vendorsData?.data?.length || 0;
+
+    const { data: categoriesData } = useGetCategories({
+        enabled: isAdmin,
+        limit: 1
+    });
+    const totalCategories = categoriesData?.pagination?.total || categoriesData?.data?.length || 0;
+
+    const allVariants = allProducts.reduce((acc, p) => {
+        if (p.variants && Array.isArray(p.variants)) {
+            return [...acc, ...p.variants.map(v => ({ ...v, productName: p.product_name }))];
+        }
+        return acc;
+    }, []);
+
+    const lowStockVariants = [...allVariants]
+        .sort((a, b) => (a.stock || 0) - (b.stock || 0))
+        .slice(0, 10);
+
     // Dynamically update board author based on logged-in user
     const recentBoards = MOCK_BOARDS.map(board => ({
         ...board,
         author: mounted && user?.fullName ? user.fullName : board.author
     }));
 
-    // While redirecting or mounting, show a loading state or nothing
-    if (!mounted || user?.role) {
+    if (!mounted || (user && !user.role)) {
         return (
             <div className="flex-1 flex items-center justify-center bg-gray-50 min-h-[60vh]">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d9a88a]"></div>
             </div>
         );
     }
+
+    if (user?.role === 'vendor' || user?.role === 'admin') {
+        return (
+            <Container className="py-8">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                    <p className="text-gray-500">Welcome back, {getFirstName()}! Here's what's happening today.</p>
+                </div>
+
+                <div className={clsx("grid gap-6 mb-8", isAdmin ? "grid-cols-1 md:grid-cols-4" : "grid-cols-1 md:grid-cols-3")}>
+                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <p className="text-sm font-medium text-gray-500 mb-1">Total Products</p>
+                        <h3 className="text-3xl font-bold text-gray-900">{allProducts.length}</h3>
+                        <div className="mt-2 text-xs text-gray-400">{isAdmin ? "Total items in system" : "Total items in your inventory"}</div>
+                    </div>
+
+                    {isAdmin ? (
+                        <>
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                <p className="text-sm font-medium text-blue-600 mb-1">Total Users</p>
+                                <h3 className="text-3xl font-bold text-blue-700">{totalUsers}</h3>
+                                <div className="mt-2 text-xs text-blue-600/70">Registered customers & pros</div>
+                            </div>
+                            <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100 shadow-sm">
+                                <p className="text-sm font-medium text-purple-600 mb-1">Total Vendors</p>
+                                <h3 className="text-3xl font-bold text-purple-700">{totalVendors}</h3>
+                                <div className="mt-2 text-xs text-purple-600/70">Active brands & sellers</div>
+                            </div>
+                            <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
+                                <p className="text-sm font-medium text-indigo-600 mb-1">Total Categories</p>
+                                <h3 className="text-3xl font-bold text-indigo-700">{totalCategories}</h3>
+                                <div className="mt-2 text-xs text-indigo-600/70">Product classifications</div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="bg-green-50 p-6 rounded-2xl border border-green-100 shadow-sm">
+                                <p className="text-sm font-medium text-green-600 mb-1">Active Products</p>
+                                <h3 className="text-3xl font-bold text-green-700">{activeProducts.length}</h3>
+                                <div className="mt-2 text-xs text-green-600/70">Currently visible to customers</div>
+                            </div>
+                            <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100 shadow-sm">
+                                <p className="text-sm font-medium text-orange-600 mb-1">Inactive Products</p>
+                                <h3 className="text-3xl font-bold text-orange-700">{inactiveProducts.length}</h3>
+                                <div className="mt-2 text-xs text-orange-600/70">Drafts or hidden products</div>
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-semibold text-gray-800">Latest Products</h2>
+                            <Link href={`/dashboard/products-list/${user?._id}`} className="text-sm text-[#d9a88a] hover:underline">View All</Link>
+                        </div>
+                        <div className="space-y-4">
+                            {recentProducts.length > 0 ? (
+                                recentProducts.map((product) => (
+                                    <div key={product._id} className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors border-b border-gray-50 last:border-0 pb-3">
+                                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                            {product.product_images?.[0] ? (
+                                                <Image src={getProductImageUrl(product.product_images[0])} alt={product.product_name} fill className="object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-medium text-gray-900 truncate">{product.product_name}</h4>
+                                            <p className="text-xs text-gray-500">ID: {product.skucode || product._id?.substring(0, 8)}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className={clsx(
+                                                "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                                                product.status === 1 || product.status === '1' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                                            )}>
+                                                {product.status === 1 || product.status === '1' ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 text-center py-4">No products found.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-semibold text-gray-800">Recent Orders</h2>
+                            <Link href="/dashboard/orders" className="text-sm text-[#d9a88a] hover:underline">View All</Link>
+                        </div>
+                        <div className="space-y-4">
+                            {recentOrders.length > 0 ? (
+                                recentOrders.map((order) => (
+                                    <div key={order._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-gray-900">Order #{order._id?.substring(order._id.length - 6).toUpperCase()}</h4>
+                                            <p className="text-xs text-gray-500">{order.user_id?.name || `${order.user_id?.first_name || ''} ${order.user_id?.last_name || ''}`.trim() || 'Unknown User'}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold text-gray-900">₹{order.total_amount || 0}</p>
+                                            <span className="text-[10px] text-gray-400 capitalize">{order.order_status || 'Pending'}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 text-center py-4">No recent orders.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {isAdmin && (
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-8">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-semibold text-gray-800">Inactive Products (Needs Attention)</h2>
+                            <span className="text-xs text-gray-400">{inactiveProducts.length} products found</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {inactiveProducts.length > 0 ? (
+                                inactiveProducts.slice(0, 6).map((product) => (
+                                    <div key={product._id} className="flex items-center gap-3 p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
+                                            {product.product_images?.[0] ? (
+                                                <Image src={getProductImageUrl(product.product_images[0])} alt={product.product_name} fill className="object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                    <Package className="w-6 h-6" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-medium text-gray-900 truncate">{product.product_name}</h4>
+                                            <p className="text-xs text-gray-500">Vendor: {product.userid?.name || 'N/A'}</p>
+                                        </div>
+                                        <Link href={`/dashboard/products-list/${product.userid?._id || ''}/edit/${product._id}`} className="text-xs text-[#d9a88a] font-semibold hover:underline">
+                                            Edit
+                                        </Link>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="col-span-full text-center py-4 text-gray-500 text-sm">No inactive products found.</p>
+                            )}
+                        </div>
+                        {inactiveProducts.length > 6 && (
+                            <div className="mt-4 text-center">
+                                <Link href="/dashboard/products-list" className="text-sm text-[#d9a88a] font-medium hover:underline">View all inactive products</Link>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mt-8">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                        Stock Monitoring
+                        <span className="text-xs font-normal text-gray-400">(Low stock prioritised)</span>
+                    </h2>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-medium">
+                                <tr>
+                                    <th className="px-4 py-3 rounded-l-lg border-b-0">Product & Variant</th>
+                                    <th className="px-4 py-3 border-b-0">SKU</th>
+                                    <th className="px-4 py-3 border-b-0">Current Stock</th>
+                                    <th className="px-4 py-3 rounded-r-lg border-b-0 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {lowStockVariants.length > 0 ? (
+                                    lowStockVariants.map((variant, idx) => (
+                                        <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium text-gray-900">{variant.productName}</span>
+                                                    <span className="text-xs text-gray-500">{variant.color} / {variant.size} {variant.weight}{variant.weight_type}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-600">{variant.skucode || 'N/A'}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={clsx(
+                                                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                                                    (variant.stock || 0) <= 5 ? "bg-red-100 text-red-800" : (variant.stock || 0) <= 20 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"
+                                                )}>
+                                                    {variant.stock || 0} in stock
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <Link href={`/dashboard/products-list/${user?._id}/edit/${variant?.productId}`} className="text-[#d9a88a] hover:text-[#c89675] text-xs font-semibold">Update</Link>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="4" className="text-center py-8 text-gray-500">No stock data available.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </Container>
+        );
+    }
+
 
     return (
         <Container className="py-8">

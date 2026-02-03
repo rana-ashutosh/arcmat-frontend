@@ -15,15 +15,16 @@ import BulkActionsBar from './BulkActionsBar';
 import BulkUploadModal from './BulkUploadModal';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { getProductImageUrl } from '@/lib/productUtils';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Lock, Unlock } from 'lucide-react';
 
 export default function VendorProductTable({ products = [] }) {
   const router = useRouter();
   const { vendorId } = useParams();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const effectiveVendorId = vendorId || user?._id || user?.id;
   const { data: categoryData } = useGetCategories();
-  const categoriesList = categoryData?.data || [];
+  const categoriesList = Array.isArray(categoryData) ? categoryData : (categoryData?.data || []);
   const {
     selectedProducts,
     toggleSelection,
@@ -84,8 +85,13 @@ export default function VendorProductTable({ products = [] }) {
 
   const handleToggleStatus = async (productId, currentStatus) => {
     try {
-      const isActive = currentStatus === 'Active' || currentStatus === 1;
-      const newStatus = isActive ? 0 : 1;
+      const isCurrentlyActive =
+        currentStatus === true ||
+        currentStatus === 1 ||
+        currentStatus === '1' ||
+        currentStatus === 'Active';
+
+      const newStatus = isCurrentlyActive ? 0 : 1;
       await updateProductMutation.mutateAsync({ id: productId, data: { status: newStatus } });
       toast.success(
         newStatus === 0
@@ -203,6 +209,18 @@ export default function VendorProductTable({ products = [] }) {
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleToggleStatus(id, isActive)}
+                        className={clsx(
+                          "p-2 rounded-lg transition-all cursor-pointer",
+                          isActive ? "text-amber-600 hover:bg-amber-50" : "text-emerald-600 hover:bg-emerald-50"
+                        )}
+                        title={isActive ? "Deactivate Product" : "Activate Product"}
+                      >
+                        {isActive ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(id, name)}
                       className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all cursor-pointer"

@@ -157,8 +157,9 @@ export default function ProductsListPage() {
 
   if (authLoading) return <div className="p-6">Loading...</div>;
 
+  const isAdmin = user?.role === 'admin';
   const isVendor = user?.role === 'vendor';
-  const productsToDisplay = isVendor ? apiProducts : getPublicProducts();
+  const showManagementUI = isAdmin || isVendor;
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -237,12 +238,9 @@ export default function ProductsListPage() {
       </div>
 
       {/* CONDITIONAL CONTENT */}
-      {isVendor ? (
-        // --- VENDOR VIEW ---
+      {showManagementUI ? (
         <div className="space-y-4">
-
-          <AttributeCompletionBanner />
-
+          {isVendor && <AttributeCompletionBanner />}
           <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex flex-col md:flex-row gap-4 items-center flex-1">
               <div className="relative w-full md:max-w-xs">
@@ -289,13 +287,10 @@ export default function ProductsListPage() {
             </div>
           </div>
 
-          <BulkActionsBar products={apiProducts} />
+          {isVendor && <BulkActionsBar products={apiProducts} />}
 
-          {/* 2. TABLE VIEW (Now at the top) */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* Pass REAL API PRODUCTS */}
             <VendorProductTable products={apiProducts} />
-
             {totalItems > 0 && (
               <Pagination
                 currentPage={currentPage}
@@ -307,12 +302,11 @@ export default function ProductsListPage() {
               />
             )}
           </div>
-
         </div>
       ) : (
         <div className="space-y-6">
           <ProductFilters />
-          <ProductGrid products={productsToDisplay} />
+          <ProductGrid products={getPublicProducts()} />
         </div>
       )}
     </Container>

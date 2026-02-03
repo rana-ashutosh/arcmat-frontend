@@ -2,10 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import categoryService from '@/services/categoryService';
 
 // Hook to get all categories (flat list)
-export const useGetCategories = (userId) => {
+export const useGetCategories = ({ enabled = true, ...params } = {}) => {
     return useQuery({
-        queryKey: ['categories', userId],
-        queryFn: () => categoryService.getAllCategories(userId ? { userid: userId } : {}),
+        queryKey: ['categories', params],
+        queryFn: async () => {
+            const response = await categoryService.getAllCategories(params);
+            return response.data || response;
+        },
+        enabled
     });
 };
 

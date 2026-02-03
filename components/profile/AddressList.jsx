@@ -8,7 +8,7 @@ import { toast } from '@/components/ui/Toast';
 
 const AddressList = () => {
     const { user } = useAuth();
-    const { data: apiResponse, isLoading, error } = useGetAddresses();
+    const { data: apiResponse, isLoading, error } = useGetAddresses(user?._id);
     const addresses = apiResponse?.data?.data || [];
 
     const createMutation = useCreateAddress();

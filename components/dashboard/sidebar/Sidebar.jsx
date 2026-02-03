@@ -13,7 +13,8 @@ import {
   Layers,
   Heart,
   ShoppingBag,
-  User
+  User,
+  LayoutDashboard
 } from 'lucide-react';
 import clsx from 'clsx';
 import useAuthStore from '@/store/useAuthStore';
@@ -29,7 +30,8 @@ const ICON_MAP = {
   HelpCircle,
   ShoppingBag,
   Heart,
-  User
+  User,
+  LayoutDashboard
 };
 
 const mapIcons = (items) => items.map(item => ({
@@ -63,17 +65,17 @@ export default function Sidebar() {
 
   // Determine menu items based on role
   const isVendor = user?.role === 'vendor';
-  const menuItems = isVendor ? VENDOR_MENU_ITEMS : USER_MENU_ITEMS;
+  const isAdmin = user?.role === 'admin';
+  const menuItems = isVendor || isAdmin ? VENDOR_MENU_ITEMS : USER_MENU_ITEMS;
   const visibleItems = menuItems
-    .filter(item => !item.requiresAuth || isAuthenticated)
-    .map(item => {
-      if (item.id === 'products-list' && isVendor && (user?._id || user?.id)) {
-        return {
-          ...item,
-          href: `/dashboard/products-list/${user._id || user.id}`
-        };
+    .filter(item => {
+      if (item.requiresAuth && !isAuthenticated) return false;
+
+      if ((item.id === 'categories' || item.id === 'attributes' || item.id === 'users') && !isAdmin) {
+        return false;
       }
-      return item;
+
+      return true;
     });
 
   return (
@@ -106,7 +108,7 @@ export default function Sidebar() {
 
           <SidebarUser isCollapsed={safeCollapsed} mounted={mounted} />
 
-          {!isVendor && (
+          {/* {!isVendor && (
             <Link
               href="/dashboard/projects/create"
               className={clsx(
@@ -122,7 +124,7 @@ export default function Sidebar() {
                 Create project
               </span>
             </Link>
-          )}
+          )} */}
 
           <nav className="flex-1 space-y-2">
             {visibleItems.map((item) => (

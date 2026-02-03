@@ -10,27 +10,65 @@ export const productService = {
     // Get single product by ID
     getProductById: async (id) => {
         const response = await api.get(`/product/${id}`);
-        return response.data.data.data;
+        return response.data;
     },
 
     // Create a new product
     // Payload should be FormData due to file uploads
     createProduct: async (productData) => {
-        const response = await api.post('/product', productData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        let payload = productData;
+        let config = {};
+
+        if (!(productData instanceof FormData)) {
+            const formData = new FormData();
+            Object.keys(productData).forEach(key => {
+                const value = productData[key];
+                if (value !== undefined) {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => formData.append(key, v));
+                    } else if (typeof value === 'object' && value !== null) {
+                        formData.append(key, JSON.stringify(value));
+                    } else {
+                        formData.append(key, value);
+                    }
+                }
+            });
+            payload = formData;
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        } else {
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        }
+
+        const response = await api.post('/product', payload, config);
         return response.data;
     },
 
     // Update a product
     updateProduct: async (id, productData) => {
-        const response = await api.patch(`/product/${id}`, productData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        let payload = productData;
+        let config = {};
+
+        if (!(productData instanceof FormData)) {
+            const formData = new FormData();
+            Object.keys(productData).forEach(key => {
+                const value = productData[key];
+                if (value !== undefined) {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => formData.append(key, v));
+                    } else if (typeof value === 'object' && value !== null) {
+                        formData.append(key, JSON.stringify(value));
+                    } else {
+                        formData.append(key, value);
+                    }
+                }
+            });
+            payload = formData;
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        } else {
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        }
+
+        const response = await api.patch(`/product/${id}`, payload, config);
         return response.data;
     },
 

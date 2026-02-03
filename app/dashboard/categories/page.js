@@ -24,7 +24,7 @@ export default function CategoriesPage() {
 
     // Pass null to fetch ALL categories regardless of vendor
     const { data: apiResponse, isLoading, error } = useGetCategories();
-    const categories = apiResponse?.data || [];
+    const categories = Array.isArray(apiResponse) ? apiResponse : (apiResponse?.data || []);
 
     const createCategoryMutation = useCreateCategory();
     const deleteCategoryMutation = useDeleteCategory();

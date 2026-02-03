@@ -42,6 +42,17 @@ export const useUser = () => {
     });
 };
 
+export const useGetUsers = ({ enabled = true, ...params } = {}) => {
+    return useQuery({
+        queryKey: ['users', params],
+        queryFn: async () => {
+            const response = await authService.getAllUsers(params);
+            return response.data || response;
+        },
+        enabled
+    });
+};
+
 export const useAuth = () => {
     const { data: userData, isLoading: queryLoading } = useUser();
     const [user, setUser] = useState(null);
@@ -219,6 +230,26 @@ export const useChangePasswordMutation = () => {
         onError: (error) => {
             const message = error?.response?.data?.message || error.message || "Failed to update password";
             toast.error(message, "Update Failed");
+        }
+    });
+};
+
+export const useDeleteUser = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id) => authService.deleteUser(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+        }
+    });
+};
+
+export const useUpdateUser = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }) => authService.updateUser(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
         }
     });
 };

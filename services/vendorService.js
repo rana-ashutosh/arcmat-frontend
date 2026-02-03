@@ -1,8 +1,8 @@
 import api from '@/lib/api';
 
 const vendorService = {
-    getAllVendors: async () => {
-        const response = await api.get('/brand');
+    getAllVendors: async (params = {}) => {
+        const response = await api.get('/brand', { params });
 
         return response.data;
     },

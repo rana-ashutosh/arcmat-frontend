@@ -3,15 +3,16 @@ import addressService from '../services/addressService';
 
 export const ADDRESS_KEYS = {
     all: ['addresses'],
-    lists: () => [...ADDRESS_KEYS.all, 'list'],
+    lists: (userId) => [...ADDRESS_KEYS.all, 'list', userId].filter(Boolean),
     details: () => [...ADDRESS_KEYS.all, 'detail'],
     detail: (id) => [...ADDRESS_KEYS.details(), id],
 };
 
-export const useGetAddresses = () => {
+export const useGetAddresses = (userId) => {
     return useQuery({
-        queryKey: ADDRESS_KEYS.lists(),
+        queryKey: ADDRESS_KEYS.lists(userId),
         queryFn: addressService.getAddresses,
+        enabled: !!userId,
     });
 };
 
@@ -40,7 +41,7 @@ export const useUpdateAddress = () => {
     return useMutation({
         mutationFn: ({ id, data }) => addressService.updateAddress(id, data),
         onSuccess: (data, variables) => {
-            queryClient.invalidateQueries({ queryKey: ADDRESS_KEYS.lists() });
+            queryClient.invalidateQueries({ queryKey: ['addresses', 'list'] });
             queryClient.invalidateQueries({ queryKey: ADDRESS_KEYS.detail(variables.id) });
         },
     });

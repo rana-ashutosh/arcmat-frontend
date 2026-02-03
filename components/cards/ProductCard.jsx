@@ -23,7 +23,7 @@ const ProductCard = ({ product }) => {
     const images = rawImages.map(img => {
         if (!img || typeof img !== 'string') return null;
         if (img.startsWith('http') || img.startsWith('data:') || img.startsWith('/')) return img;
-        return `http://localhost:8000/api/public/uploads/product/${img}`;
+        return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/public/uploads/product/${img}`;
     }).filter(Boolean);
 
     const hasMultipleImages = images.length > 1
@@ -112,8 +112,14 @@ const ProductCard = ({ product }) => {
                         )}
                     </div>
 
-                    <h4 className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">{name}</h4>
-                    <h3 className="text-[13px] font-semibold text-gray-800 leading-tight mb-1 group-hover:text-[#e09a74] transition-colors">{brand}</h3>
+                    <h4 className="text-[13px] font-semibold text-gray-800 uppercase tracking-wider mb-0.5 group-hover:text-[#e09a74] transition-colors">{name}</h4>
+                    <h3 className="text-[9px] font-semibold text-gray-400 leading-tight mb-1 ">
+                        {product.createdBy?.name ||
+                            (product.createdBy?.first_name ? `${product.createdBy.first_name} ${product.createdBy.last_name || ''}` : null) ||
+                            product.vendorName ||
+                            brand ||
+                            'Unknown Vendor'}
+                    </h3>
                     <p className="text-[12px] font-normal text-gray-500 mb-4 line-clamp-1">{subtitle}</p>
                     {price && (
                         <p className="text-[14px] font-bold text-[#e09a74] mb-2">₹{price}</p>

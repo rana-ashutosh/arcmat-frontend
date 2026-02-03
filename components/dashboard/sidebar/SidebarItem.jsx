@@ -8,7 +8,7 @@ import clsx from 'clsx';
 
 const SidebarItem = memo(({ item, isCollapsed }) => {
     const pathname = usePathname();
-    const isActive = pathname.startsWith(item.href);
+    const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
     const Icon = item.icon;
 
     return (

@@ -1,6 +1,12 @@
 {
     "VENDOR_MENU_ITEMS": [
         {
+            "id": "dashboard",
+            "label": "Dashboard",
+            "icon": "LayoutDashboard",
+            "href": "/dashboard"
+        },
+        {
             "id": "products-list",
             "label": "Products List",
             "icon": "Package",
@@ -26,6 +32,12 @@
             "href": "/profile"
         },
         {
+            "id": "users",
+            "label": "Users",
+            "icon": "User",
+            "href": "/dashboard/users"
+        },
+        {
             "id": "help",
             "label": "Help",
             "icon": "HelpCircle",
@@ -33,6 +45,12 @@
         }
     ],
     "USER_MENU_ITEMS": [
+        {
+            "id": "dashboard",
+            "label": "Dashboard",
+            "icon": "LayoutDashboard",
+            "href": "/dashboard"
+        },
         {
             "id": "my-orders",
             "label": "My Orders",

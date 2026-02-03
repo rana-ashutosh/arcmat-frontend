@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useProductStore } from '@/store/useProductStore';
 import { useUIStore } from '@/store/useUIStore';
 import { CATEGORIES } from '@/lib/mockData/categories';
+import { useAuth } from '@/hooks/useAuth';
+import { useUpdateProduct, useDeleteProduct } from '@/hooks/useProduct';
 import { toast } from '../ui/Toast';
 
 export default function BulkActionsBar({ products = [] }) {
@@ -14,6 +16,8 @@ export default function BulkActionsBar({ products = [] }) {
     bulkDelete,
     clearSelection,
   } = useProductStore();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const { openProductFormModal } = useUIStore();
   const [selectedAction, setSelectedAction] = useState('');
@@ -21,51 +25,52 @@ export default function BulkActionsBar({ products = [] }) {
   // If no products selected, don't render anything
   if (selectedProducts.length === 0) return null;
 
-  const handleBulkAction = () => {
+  const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
+
+  const handleBulkAction = async () => {
     if (!selectedAction) return;
 
-    switch (selectedAction) {
-      case 'edit':
-        if (selectedProducts.length === 1) {
-          const productToEdit = products.find((p) => (p._id || p.id) === selectedProducts[0]);
-          if (productToEdit) {
-            openProductFormModal(productToEdit);
+    try {
+      switch (selectedAction) {
+        case 'edit':
+          if (selectedProducts.length === 1) {
+            const productToEdit = products.find((p) => (p._id || p.id) === selectedProducts[0]);
+            if (productToEdit) {
+              openProductFormModal(productToEdit);
+            }
+          } else {
+            toast.error('Please select only one product to edit');
           }
-        } else {
-          toast.error('Please select only one product to edit');
-        }
-        break;
+          break;
 
-      case 'activate':
-        bulkUpdateStatus(selectedProducts, true);
-        toast.success(`${selectedProducts.length} products activated`);
-        break;
-
-      case 'deactivate':
-        bulkUpdateStatus(selectedProducts, false);
-        toast.success(`${selectedProducts.length} products deactivated`);
-        break;
-
-      case 'delete':
-        if (confirm(`Delete ${selectedProducts.length} products?`)) {
-          bulkDelete(selectedProducts);
-          toast.success(`${selectedProducts.length} products deleted`);
-        }
-        break;
-
-      default:
-        if (selectedAction.startsWith('category-')) {
-          const categoryId = parseInt(selectedAction.replace('category-', ''));
-          bulkUpdateCategory(selectedProducts, categoryId);
-          const categoryName = CATEGORIES.find((c) => c.id === categoryId)?.name;
-          toast.success(
-            `${selectedProducts.length} products moved to ${categoryName}`
+        case 'activate':
+        case 'deactivate':
+          const isActivate = selectedAction === 'activate';
+          await Promise.all(
+            selectedProducts.map(id =>
+              updateProductMutation.mutateAsync({ id, data: { status: isActivate ? 1 : 0 } })
+            )
           );
-        }
+          toast.success(`${selectedProducts.length} products ${isActivate ? 'activated' : 'deactivated'}`);
+          break;
+
+        case 'delete':
+          if (confirm(`Delete ${selectedProducts.length} products? This action cannot be undone.`)) {
+            await Promise.all(
+              selectedProducts.map(id => deleteProductMutation.mutateAsync(id))
+            );
+            toast.success(`${selectedProducts.length} products deleted`);
+          }
+          break;
+
+        default:
+          toast.info("This bulk action is not yet implemented with the API.");
+      }
+    } catch (error) {
+      toast.error("Failed to complete some bulk actions. Please try again.");
     }
 
-    // If action was edit, we keep selection so user sees what they are editing. 
-    // Otherwise, clear selection after action.
     if (selectedAction !== 'edit') {
       clearSelection();
       setSelectedAction('');
@@ -106,8 +111,12 @@ export default function BulkActionsBar({ products = [] }) {
                 <option value="edit">Edit Product</option>
               )}
 
-              <option value="activate">Set Active</option>
-              <option value="deactivate">Set Inactive</option>
+              {isAdmin && (
+                <>
+                  <option value="activate">Set Active</option>
+                  <option value="deactivate">Set Inactive</option>
+                </>
+              )}
               <option value="delete">Delete</option>
 
               <optgroup label="Move to Category">
