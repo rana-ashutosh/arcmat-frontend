@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination, Autoplay } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
+import { getProductImageUrl } from '@/lib/productUtils'
 
 const ProductCard = ({ product }) => {
     const name = product.product_name || product.name
@@ -20,11 +21,7 @@ const ProductCard = ({ product }) => {
         ? product.product_images
         : (Array.isArray(product.images) ? product.images : [product.image || product.product_image1].filter(Boolean));
 
-    const images = rawImages.map(img => {
-        if (!img || typeof img !== 'string') return null;
-        if (img.startsWith('http') || img.startsWith('data:') || img.startsWith('/')) return img;
-        return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/public/uploads/product/${img}`;
-    }).filter(Boolean);
+    const images = rawImages.map(img => getProductImageUrl(img)).filter(Boolean);
 
     const hasMultipleImages = images.length > 1
     const [currentImageIdx, setCurrentImageIdx] = React.useState(0)
@@ -104,7 +101,7 @@ const ProductCard = ({ product }) => {
                                 }}
                                 className={`w-5 h-5 rounded-md border transition-all overflow-hidden shrink-0 ${currentImageIdx === idx ? 'ring-2 ring-[#e09a74] ring-offset-1 border-transparent' : 'border-gray-200'}`}
                             >
-                                <Image src={sv} width={20} height={20} alt="color" className="object-cover w-full h-full" unoptimized/>
+                                <Image src={sv} width={20} height={20} alt="color" className="object-cover w-full h-full" unoptimized />
                             </button>
                         ))}
                         {product.moreVariants && (

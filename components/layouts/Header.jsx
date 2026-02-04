@@ -10,6 +10,7 @@ import Cookies from 'js-cookie';
 import { LogOut, User, ChevronDown, Heart, Folder, ShoppingCart, LayoutDashboard, Menu, Search, Camera, Loader2 } from 'lucide-react';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { useGetProducts } from '@/hooks/useProduct';
+import { getProductImageUrl } from '@/lib/productUtils';
 
 const Header = ({ variant = 'default' }) => {
 
@@ -111,7 +112,7 @@ const Header = ({ variant = 'default' }) => {
                     </div>
                 </div>
 
-            {/* <div className="flex items-center gap-2 lg:gap-6 flex-shrink-0"></div> */}
+                {/* <div className="flex items-center gap-2 lg:gap-6 flex-shrink-0"></div> */}
                 {(!isDashboard || user?.role !== 'vendor') && (
                     <div className='hidden md:flex flex-1 max-w-2xl mx-4 relative'>
                         <div className="relative w-full group">
@@ -158,9 +159,7 @@ const Header = ({ variant = 'default' }) => {
                                                     <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
                                                         {(product.images?.[0] || product.product_images?.[0]) ? (
                                                             <Image
-                                                                src={(product.images?.[0] || product.product_images?.[0]).startsWith('http')
-                                                                    ? (product.images?.[0] || product.product_images?.[0])
-                                                                    : `http://localhost:8000/api/public/uploads/product/${(product.images?.[0] || product.product_images?.[0])}`}
+                                                                src={getProductImageUrl(product.images?.[0] || product.product_images?.[0])}
                                                                 alt={product.name || product.product_name}
                                                                 fill
                                                                 className="object-cover"

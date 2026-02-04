@@ -9,6 +9,7 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { toast } from '@/components/ui/Toast';
 import { useGetBanners, useDeleteBanner } from '@/hooks/useBanner';
 import Image from 'next/image';
+import { getBannerImageUrl } from '@/lib/productUtils';
 
 export default function BannersPage() {
     const router = useRouter();
@@ -49,11 +50,7 @@ export default function BannersPage() {
         }
     };
 
-    const getBannerImageUrl = (filename) => {
-        if (!filename) return null;
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        return `${baseUrl}/api/public/uploads/banner/${filename}`;
-    };
+    // Local function replaced by import from lib/productUtils
 
     if (isLoading) {
         return (

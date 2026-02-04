@@ -17,15 +17,15 @@ export default function EditProductPage() {
 
     const { data: productResponse, isLoading, error } = useGetProduct(productId);
     const updateProductMutation = useUpdateProduct();
-console.log(productResponse)
-    const product = productResponse?.data?.data?.data || productResponse?.data || productResponse;
+    const product = productResponse?.data?.data?.data || productResponse?.data?.data || productResponse?.data;
+    console.log(productResponse,product)
     const effectiveVendorId = vendorId || user?._id || user?.id;
 
     const handleUpdateProduct = async (formData) => {
         try {
             await updateProductMutation.mutateAsync({ id: productId, data: formData });
             toast.success('Product updated successfully!');
-            router.push(`/dashboard/products-list/${effectiveVendorId}`);
+            router.push(user.role==='admin'?`/dashboard/products-list`:`/dashboard/products-list/${effectiveVendorId}`);
         } catch (error) {
             const msg = error.response?.data?.message?.message || error.message || 'Failed to update product';
             toast.error(msg);
@@ -46,7 +46,7 @@ console.log(productResponse)
             <Container className="py-20 text-center">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
                 <p className="text-gray-500 mb-8">The product you are trying to edit doesn't exist or you don't have permission.</p>
-                <Link href={`/dashboard/products-list/${effectiveVendorId}`} className="text-[#e09a74] font-bold hover:underline">
+                <Link href={user.role==='admin'?`/dashboard/products-list`:`/dashboard/products-list/${effectiveVendorId}`} className="text-[#e09a74] font-bold hover:underline">
                     Back to Product List
                 </Link>
             </Container>
@@ -56,7 +56,7 @@ console.log(productResponse)
     return (
         <Container className="py-8 max-w-5xl mx-auto">
             <div className="flex items-center gap-4 mb-8">
-                <Link href={`/dashboard/products-list/${effectiveVendorId}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <Link href={user.role==='admin'?`/dashboard/products-list`:`/dashboard/products-list/${effectiveVendorId}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <div>

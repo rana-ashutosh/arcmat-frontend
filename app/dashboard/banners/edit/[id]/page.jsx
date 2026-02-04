@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { useGetBanner, useUpdateBanner } from '@/hooks/useBanner';
 import Image from 'next/image';
+import { getBannerImageUrl } from '@/lib/productUtils';
 
 export default function EditBannerPage() {
     const router = useRouter();
@@ -43,8 +44,7 @@ export default function EditBannerPage() {
             });
 
             if (banner.banner) {
-                const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                setPreviewUrl(`${baseUrl}/api/public/uploads/banner/${banner.banner}`);
+                setPreviewUrl(getBannerImageUrl(banner.banner));
             }
         }
     }, [banner]);

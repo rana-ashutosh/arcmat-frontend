@@ -186,7 +186,7 @@ export default function DashboardPage() {
                     <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-semibold text-gray-800">Latest Products</h2>
-                            <Link href={`/dashboard/products-list/${user?._id}`} className="text-sm text-[#d9a88a] hover:underline">View All</Link>
+                            <Link href={user.role === 'admin' ? '/dashboard/products-list' : `/dashboard/products-list/${user?._id}`} className="text-sm text-[#d9a88a] hover:underline">View All</Link>
                         </div>
                         <div className="space-y-4">
                             {isLoadingAll ? (
@@ -276,9 +276,9 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h4 className="text-sm font-medium text-gray-900 truncate">{product.product_name}</h4>
-                                            <p className="text-xs text-gray-500">Vendor: {product.userid?.name || 'N/A'}</p>
+                                            <p className="text-xs text-gray-500">Vendor: {product.createdBy?.name || 'N/A'}</p>
                                         </div>
-                                        <Link href={`/dashboard/products-list/${product.userid?._id || ''}/edit/${product._id}`} className="text-xs text-[#d9a88a] font-semibold hover:underline">
+                                        <Link href={`/dashboard/products-list/${product.createdBy?._id || ''}/edit/${product._id}`} className="text-xs text-[#d9a88a] font-semibold hover:underline">
                                             Edit
                                         </Link>
                                     </div>

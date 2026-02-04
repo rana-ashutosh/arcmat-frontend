@@ -25,6 +25,7 @@ export default function VendorProductTable({ products = [] }) {
   const effectiveVendorId = vendorId || user?._id || user?.id;
 
   const deleteProductMutation = useDeleteProduct();
+  const updateProductMutation = useUpdateProduct();
 
   const { openProductFormModal, openBulkUploadModal } = useUIStore();
 

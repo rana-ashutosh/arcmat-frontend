@@ -15,6 +15,7 @@ import 'swiper/css/pagination'
 import 'swiper/css/thumbs'
 import 'swiper/css/free-mode'
 import { toast } from '../ui/Toast'
+import { getProductImageUrl } from '@/lib/productUtils'
 
 const ProductDetailView = ({ product, categories = [], childCategories = [] }) => {
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
@@ -52,12 +53,8 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
     // Images
     const images =
         product.product_images?.length
-            ? product.product_images.map(img =>
-                img.startsWith('http')
-                    ? img
-                    : `http://localhost:8000/api/public/uploads/product/${img}`
-            )
-            : [product.product_image1].filter(Boolean)
+            ? product.product_images.map(img => getProductImageUrl(img))
+            : [getProductImageUrl(product.product_image1)].filter(Boolean)
 
     const displayImages = images.length ? images : ['/Icons/arcmatlogo.svg']
 

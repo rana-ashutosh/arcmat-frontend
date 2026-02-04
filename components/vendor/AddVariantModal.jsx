@@ -72,7 +72,6 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
 
             // Handle previews for editing
             if (editingVariant) {
-                const baseImgUrl = 'http://localhost:8000/api/public/uploads/variant/';
                 const serverImages = editingVariant.variant_images && editingVariant.variant_images.length > 0
                     ? editingVariant.variant_images
                     : [
