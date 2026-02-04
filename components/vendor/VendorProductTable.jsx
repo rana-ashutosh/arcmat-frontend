@@ -23,48 +23,13 @@ export default function VendorProductTable({ products = [] }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const effectiveVendorId = vendorId || user?._id || user?.id;
-  const { data: categoryData } = useGetCategories();
-  const categoriesList = Array.isArray(categoryData) ? categoryData : (categoryData?.data || []);
-  const {
-    selectedProducts,
-    toggleSelection,
-    clearSelection,
-  } = useProductStore();
 
   const deleteProductMutation = useDeleteProduct();
-  const updateProductMutation = useUpdateProduct();
 
   const { openProductFormModal, openBulkUploadModal } = useUIStore();
 
-  const [selectAll, setSelectAll] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
-
-  const getCategoryName = (category) => {
-    if (!category) return 'N/A';
-
-    if (typeof category === 'object') {
-      return category.name || category.category_name || 'N/A';
-    }
-
-    const cat = categoriesList.find((c) => (c._id || c.id) === category);
-    if (!cat) return category;
-    return cat.name;
-  };
-
-  const handleSelectAll = () => {
-    if (selectAll) {
-      clearSelection();
-    } else {
-      products.forEach((p) => {
-        const id = p._id || p.id;
-        if (!selectedProducts.includes(id)) {
-          toggleSelection(id);
-        }
-      });
-    }
-    setSelectAll(!selectAll);
-  };
 
   const handleDelete = (productId, productName) => {
     setProductToDelete({ id: productId, name: productName });
@@ -109,14 +74,6 @@ export default function VendorProductTable({ products = [] }) {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left">
-                <input
-                  type="checkbox"
-                  checked={selectAll}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 text-[#d9a88a] focus:ring-[#d9a88a] border-gray-300 rounded"
-                />
-              </th>
               <th className="px-6 py-3 text-left text-xs font-bold text-gray-800 uppercase tracking-wider">
                 Image
               </th>
@@ -153,14 +110,6 @@ export default function VendorProductTable({ products = [] }) {
 
               return (
                 <tr key={id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedProducts.includes(id)}
-                      onChange={() => toggleSelection(id)}
-                      className="h-4 w-4 text-[#d9a88a] focus:ring-[#d9a88a] border-gray-300 rounded"
-                    />
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="h-12 w-12 bg-gray-100 rounded overflow-hidden">
                       {images?.[0] ? (

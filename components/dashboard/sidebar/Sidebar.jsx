@@ -70,6 +70,12 @@ export default function Sidebar() {
   const isAdmin = user?.role === 'admin';
   const menuItems = isVendor || isAdmin ? VENDOR_MENU_ITEMS : USER_MENU_ITEMS;
   const visibleItems = menuItems
+    .map(item => {
+      if (isVendor && item.id === 'products-list' && (user?._id || user?.id)) {
+        return { ...item, href: `/dashboard/products-list/${user._id || user.id}` };
+      }
+      return item;
+    })
     .filter(item => {
       if (item.requiresAuth && !isAuthenticated) return false;
 

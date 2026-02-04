@@ -142,6 +142,17 @@ export default function ProductsListPage() {
     };
 
     const showManagementUI = isVendor || isAdmin;
+    const router = require('next/navigation').useRouter();
+
+    require('react').useEffect(() => {
+        if (!authLoading && isVendor && user?._id && !vendorIdFromRoute) {
+            router.replace(`/dashboard/products-list/${user._id}`);
+        }
+    }, [authLoading, isVendor, user, vendorIdFromRoute, router]);
+
+    if (isVendor && !vendorIdFromRoute) {
+        return null;
+    }
 
     return (
         <Container className="py-6 space-y-6">
@@ -209,8 +220,8 @@ export default function ProductsListPage() {
                     {isVendor && <AttributeCompletionBanner />}
 
                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-                        <div className="flex flex-col md:flex-row gap-4 items-center flex-1">
-                            <div className="relative w-full md:max-w-xs">
+                        <div className="flex flex-col w-full lg:flex-row gap-4 items-center flex-1">
+                            <div className="relative w-full lg:max-w-xs">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                                 <input
                                     type="text"
@@ -221,33 +232,36 @@ export default function ProductsListPage() {
                                 />
                             </div>
 
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                                className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="1">Active Only</option>
-                                <option value="0">Inactive Only</option>
-                            </select>
+                            <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 w-full'>
 
-                            <select
-                                value={orderBy}
-                                onChange={(e) => { setOrderBy(e.target.value); setCurrentPage(1); }}
-                                className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
-                            >
-                                <option value="createdAt">Date Created</option>
-                                <option value="product_name">Product Name</option>
-                            </select>
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                                    className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="1">Active Only</option>
+                                    <option value="0">Inactive Only</option>
+                                </select>
 
-                            <select
-                                value={sortOrder}
-                                onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}
-                                className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
-                            >
-                                <option value="DESC">Descending</option>
-                                <option value="ASC">Ascending</option>
-                            </select>
+                                <select
+                                    value={orderBy}
+                                    onChange={(e) => { setOrderBy(e.target.value); setCurrentPage(1); }}
+                                    className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
+                                >
+                                    <option value="createdAt">Date Createdd</option>
+                                    <option value="product_name">Product Name</option>
+                                </select>
+
+                                <select
+                                    value={sortOrder}
+                                    onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}
+                                    className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
+                                >
+                                    <option value="DESC">Descending</option>
+                                    <option value="ASC">Ascending</option>
+                                </select>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-500">Total: {totalItems} products</span>

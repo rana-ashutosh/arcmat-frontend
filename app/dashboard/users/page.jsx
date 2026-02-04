@@ -118,7 +118,7 @@ export default function UsersPage() {
 
             {/* Filters & Search */}
             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6">
-                <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="flex flex-col lg:flex-row gap-4 items-center">
                     <div className="relative flex-1 w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
@@ -130,7 +130,7 @@ export default function UsersPage() {
                         />
                     </div>
 
-                    <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200 w-full md:w-auto">
+                    <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200 w-full md:w-auto overflow-x-auto">
                         {ROLES.map((role) => (
                             <button
                                 key={role.value}
