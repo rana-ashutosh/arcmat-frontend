@@ -19,7 +19,8 @@ export default function ClientProviders({ children }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 15 * 60 * 1000,    // 15 minutes
         refetchOnWindowFocus: false,
       },
     },

@@ -1,5 +1,6 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs, FreeMode } from 'swiper/modules'
@@ -15,69 +16,156 @@ import 'swiper/css/pagination'
 import 'swiper/css/thumbs'
 import 'swiper/css/free-mode'
 import { toast } from '../ui/Toast'
-import { getProductImageUrl } from '@/lib/productUtils'
+import { getProductImageUrl, getVariantImageUrl, getColorCode, resolvePricing, calculateDiscount, getSpecifications, formatNumber } from '@/lib/productUtils'
+import { Heart } from 'lucide-react'
+import { useAddToWishlist, useGetWishlist } from '@/hooks/useWishlist'
+import { useAuth } from '@/hooks/useAuth'
 
-const ProductDetailView = ({ product, categories = [], childCategories = [] }) => {
+const ProductDetailView = ({ product, initialVariantId, categories = [], childCategories = [] }) => {
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
     const [isAdded, setIsAdded] = useState(false)
+    const [isWishlisted, setIsWishlisted] = useState(false)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [activeRequest, setActiveRequest] = useState({})
 
+    const router = useRouter()
+    const pathname = usePathname()
+
+    const [selectedVariant, setSelectedVariant] = useState(null)
+    const [selectedAttributes, setSelectedAttributes] = useState({})
+
+    const { isAuthenticated } = useAuth()
+    const { data: wishlistData } = useGetWishlist(isAuthenticated)
+
+    const isInWishlist = React.useMemo(() => {
+        const wishlistItems = wishlistData?.data?.data || []
+        return wishlistItems.some(item =>
+            (selectedVariant && item.product_variant_id?._id === selectedVariant?._id) ||
+            (!selectedVariant && item.product_id?._id === product?._id)
+        )
+    }, [wishlistData, selectedVariant, product])
+
+    useEffect(() => {
+        setIsWishlisted(isInWishlist)
+    }, [isInWishlist])
+
     if (!product) return null
+
+    const variants = product.variants || []
+    const hasVariants = variants.length > 0
+
+    const availableAttributes = React.useMemo(() => {
+        if (!hasVariants) return []
+        const keys = ['color', 'size', 'weight']
+        return keys.filter(key => variants.some(v => v[key]))
+    }, [variants, hasVariants])
+
+    React.useEffect(() => {
+        if (hasVariants && !selectedVariant) {
+            const defaultVariant = (initialVariantId && variants.find(v => v._id === initialVariantId)) ||
+                variants.find(v => v.status === 1) ||
+                variants[0]
+            if (defaultVariant) {
+                setSelectedVariant(defaultVariant)
+                const initialAttrs = {}
+                availableAttributes.forEach(key => {
+                    if (defaultVariant[key]) initialAttrs[key] = defaultVariant[key]
+                })
+                setSelectedAttributes(initialAttrs)
+            }
+        }
+    }, [hasVariants, product, initialVariantId, variants, availableAttributes, selectedVariant])
+
+    useEffect(() => {
+        if (selectedVariant?._id) {
+            const params = new URLSearchParams(window.location.search)
+            params.set('variantId', selectedVariant._id)
+            router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+        }
+    }, [selectedVariant?._id, pathname, router])
+
+    const handleAttributeSelect = (key, value) => {
+        const newAttributes = { ...selectedAttributes, [key]: value }
+        setSelectedAttributes(newAttributes)
+
+        const matchingVariant = variants.find(v => {
+            return availableAttributes.every(attrKey => {
+                const targetValue = attrKey === key ? value : newAttributes[attrKey]
+                return !targetValue || v[attrKey] === targetValue
+            })
+        })
+
+        if (matchingVariant) {
+            setSelectedVariant(matchingVariant)
+        }
+    }
+
+    const handleVariantSelect = (v) => {
+        setSelectedVariant(v)
+        const newAttrs = {}
+        availableAttributes.forEach(key => {
+            if (v[key]) newAttrs[key] = v[key]
+        })
+        setSelectedAttributes(newAttrs)
+    }
 
     const handleOpenModal = (requestType) => {
         setActiveRequest(requestType)
         setIsModalOpen(true)
     }
 
-    const handleClick = () => {
-        toast.info('Coming soon!', 'Stay tuned');
-    };
+    // Pricing Logic
+    const { price, mrp, hasPrice } = resolvePricing(product, selectedVariant)
+    const discountPercentage = calculateDiscount(mrp, price)
 
+    const currentItem = selectedVariant || product
     const name = product.product_name || product.name
-    const price = product.selling_price || product.price
-    const mrp = product.mrp_price || product.mrp
     const subtitle = product.sort_description || product.subtitle
     const description = product.description
-
-    // Core Boolean Flags
-    const hasPrice = Boolean(price && Number(price) > 0)
-    const hasMrp = Boolean(mrp && Number(mrp) > 0)
-    const stockQuantity = Number(product.stock || product.available_stock || 0)
-    const inStock =
-        product.stock_status?.toLowerCase().includes('in stock') || stockQuantity > 0
+    const stockQuantity = Number(currentItem.stock || currentItem.available_stock || 0)
+    const isActive = currentItem.status === 1 || currentItem.status === '1' || currentItem.status === 'Active'
+    const inStock = isActive && stockQuantity > 0
     const isPurchasable = hasPrice && inStock
     const isPremium = product.featuredproduct === 'Active'
     const vendorName = product.createdBy?.name
 
-    // Images
-    const images =
-        product.product_images?.length
-            ? product.product_images.map(img => getProductImageUrl(img))
-            : [getProductImageUrl(product.product_image1)].filter(Boolean)
+    const isFromVariant = Boolean(selectedVariant?.variant_images?.length)
+    const rawImages = isFromVariant
+        ? selectedVariant.variant_images
+        : (product.product_images?.length ? product.product_images : (Array.isArray(product.images) ? product.images : [product.image || product.product_image1].filter(Boolean)))
 
+    const images = rawImages.filter(Boolean).map(img => isFromVariant ? getVariantImageUrl(img) : getProductImageUrl(img))
     const displayImages = images.length ? images : ['/Icons/arcmatlogo.svg']
 
     const handleAddToCart = () => {
         if (!isPurchasable) return
         setIsAdded(true)
         setTimeout(() => setIsAdded(false), 2000)
+        toast.success("Item added to cart")
     }
 
+    const { mutate: addToWishlist } = useAddToWishlist()
 
+    const handleAddToWishlist = () => {
+        if (!isAuthenticated) {
+            router.push('/auth/login')
+            return
+        }
 
-    // Dynamic attributes
-    const dynamicAttributes = product.dynamicAttributes
-        ? typeof product.dynamicAttributes === 'string'
-            ? JSON.parse(product.dynamicAttributes)
-            : product.dynamicAttributes
-        : []
+        addToWishlist({
+            product_id: product._id,
+            product_variant_id: selectedVariant?._id || null,
+            item_or_variant: selectedVariant ? 'variant' : 'item'
+        })
+        setIsWishlisted(true)
+    }
 
-    const weight = product.weight
-        ? `${product.weight} ${product.weight_type || product.weight_unit || 'kg'}`
-        : null
+    // Specifications
+    const finalSpecifications = getSpecifications(product, selectedVariant)
+    const displayWeight = selectedVariant?.weight
+        ? `${selectedVariant.weight} ${selectedVariant.weight_type || selectedVariant.weight_unit || 'kg'}`
+        : (product.weight ? `${product.weight} ${product.weight_type || 'kg'}` : null)
 
-    // CTA Logic
     const showPrimaryAddToCart = isPurchasable
     const showOutOfStockQuote = !isPurchasable
 
@@ -109,6 +197,7 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                             <div className="relative aspect-4/3 bg-white rounded-none overflow-hidden">
                                 {images.length > 1 ? (
                                     <Swiper
+                                        key={selectedVariant?._id || 'main'}
                                         modules={[Navigation, Pagination, Thumbs]}
                                         navigation
                                         pagination={{ clickable: true }}
@@ -143,9 +232,9 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                                     </div>
                                 )}
                             </div>
-
                             {images.length > 1 && (
                                 <Swiper
+                                    key={selectedVariant?._id || 'thumbs-main'}
                                     onSwiper={setThumbsSwiper}
                                     modules={[Thumbs, FreeMode]}
                                     spaceBetween={8}
@@ -194,35 +283,190 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                                             {inStock ? 'IN STOCK' : 'LISTED'}
                                         </span>
                                     </div>
-
+                                    {hasVariants && selectedVariant && (
+                                        <p className="text-sm py-1 text-gray-500 mt-1 flex items-center gap-2">
+                                            <span>SKU: {selectedVariant.skucode || selectedVariant._id}</span>
+                                            {selectedVariant.color && (
+                                                <>
+                                                    <span className="text-gray-300">|</span>
+                                                    <span>Color: <span className="text-gray-700 font-medium">{selectedVariant.color}</span></span>
+                                                </>
+                                            )}
+                                            {selectedVariant.size && (
+                                                <>
+                                                    <span className="text-gray-300">|</span>
+                                                    <span>Size: <span className="text-gray-700 font-medium">{selectedVariant.size}</span></span>
+                                                </>
+                                            )}
+                                        </p>
+                                    )}
                                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">{name}</h1>
                                     <p className="text-base text-gray-700 leading-relaxed mb-4">{subtitle}</p>
 
-                                    {/* PRICE SECTION */}
-                                    {(hasPrice || hasMrp) && (
-                                        <div className="mt-5 border-t border-dashed border-gray-200 pt-4">
-                                            {showOutOfStockQuote ? (
-                                                <span className="text-3xl font-bold text-gray-900">
-                                                    ₹{Number(mrp).toLocaleString()}
-                                                </span>
-                                            ) : (
-                                                <div className="flex items-baseline gap-3">
-                                                    <span className="text-3xl font-bold text-gray-900">
-                                                        ₹{Number(price).toLocaleString()}
-                                                    </span>
-                                                    {Number(mrp) > Number(price) && (
-                                                        <>
-                                                            <span className="text-lg text-gray-400 line-through">
-                                                                ₹{Number(mrp).toLocaleString()}
-                                                            </span>
-                                                            <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded-full">
-                                                                {Math.round(((Number(mrp) - Number(price)) / Number(mrp)) * 100)}% OFF
-                                                            </span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
+                                    {/* VARIANT PICKER (THUMBNAILS) */}
+                                    {hasVariants && (
+                                        <div className="mt-4 mb-6">
+                                            <h4 className="text-sm font-semibold text-gray-900 mb-3">Available Variants</h4>
+                                            <div className="flex flex-wrap gap-3">
+                                                {variants.map((v, idx) => {
+                                                    const hasVariantImg = v.variant_images?.length > 0
+                                                    const img = hasVariantImg
+                                                        ? getVariantImageUrl(v.variant_images[0])
+                                                        : displayImages[0];
+                                                    const isSelected = selectedVariant?._id === v._id;
+                                                    const variantColorCode = v.color ? getColorCode(v.color) : null
 
+                                                    return (
+                                                        <button
+                                                            key={v._id || idx}
+                                                            onClick={() => handleVariantSelect(v)}
+                                                            className={`group relative w-16 h-16 rounded-xl border-2 transition-all p-1 bg-white ${isSelected
+                                                                ? 'border-[#e09a74] ring-2 ring-[#e09a74]/20 shadow-sm'
+                                                                : 'border-gray-100 hover:border-gray-300'
+                                                                }`}
+                                                        >
+                                                            <div className="relative w-full h-full rounded-lg overflow-hidden flex items-center justify-center bg-gray-50">
+                                                                {!hasVariantImg && variantColorCode ? (
+                                                                    <div
+                                                                        className="w-full h-full transition-transform group-hover:scale-110 duration-300"
+                                                                        style={{ backgroundColor: variantColorCode }}
+                                                                    />
+                                                                ) : (
+                                                                    <Image
+                                                                        src={img}
+                                                                        alt={`Variant ${idx + 1}`}
+                                                                        fill
+                                                                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                            {isSelected && (
+                                                                <div className="absolute -top-1.5 -right-1.5 bg-[#e09a74] text-white w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm scale-110">
+                                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="w-2.5 h-2.5">
+                                                                        <polyline points="20 6 9 17 4 12" />
+                                                                    </svg>
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* ATTRIBUTE SELECTORS */}
+                                    {hasVariants && (
+                                        <div className="mt-4 mb-6 space-y-4">
+                                            {availableAttributes.map(attrKey => {
+                                                // Get unique values for this attribute
+                                                const uniqueValues = [...new Set(variants.map(v => v[attrKey]).filter(Boolean))]
+
+                                                if (uniqueValues.length === 0) return null
+
+                                                return (
+                                                    <div key={attrKey}>
+                                                        <h4 className="text-sm font-medium text-gray-900 mb-2 capitalize">
+                                                            {attrKey === 'color' ? 'Select Color' : `${attrKey}:`}
+                                                        </h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {uniqueValues.map(value => {
+                                                                const isSelected = selectedAttributes[attrKey] === value
+
+                                                                // Dependent Selection: Check if this value is compatible with other current selections
+                                                                const isCompatible = variants.some(v =>
+                                                                    v[attrKey] === value &&
+                                                                    availableAttributes.every(ak =>
+                                                                        ak === attrKey || !selectedAttributes[ak] || v[ak] === selectedAttributes[ak]
+                                                                    )
+                                                                )
+
+                                                                if (attrKey === 'color') {
+                                                                    // Color Swatch style
+                                                                    const colorCode = getColorCode(value)
+                                                                    const isWhite = value.toLowerCase() === 'white'
+
+                                                                    return (
+                                                                        <button
+                                                                            key={value}
+                                                                            onClick={() => handleAttributeSelect(attrKey, value)}
+                                                                            disabled={!isCompatible}
+                                                                            className={`
+                                                                                flex items-center gap-2 p-1 rounded-full border transition-all
+                                                                                ${isSelected
+                                                                                    ? 'border-gray-900 ring-1 ring-gray-900 bg-gray-50 text-gray-900 font-medium'
+                                                                                    : isCompatible
+                                                                                        ? 'border-gray-200 text-gray-600 hover:border-gray-400'
+                                                                                        : 'border-gray-100 text-gray-300 cursor-not-allowed opacity-50 grayscale'
+                                                                                }
+                                                                            `}
+                                                                            title={value}
+                                                                        >
+                                                                            <span
+                                                                                className={`w-8 h-8 rounded-full border ${isWhite ? 'border-gray-200' : 'border-transparent'}`}
+                                                                                style={{ backgroundColor: colorCode }}
+                                                                            />
+                                                                        </button>
+                                                                    )
+                                                                }
+
+                                                                // Default Button style for Size/Weight etc
+                                                                return (
+                                                                    <button
+                                                                        key={value}
+                                                                        onClick={() => handleAttributeSelect(attrKey, value)}
+                                                                        disabled={!isCompatible}
+                                                                        className={`
+                                                                            px-4 py-2 rounded-lg text-sm border transition-all
+                                                                            ${isSelected
+                                                                                ? 'border-[#e09a74] bg-[#fffbf9] text-[#e09a74] font-medium'
+                                                                                : isCompatible
+                                                                                    ? 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                                                                    : 'border-gray-100 text-gray-300 cursor-not-allowed opacity-50'
+                                                                            }
+                                                                        `}
+                                                                    >
+                                                                        {value}
+                                                                        {attrKey === 'weight' && ` ${variants.find(v => v.weight === value)?.weight_type || ''}`}
+                                                                    </button>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* PRICE SECTION */}
+                                    {hasPrice ? (
+                                        <div className="mt-5 border-t border-dashed border-gray-200 pt-5">
+                                            <div className="flex items-baseline gap-3 flex-wrap">
+                                                <span className="text-3xl md:text-4xl font-bold text-gray-900">
+                                                    ₹{Number(price).toLocaleString()}
+                                                </span>
+                                                {discountPercentage > 0 && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-lg text-gray-400 line-through decoration-gray-300">
+                                                            ₹{Number(mrp).toLocaleString()}
+                                                        </span>
+                                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full border border-green-200 uppercase tracking-wider">
+                                                            {discountPercentage}% OFF
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {discountPercentage > 0 && (
+                                                <p className="text-[10px] text-green-600 font-medium mt-1 uppercase tracking-tight">
+                                                    You save ₹{(Number(mrp) - Number(price)).toLocaleString()}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="mt-5 border-t border-dashed border-gray-200 pt-5">
+                                            <div className="p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                                                <span className="text-lg font-semibold text-gray-600">Price on Request</span>
+                                                <p className="text-xs text-gray-400 mt-1">Contact us for specialized pricing and bulk orders.</p>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -267,8 +511,17 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                                         )}
                                     </div>
 
-                                    <button className="mt-2 w-full border border-gray-300 text-gray-900 py-2.5 rounded-full text-sm hover:bg-gray-50 transition">
-                                        SAVE
+                                    <button
+                                        onClick={handleAddToWishlist}
+                                        className={`
+                                            mt-2 w-full py-2.5 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-2 border
+                                            ${isWishlisted
+                                                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                                                : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+                                            }
+                                        `}>
+                                        <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+                                        {isWishlisted ? 'SAVED TO WISHLIST' : 'ADD TO WISHLIST'}
                                     </button>
                                 </div>
                             </div>
@@ -287,14 +540,14 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                             </section>
 
                             {/* Specifications */}
-                            {dynamicAttributes.length > 0 && (
+                            {finalSpecifications.length > 0 && (
                                 <section className="bg-white rounded-xl border border-gray-100 p-5">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Specifications</h3>
                                     <div className="space-y-3">
-                                        {dynamicAttributes.map((attr, idx) => (
+                                        {finalSpecifications.map((attr, idx) => (
                                             <div key={idx} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 border-b last:border-b-0 pb-2">
-                                                <span className="sm:w-1/3 text-sm font-medium text-gray-700">{attr.attributeName || attr.key}</span>
-                                                <span className="sm:w-2/3 text-sm text-gray-600">{attr.attributeValue || attr.value}</span>
+                                                <span className="sm:w-1/3 text-sm font-medium text-gray-700">{attr.label}</span>
+                                                <span className="sm:w-2/3 text-sm text-gray-600">{attr.value}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -331,10 +584,10 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                                                     </li>
                                                 ))}
                                             </ul>
-                                            {weight && (
+                                            {displayWeight && (
                                                 <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-blue-50 border border-blue-100">
                                                     <span className="font-semibold text-blue-700">Estimated Weight</span>
-                                                    <span className="text-blue-900">{weight}</span>
+                                                    <span className="text-blue-900">{displayWeight}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -418,7 +671,7 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
         }
       `}</style>
                 </div>
-            </Container>
+            </Container >
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                 <RequestInfo
                     product={product}
@@ -427,7 +680,7 @@ const ProductDetailView = ({ product, categories = [], childCategories = [] }) =
                     isModal={true}
                 />
             </Modal>
-        </section>
+        </section >
     )
 }
 

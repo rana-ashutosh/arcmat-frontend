@@ -2,8 +2,6 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import Header from "@/components/layouts/Header";
-import Footer from "@/components/layouts/Footer";
 import Container from "@/components/ui/Container";
 import BackLink from "@/components/ui/BackLink";
 import Button from "@/components/ui/Button";
@@ -95,7 +93,6 @@ const Blob = ({ className }) => (
 export default function AboutPage() {
     return (
         <>
-            <Header />
             <main className="bg-white overflow-hidden text-[#373a40]">
 
                 {/* HERO SECTION */}
@@ -447,7 +444,6 @@ export default function AboutPage() {
                 </section>
 
             </main>
-            <Footer />
         </>
     );
 }

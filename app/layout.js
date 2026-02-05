@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
         <React.Suspense fallback={null}>
           <ClientProviders>
             <MobileMenu />
-            <Toaster position="top-right" richColors closeButton />
+            <Toaster position="bottom-right" theme="light"  closeButton />
             {children}
           </ClientProviders>
         </React.Suspense>

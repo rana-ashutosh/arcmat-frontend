@@ -62,7 +62,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-[40px] flex-col flex gap-3">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 flex-col flex gap-3">
 
           <div className="relative">
             <input
@@ -70,7 +70,7 @@ export default function LoginForm() {
               type="email"
               placeholder="Business Email"
               className={clsx(
-                "w-full h-[49px] rounded-[8px] border px-4 text-[15.75px] text-[#4D4E58] placeholder-[#86868B] focus:outline-none focus:border-[#E09A74] transition-all",
+                "w-full py-3 rounded-[8px] border px-4 text-[15.75px] text-[#4D4E58] placeholder-[#86868B] focus:outline-none focus:border-[#E09A74] transition-all",
                 errors.email ? "border-red-500" : "border-[#E5E5E5]"
               )}
             />
@@ -83,7 +83,7 @@ export default function LoginForm() {
               type={showPassword ? "text" : "password"}
               placeholder="Password"
               className={clsx(
-                "w-full h-[49px] rounded-[8px] border px-4 text-[15.75px] text-[#4D4E58] placeholder-[#86868B] focus:outline-none focus:border-[#E09A74] transition-all",
+                "w-full py-3 rounded-[8px] border px-4 text-[15.75px] text-[#4D4E58] placeholder-[#86868B] focus:outline-none focus:border-[#E09A74] transition-all",
                 errors.password ? "border-red-500" : "border-[#E5E5E5]"
               )}
             />
@@ -106,16 +106,13 @@ export default function LoginForm() {
             {errors.password && <span className="text-red-500 text-sm mt-1 absolute -bottom-6 left-0">{errors.password.message}</span>}
           </div>
 
-          <div className="space-y-4 pt-2">
+          <div className=" pt-2">
             <p className="text-[12px] text-[#4D4E58]">
               By Clicking "Sign In", You Agree to <Link href="/terms" className="text-black underline">Our Terms of Use</Link> and <Link href="/privacy" className="text-black underline">Privacy Notice</Link>
             </p>
-
-            <div className="flex items-center gap-1 text-[15.6px] text-[#4D4E58]">
-            </div>
           </div>
 
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end ">
             <Link
               href="/forgot-password"
               className="text-sm font-medium text-[#d9a88a] hover:text-[#c99775] transition-colors"

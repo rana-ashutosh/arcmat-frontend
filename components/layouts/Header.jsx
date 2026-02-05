@@ -9,8 +9,9 @@ import { useAuth } from '@/hooks/useAuth';
 import Cookies from 'js-cookie';
 import { LogOut, User, ChevronDown, Heart, Folder, ShoppingCart, LayoutDashboard, Menu, Search, Camera, Loader2 } from 'lucide-react';
 import { useSidebarStore } from '@/store/useSidebarStore';
-import { useGetProducts } from '@/hooks/useProduct';
 import { getProductImageUrl } from '@/lib/productUtils';
+import { useGetProducts } from '@/hooks/useProduct';
+import { useGetWishlist } from '@/hooks/useWishlist';
 
 const Header = ({ variant = 'default' }) => {
 
@@ -30,7 +31,6 @@ const Header = ({ variant = 'default' }) => {
         }, 500)
         return () => clearTimeout(timer)
     }, [searchText])
-
     const { data: searchResults, isLoading: isSearching } = useGetProducts({
         limit: 1000,
         enabled: !!debouncedSearch
@@ -76,6 +76,9 @@ const Header = ({ variant = 'default' }) => {
 
 
     const { user, isAuthenticated, logout, loading } = useAuth();
+    const { data: wishlistData } = useGetWishlist(isAuthenticated);
+    const wishlistCount = wishlistData?.data?.data?.length || 0;
+
     const handleChange = (e) => {
         setSearchText(e.target.value)
     }
@@ -177,7 +180,7 @@ const Header = ({ variant = 'default' }) => {
                                                         </h4>
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <span className="text-xs font-semibold text-[#e09a74]">
-                                                                ${product.price || product.selling_price}
+                                                                ₹{product.minPrice}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -215,9 +218,16 @@ const Header = ({ variant = 'default' }) => {
                     <div className='flex md:flex items-center sm:gap-4'>
                         {(!user || user.role !== 'vendor') && (
                             <>
-                                <button className='p-2 hover:bg-gray-50 rounded-full transition-colors'>
-                                    <Heart size={22} className="text-gray-600" />
-                                </button>
+                                <Link href="/wishlist">
+                                    <button className='p-2 hover:bg-gray-50 rounded-full transition-colors relative'>
+                                        <Heart size={22} className="text-gray-600" />
+                                        {wishlistCount > 0 && (
+                                            <span className="absolute top-1 right-1 bg-[#e09a74] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                                                {wishlistCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                </Link>
                                 <button className='p-2 hover:bg-gray-50 rounded-full transition-colors hidden lg:block'>
                                     <Folder size={22} className="text-gray-600" />
                                 </button>

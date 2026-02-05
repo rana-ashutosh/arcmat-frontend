@@ -11,6 +11,12 @@ export const PRODUCT_KEYS = {
     detail: (id) => [...PRODUCT_KEYS.details(), id],
 };
 
+export const VARIANT_KEYS = {
+    all: ['variants'],
+    lists: () => [...VARIANT_KEYS.all, 'list'],
+    list: (filters) => [...VARIANT_KEYS.lists(), { ...filters }],
+};
+
 // Hook to fetch products
 export const useGetProducts = ({ userId, page, limit, enabled = true, ...otherFilters } = {}) => {
     return useQuery({
@@ -29,6 +35,15 @@ export const useGetProducts = ({ userId, page, limit, enabled = true, ...otherFi
             ...otherFilters
         }),
         enabled: enabled,
+    });
+};
+
+// Hook to fetch variants (variant-centric)
+export const useGetVariants = (filters = {}) => {
+    return useQuery({
+        queryKey: VARIANT_KEYS.list(filters),
+        queryFn: () => productService.getAllVariants(filters),
+        enabled: filters.enabled !== false,
     });
 };
 

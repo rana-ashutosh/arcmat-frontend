@@ -4,8 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
-import Header from "@/components/layouts/Header";
-import Footer from "@/components/layouts/Footer";
 import Container from '@/components/ui/Container';
 import Button from '@/components/ui/Button';
 import BackLink from '@/components/ui/BackLink';
@@ -41,7 +39,6 @@ export default function ContactUsPage() {
 
     return (
         <>
-            <Header />
             <main className="py-8 bg-white">
                 <Container>
                     <div >
@@ -186,7 +183,6 @@ export default function ContactUsPage() {
                     </div>
                 </Container>
             </main>
-            <Footer />
         </>
     );
 }

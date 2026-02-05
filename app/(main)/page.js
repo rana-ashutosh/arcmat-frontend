@@ -1,19 +1,14 @@
-import Header from "@/components/layouts/Header";
-import Navbar from "@/components/navbar/navbar";
 import HeroSection from "@/components/sections/HeroSection";
 import CategoryCarousel from '@/components/sections/CategoryCarousel';
 import BentoGrid from "@/components/layouts/BentoGrid/BentoGrid";
 import WeeklySelections from "@/components/layouts/WeeklySelections/WeeklySelections";
 import InspirationGallery from "@/components/layouts/InspirationGallery/InspirationGallery";
 import LeadingBrands from "@/components/sections/LeadingBrands";
-import Footer from "@/components/layouts/Footer";
 import Container from "@/components/ui/Container";
 
 export default function Page() {
   return (
     <>
-      <Header />
-      <Navbar />
       <HeroSection />
       <div className="w-full py-14 bg-white">
         <Container>
@@ -36,7 +31,6 @@ export default function Page() {
         <InspirationGallery />
         <LeadingBrands />
       </div>
-      <Footer />
     </>
   )
 }

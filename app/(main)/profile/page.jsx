@@ -1,7 +1,5 @@
 "use client";
 import React, { useState } from 'react';
-import Header from '@/components/layouts/Header';
-import Footer from '@/components/layouts/Footer';
 import Container from '@/components/ui/Container';
 import { useAuth } from '@/hooks/useAuth';
 import Sidebar from '@/components/dashboard/sidebar/Sidebar';
@@ -26,7 +24,6 @@ const ProfilePage = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-white">
-            <Header variant="dashboard" />
             <div className="flex flex-1">
                 <Sidebar />
                 <main className="flex-1 overflow-y-auto bg-gray-50 py-10">

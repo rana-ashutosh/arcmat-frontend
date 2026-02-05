@@ -7,6 +7,12 @@ export const productService = {
         return response.data;
     },
 
+    // Get all variants (variant-centric listing)
+    getAllVariants: async (params) => {
+        const response = await api.get('/variant', { params });
+        return response.data;
+    },
+
     // Get single product by ID
     getProductById: async (id) => {
         const response = await api.get(`/product/${id}`);
@@ -14,19 +20,34 @@ export const productService = {
     },
 
     // Create a new product
-    // Payload should be FormData due to file uploads
+    // Payload should be FormData if there are file uploads, otherwise standard JSON
     createProduct: async (productData) => {
         let payload = productData;
         let config = {};
 
-        if (!(productData instanceof FormData)) {
+        const containsFiles = (data) => {
+            if (data instanceof FormData) return true;
+            return Object.values(data).some(value =>
+                value instanceof File ||
+                value instanceof Blob ||
+                (Array.isArray(value) && value.some(v => v instanceof File || v instanceof Blob))
+            );
+        };
+
+        if (containsFiles(productData) && !(productData instanceof FormData)) {
             const formData = new FormData();
             Object.keys(productData).forEach(key => {
                 const value = productData[key];
                 if (value !== undefined) {
                     if (Array.isArray(value)) {
-                        value.forEach(v => formData.append(key, v));
-                    } else if (typeof value === 'object' && value !== null) {
+                        value.forEach(v => {
+                            if (v instanceof File || v instanceof Blob) {
+                                formData.append(key, v);
+                            } else {
+                                formData.append(key, v);
+                            }
+                        });
+                    } else if (typeof value === 'object' && value !== null && !(value instanceof File) && !(value instanceof Blob)) {
                         formData.append(key, JSON.stringify(value));
                     } else {
                         formData.append(key, value);
@@ -35,7 +56,7 @@ export const productService = {
             });
             payload = formData;
             config.headers = { 'Content-Type': 'multipart/form-data' };
-        } else {
+        } else if (productData instanceof FormData) {
             config.headers = { 'Content-Type': 'multipart/form-data' };
         }
 
@@ -48,14 +69,23 @@ export const productService = {
         let payload = productData;
         let config = {};
 
-        if (!(productData instanceof FormData)) {
+        const containsFiles = (data) => {
+            if (data instanceof FormData) return true;
+            return Object.values(data).some(value =>
+                value instanceof File ||
+                value instanceof Blob ||
+                (Array.isArray(value) && value.some(v => v instanceof File || v instanceof Blob))
+            );
+        };
+
+        if (containsFiles(productData) && !(productData instanceof FormData)) {
             const formData = new FormData();
             Object.keys(productData).forEach(key => {
                 const value = productData[key];
                 if (value !== undefined) {
                     if (Array.isArray(value)) {
                         value.forEach(v => formData.append(key, v));
-                    } else if (typeof value === 'object' && value !== null) {
+                    } else if (typeof value === 'object' && value !== null && !(value instanceof File) && !(value instanceof Blob)) {
                         formData.append(key, JSON.stringify(value));
                     } else {
                         formData.append(key, value);
@@ -64,7 +94,7 @@ export const productService = {
             });
             payload = formData;
             config.headers = { 'Content-Type': 'multipart/form-data' };
-        } else {
+        } else if (productData instanceof FormData) {
             config.headers = { 'Content-Type': 'multipart/form-data' };
         }
 

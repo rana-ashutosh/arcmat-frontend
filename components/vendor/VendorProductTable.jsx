@@ -104,8 +104,6 @@ export default function VendorProductTable({ products = [] }) {
               const images = product.product_images || product.images || [];
               const name = product.product_name || product.name;
               const description = product.sort_description || product.description;
-              const price = product.selling_price ?? product.price;
-              const stock = product.stock ?? product.stockQuantity;
               const isActive = product.status === 1 || product.status === 'Active' || product.isActive === true;
               const status = product.status ?? (isActive ? 'Active' : 'Inactive');
 

@@ -27,11 +27,39 @@ const bannerService = {
 
     // Update an existing banner
     updateBanner: async (id, bannerData) => {
-        const config = {};
-        if (bannerData instanceof FormData) {
+        let payload = bannerData;
+        let config = {};
+
+        const containsFiles = (data) => {
+            if (data instanceof FormData) return true;
+            return Object.values(data).some(value =>
+                value instanceof File ||
+                value instanceof Blob ||
+                (Array.isArray(value) && value.some(v => v instanceof File || v instanceof Blob))
+            );
+        };
+
+        if (containsFiles(bannerData) && !(bannerData instanceof FormData)) {
+            const formData = new FormData();
+            Object.keys(bannerData).forEach(key => {
+                const value = bannerData[key];
+                if (value !== undefined) {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => formData.append(key, v));
+                    } else if (typeof value === 'object' && value !== null && !(value instanceof File) && !(value instanceof Blob)) {
+                        formData.append(key, JSON.stringify(value));
+                    } else {
+                        formData.append(key, value);
+                    }
+                }
+            });
+            payload = formData;
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        } else if (bannerData instanceof FormData) {
             config.headers = { 'Content-Type': 'multipart/form-data' };
         }
-        const response = await api.patch(`/banner/${id}`, bannerData, config);
+
+        const response = await api.patch(`/banner/${id}`, payload, config);
         return response.data;
     },
 

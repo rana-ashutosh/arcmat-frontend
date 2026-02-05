@@ -15,22 +15,77 @@ export const variantService = {
 
     // Create variant
     createVariant: async (variantData) => {
-        // Note: This expects FormData if images are included
-        const response = await api.post('/variant', variantData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        let payload = variantData;
+        let config = {};
+
+        const containsFiles = (data) => {
+            if (data instanceof FormData) return true;
+            return Object.values(data).some(value =>
+                value instanceof File ||
+                value instanceof Blob ||
+                (Array.isArray(value) && value.some(v => v instanceof File || v instanceof Blob))
+            );
+        };
+
+        if (containsFiles(variantData) && !(variantData instanceof FormData)) {
+            const formData = new FormData();
+            Object.keys(variantData).forEach(key => {
+                const value = variantData[key];
+                if (value !== undefined) {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => formData.append(key, v));
+                    } else if (typeof value === 'object' && value !== null && !(value instanceof File) && !(value instanceof Blob)) {
+                        formData.append(key, JSON.stringify(value));
+                    } else {
+                        formData.append(key, value);
+                    }
+                }
+            });
+            payload = formData;
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        } else if (variantData instanceof FormData) {
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        }
+
+        const response = await api.post('/variant', payload, config);
         return response.data;
     },
 
     // Update variant
     updateVariant: async (id, variantData) => {
-        const response = await api.patch(`/variant/${id}`, variantData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        let payload = variantData;
+        let config = {};
+
+        const containsFiles = (data) => {
+            if (data instanceof FormData) return true;
+            return Object.values(data).some(value =>
+                value instanceof File ||
+                value instanceof Blob ||
+                (Array.isArray(value) && value.some(v => v instanceof File || v instanceof Blob))
+            );
+        };
+
+        if (containsFiles(variantData) && !(variantData instanceof FormData)) {
+            const formData = new FormData();
+            Object.keys(variantData).forEach(key => {
+                const value = variantData[key];
+                if (value !== undefined) {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => formData.append(key, v));
+                    } else if (typeof value === 'object' && value !== null && !(value instanceof File) && !(value instanceof Blob)) {
+                        formData.append(key, JSON.stringify(value));
+                    } else {
+                        formData.append(key, value);
+                    }
+                }
+            });
+            payload = formData;
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        } else if (variantData instanceof FormData) {
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        }
+
+        const response = await api.patch(`/variant/${id}`, payload, config);
         return response.data;
     },
 
