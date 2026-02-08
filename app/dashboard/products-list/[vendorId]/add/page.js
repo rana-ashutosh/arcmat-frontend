@@ -11,6 +11,7 @@ import Container from '@/components/ui/Container';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
+import RoleGuard from '@/components/auth/RoleGaurd';
 
 export default function AddProductPage() {
     const router = useRouter();
@@ -48,54 +49,56 @@ export default function AddProductPage() {
     };
 
     return (
-        <Container className="py-8 max-w-5xl mx-auto">
-            {/* Progress Header */}
-            <div className="flex items-center justify-between mb-12">
-                <div className="flex items-center gap-4">
-                    <Link href={`/dashboard/products-list/${effectiveVendorId}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            {createdProductId ? 'Add Variant Details' : 'Add New Product'}
-                        </h1>
-                        <p className="text-sm text-gray-500">
-                            {createdProductId
-                                ? `Created: ${createdProductData?.product_name || 'Base Product'}`
-                                : 'Step 1: Provide basic product information.'}
-                        </p>
+        <RoleGuard allowedRoles={['admin', 'vendor']}>
+            <Container className="py-8 max-w-5xl mx-auto">
+                {/* Progress Header */}
+                <div className="flex items-center justify-between mb-12">
+                    <div className="flex items-center gap-4">
+                        <Link href={`/dashboard/products-list/${effectiveVendorId}`} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                {createdProductId ? 'Add Variant Details' : 'Add New Product'}
+                            </h1>
+                            <p className="text-sm text-gray-500">
+                                {createdProductId
+                                    ? `Created: ${createdProductData?.product_name || 'Base Product'}`
+                                    : 'Step 1: Provide basic product information.'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Step Indicators */}
+                    <div className="flex items-center gap-2">
+                        <div className={clsx("flex items-center justify-center w-8 h-8 rounded-full font-bold transition-all",
+                            createdProductId ? "bg-green-100 text-green-600" : "bg-[#e09a74] text-white shadow-lg shadow-orange-100")}>
+                            {createdProductId ? <CheckCircle2 className="w-5 h-5" /> : '1'}
+                        </div>
+                        <div className="w-8 h-0.5 bg-gray-200"></div>
+                        <div className={clsx("flex items-center justify-center w-8 h-8 rounded-full font-bold transition-all",
+                            createdProductId ? "bg-[#e09a74] text-white shadow-lg shadow-orange-100" : "bg-gray-100 text-gray-400")}>
+                            2
+                        </div>
                     </div>
                 </div>
 
-                {/* Step Indicators */}
-                <div className="flex items-center gap-2">
-                    <div className={clsx("flex items-center justify-center w-8 h-8 rounded-full font-bold transition-all",
-                        createdProductId ? "bg-green-100 text-green-600" : "bg-[#e09a74] text-white shadow-lg shadow-orange-100")}>
-                        {createdProductId ? <CheckCircle2 className="w-5 h-5" /> : '1'}
+                {/* Conditional wizard content */}
+                {!createdProductId ? (
+                    <div className="animate-in fade-in slide-in-from-left-4 duration-500">
+                        <ProductForm
+                            onSubmit={handleCreateProduct}
+                            isSubmitting={createProductMutation.isPending}
+                        />
                     </div>
-                    <div className="w-8 h-0.5 bg-gray-200"></div>
-                    <div className={clsx("flex items-center justify-center w-8 h-8 rounded-full font-bold transition-all",
-                        createdProductId ? "bg-[#e09a74] text-white shadow-lg shadow-orange-100" : "bg-gray-100 text-gray-400")}>
-                        2
-                    </div>
-                </div>
-            </div>
-
-            {/* Conditional wizard content */}
-            {!createdProductId ? (
-                <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-                    <ProductForm
-                        onSubmit={handleCreateProduct}
-                        isSubmitting={createProductMutation.isPending}
+                ) : (
+                    <VariantForm
+                        productId={createdProductId}
+                        vendorId={effectiveVendorId}
+                        onComplete={handleVariantComplete}
                     />
-                </div>
-            ) : (
-                <VariantForm
-                    productId={createdProductId}
-                    vendorId={effectiveVendorId}
-                    onComplete={handleVariantComplete}
-                />
-            )}
-        </Container>
+                )}
+            </Container>
+        </RoleGuard>
     );
 }

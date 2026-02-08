@@ -8,6 +8,7 @@ import ChangePasswordCard from '@/components/profile/ChangePasswordCard';
 import BusinessProfileTab from '@/components/profile/BusinessProfileTab';
 import { User, Building2, Lock, MapPin } from 'lucide-react';
 import AddressList from '@/components/profile/AddressList';
+import Footer from '@/components/layouts/Footer';
 
 const ProfilePage = () => {
     const { user } = useAuth();

@@ -67,7 +67,7 @@
             "id": "wishlist",
             "label": "Wishlist",
             "icon": "Heart",
-            "href": "/dashboard/wishlist"
+            "href": "/wishlist"
         },
         {
             "id": "help",
