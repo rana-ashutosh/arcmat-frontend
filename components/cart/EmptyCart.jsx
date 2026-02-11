@@ -14,10 +14,9 @@ export default function EmptyCart() {
                 </p>
                 <Button
                     href="/productlist"
-                    className="bg-black text-white px-8 py-4 hover:bg-gray-800 font-semibold"
-                >
-                    Continue Shopping
-                </Button>
+                    text="Continue Shopping"
+                    className="bg-black !text-white px-10 py-4 hover:bg-black/90 font-bold transition-all shadow-lg hover:shadow-black/20"
+                />
             </div>
         </div>
     );

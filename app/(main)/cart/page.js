@@ -1,66 +1,86 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import Container from "@/components/ui/Container";
 import BackLink from "@/components/ui/BackLink";
 import EmptyCart from "@/components/cart/EmptyCart";
 import CartItem from "@/components/cart/CartItem";
 import OrderSummary from "@/components/cart/OrderSummary";
+import { useAuth } from "@/hooks/useAuth";
+import { useCartStore } from "@/store/useCartStore";
+import { useGetCart, useUpdateCartQuantity, useRemoveFromCart } from "@/hooks/useCart";
+import { useMemo } from "react";
 
 export default function CartPage() {
-    const [cartItems, setCartItems] = useState([
-        {
-            id: 1,
-            name: "Modern Minimalist Chair",
-            price: 299.99,
-            quantity: 1,
-            image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400&h=400&fit=crop",
-            color: "Charcoal Gray",
-            size: "Standard"
-        },
-        {
-            id: 2,
-            name: "Scandinavian Oak Table",
-            price: 799.99,
-            quantity: 1,
-            image: "https://images.unsplash.com/photo-1533090368676-1fd25485db88?w=400&h=400&fit=crop",
-            color: "Natural Oak",
-            size: "Large"
-        },
-        {
-            id: 3,
-            name: "Velvet Accent Sofa",
-            price: 1299.99,
-            quantity: 2,
-            image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-            color: "Navy Blue",
-            size: "3-Seater"
+    const { isAuthenticated } = useAuth();
+    const { data: backendCart, isLoading: isBackendLoading } = useGetCart(isAuthenticated);
+    const localCart = useCartStore(state => state.cart);
+    const { mutate: updateBackendQty } = useUpdateCartQuantity();
+    const { mutate: removeBackendItem } = useRemoveFromCart();
+
+    const removeItem = useCartStore(state => state.removeItem);
+    const updateQuantity = useCartStore(state => state.updateQuantity);
+
+    const items = useMemo(() => {
+        if (isAuthenticated) {
+            return backendCart?.data || [];
         }
-    ]);
+        return localCart;
+    }, [isAuthenticated, backendCart, localCart]);
 
-    const updateQuantity = (id, newQuantity) => {
+    const cartTotals = useMemo(() => {
+        if (isAuthenticated && backendCart) {
+            return {
+                subtotal: backendCart.total_Amount_with_discount_subtotal || 0,
+                shipping: backendCart.shipping_charges || 0,
+                total: backendCart.total_Amount_with_discount || 0,
+                discount: backendCart.totalDiscount || 0
+            };
+        }
+
+        const subtotal = localCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const shipping = subtotal > 1000 ? 0 : (subtotal * 0.15); // Consistent with backend 15%
+        const total = subtotal + shipping;
+
+        return {
+            subtotal,
+            shipping,
+            total,
+            discount: localCart.reduce((sum, item) => sum + ((item.mrp - item.price) * item.quantity), 0)
+        };
+    }, [isAuthenticated, backendCart, localCart]);
+
+    const handleUpdateQuantity = (id, newQuantity) => {
         if (newQuantity < 1) return;
-        setCartItems(cartItems.map(item =>
-            item.id === id ? { ...item, quantity: newQuantity } : item
-        ));
+        if (isAuthenticated) {
+            updateBackendQty({ cart_id: id, product_qty: newQuantity });
+        } else {
+            updateQuantity(id, newQuantity);
+        }
     };
 
-    const removeItem = (id) => {
-        setCartItems(cartItems.filter(item => item.id !== id));
+    const handleRemoveItem = (id) => {
+        if (isAuthenticated) {
+            removeBackendItem(id);
+        } else {
+            removeItem(id);
+        }
     };
 
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping = subtotal > 1000 ? 0 : 49.99;
-    const tax = subtotal * 0.1;
-    const total = subtotal + shipping + tax;
+    if (isBackendLoading) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+        );
+    }
 
-    if (cartItems.length === 0) {
+    if (items.length === 0) {
         return <EmptyCart />;
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 py-6 sm:py-12">
+        <div className="min-h-screen bg-linear-to-b from-white to-gray-50 py-6 sm:py-12">
             <Container>
                 {/* Header */}
                 <div className="mb-6 sm:mb-8">
@@ -70,18 +90,19 @@ export default function CartPage() {
                         className="mb-3 sm:mb-4"
                     />
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900">Shopping Cart</h1>
-                    <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">{cartItems.length} items in your cart</p>
+                    <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">{items.length} items in your cart</p>
                 </div>
 
                 <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
                     {/* Cart Items */}
                     <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-                        {cartItems.map((item) => (
+                        {items.map((item) => (
                             <CartItem
-                                key={item.id}
+                                key={isAuthenticated ? item._id : item.cartItemId}
                                 item={item}
-                                onUpdateQuantity={updateQuantity}
-                                onRemove={removeItem}
+                                isAuth={isAuthenticated}
+                                onUpdateQuantity={handleUpdateQuantity}
+                                onRemove={handleRemoveItem}
                             />
                         ))}
                     </div>
@@ -89,10 +110,10 @@ export default function CartPage() {
                     {/* Order Summary */}
                     <div className="lg:col-span-1">
                         <OrderSummary
-                            subtotal={subtotal}
-                            shipping={shipping}
-                            tax={tax}
-                            total={total}
+                            subtotal={cartTotals.subtotal}
+                            shipping={cartTotals.shipping}
+                            total={cartTotals.total}
+                            discount={cartTotals.discount}
                         />
                     </div>
                 </div>

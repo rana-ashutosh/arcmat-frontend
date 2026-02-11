@@ -1,9 +1,8 @@
-"use client";
-
 import Button from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
+import { formatCurrency } from "@/lib/productUtils";
 
-export default function OrderSummary({ subtotal, shipping, tax, total }) {
+export default function OrderSummary({ subtotal, shipping, total, discount }) {
     const handleApplyPromo = (e) => {
         e.preventDefault();
         const promoInput = document.getElementById('promo');
@@ -16,16 +15,15 @@ export default function OrderSummary({ subtotal, shipping, tax, total }) {
 
         // Simulate promo code validation
         if (promoCode.toLowerCase() === "save10") {
-            toast.success("Promo code applied successfully!", "10% discount added");
+            toast.success("Promo code applied successfully!");
             promoInput.value = "";
         } else {
-            toast.error("Invalid promo code", "Please check and try again");
+            toast.error("Invalid promo code");
         }
     };
 
     const handleCheckout = () => {
-        toast.info("Redirecting to checkout...", "Please wait");
-        // Add checkout logic here
+        toast.info("Proceeding to checkout...");
     };
 
     return (
@@ -35,26 +33,28 @@ export default function OrderSummary({ subtotal, shipping, tax, total }) {
             <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                 <div className="flex justify-between text-sm sm:text-base text-gray-600">
                     <span>Subtotal</span>
-                    <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                    <span className="font-semibold">{formatCurrency(subtotal)}</span>
                 </div>
+                {discount > 0 && (
+                    <div className="flex justify-between text-sm sm:text-base text-green-600">
+                        <span>Discount</span>
+                        <span className="font-semibold">-{formatCurrency(discount)}</span>
+                    </div>
+                )}
                 <div className="flex justify-between text-sm sm:text-base text-gray-600">
                     <span>Shipping</span>
                     <span className="font-semibold">
                         {shipping === 0 ? (
                             <span className="text-green-600">FREE</span>
                         ) : (
-                            `$${shipping.toFixed(2)}`
+                            formatCurrency(shipping)
                         )}
                     </span>
-                </div>
-                <div className="flex justify-between text-sm sm:text-base text-gray-600">
-                    <span>Tax (10%)</span>
-                    <span className="font-semibold">${tax.toFixed(2)}</span>
                 </div>
 
                 {shipping > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-blue-800">
-                        <p className="font-medium">💡 Tip: Spend ${(1000 - subtotal).toFixed(2)} more for FREE shipping!</p>
+                        <p className="font-medium">💡 Tip: Spend {formatCurrency(1000 - subtotal)} more for FREE shipping!</p>
                     </div>
                 )}
 
@@ -62,7 +62,7 @@ export default function OrderSummary({ subtotal, shipping, tax, total }) {
                     <div className="flex justify-between items-center">
                         <span className="text-base sm:text-lg font-bold text-gray-900">Total</span>
                         <span className="text-2xl sm:text-3xl font-bold text-gray-900">
-                            ${total.toFixed(2)}
+                            {formatCurrency(total)}
                         </span>
                     </div>
                 </div>
@@ -73,26 +73,25 @@ export default function OrderSummary({ subtotal, shipping, tax, total }) {
                 <label htmlFor="promo" className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                     Promo Code
                 </label>
-                <div className="flex gap-2 flex-col">
+                <div className="flex gap-2">
                     <input
                         type="text"
                         id="promo"
                         placeholder="Enter code"
-                        className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        className="flex-1 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     />
                     <Button
                         type="submit"
-                        className="px-4 sm:px-6 py-2 bg-gray-100 hover:bg-gray-200 text-sm sm:text-base font-medium"
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-sm font-medium"
                     >
                         Apply
                     </Button>
                 </div>
             </form>
 
-            {/* Checkout Button */}
             <Button
                 onClick={handleCheckout}
-                className="w-full bg-black text-white py-3 sm:py-4 mb-2 sm:mb-3 text-sm sm:text-base font-semibold hover:bg-gray-800"
+                className="w-full bg-black text-white py-3 sm:py-4 mb-3 text-sm sm:text-base font-semibold hover:bg-gray-800"
             >
                 Proceed to Checkout
             </Button>
@@ -121,7 +120,7 @@ export default function OrderSummary({ subtotal, shipping, tax, total }) {
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Free Shipping Over $1000</span>
+                    <span>Free Shipping Over {formatCurrency(1000)}</span>
                 </div>
             </div>
         </div>

@@ -2,11 +2,19 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useVendorStore } from '@/store/useVendorStore';
+import { useCartStore } from '@/store/useCartStore';
+import { toast } from '@/components/ui/Toast';
+import { useAuth } from '@/hooks/useAuth';
+import { useAddToCart } from '@/hooks/useCart';
+import { ShoppingCart, Check, Heart } from 'lucide-react';
 
 export default function ProductCard({ product }) {
+  const { isAuthenticated } = useAuth();
+  const { mutate: addToCartBackend } = useAddToCart();
   const { getVendorById } = useVendorStore();
   const vendor = getVendorById(product.vendorId);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
 
   const discount = product.mrp > product.price
     ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
@@ -23,7 +31,7 @@ export default function ProductCard({ product }) {
               alt={product.name}
               fill
               className="object-cover group-hover:scale-110 transition-transform duration-500"
-              // unoptimized
+            // unoptimized
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -89,14 +97,31 @@ export default function ProductCard({ product }) {
         <button
           onClick={(e) => {
             e.preventDefault();
-            // Add to cart logic
+            if (isAuthenticated) {
+              addToCartBackend({
+                product_name: product.name,
+                product_id: product._id,
+                product_qty: 1,
+                item_or_variant: 'item'
+              });
+            } else {
+              useCartStore.getState().addItem(product);
+              toast.success(`${product.name} added to cart!`);
+            }
+            setIsAdded(true);
+            setTimeout(() => setIsAdded(false), 2000);
           }}
-          className="w-full bg-white border-2 border-gray-200 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-[#d9a88a] hover:border-[#d9a88a] hover:text-white transition-all duration-300 flex items-center justify-center gap-2"
+          className={`w-full border-2 py-2.5 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isAdded
+            ? 'bg-green-600 border-green-600 text-white'
+            : 'bg-white border-gray-200 text-gray-700 hover:bg-[#d9a88a] hover:border-[#d9a88a] hover:text-white'
+            }`}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          Add to Cart
+          {isAdded ? (
+            <Check className="w-5 h-5" />
+          ) : (
+            <ShoppingCart className="w-5 h-5" />
+          )}
+          {isAdded ? 'Added!' : 'Add to Cart'}
         </button>
       </div>
     </div>

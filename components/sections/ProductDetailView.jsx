@@ -15,9 +15,11 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import 'swiper/css/thumbs'
 import 'swiper/css/free-mode'
-import { toast } from '../ui/Toast'
-import { getProductImageUrl, getVariantImageUrl, getColorCode, resolvePricing, calculateDiscount, getSpecifications, formatNumber } from '@/lib/productUtils'
-import { Heart } from 'lucide-react'
+import { ShoppingCart, Check, Heart } from 'lucide-react'
+import { useCartStore } from '@/store/useCartStore'
+import { useAddToCart } from '@/hooks/useCart'
+import { toast } from '@/components/ui/Toast';
+import { getProductImageUrl, getVariantImageUrl, getColorCode, resolvePricing, calculateDiscount, getSpecifications, formatNumber, formatCurrency } from '@/lib/productUtils'
 import { useAddToWishlist, useGetWishlist } from '@/hooks/useWishlist'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -27,6 +29,7 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
     const [isWishlisted, setIsWishlisted] = useState(false)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [activeRequest, setActiveRequest] = useState({})
+    const [quantity, setQuantity] = useState(1)
 
     const router = useRouter()
     const pathname = usePathname()
@@ -36,6 +39,8 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
 
     const { isAuthenticated } = useAuth()
     const { data: wishlistData } = useGetWishlist(isAuthenticated)
+    const { mutate: addToCartBackend } = useAddToCart();
+
 
     const isInWishlist = React.useMemo(() => {
         const wishlistItems = wishlistData?.data?.data || []
@@ -139,9 +144,22 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
 
     const handleAddToCart = () => {
         if (!isPurchasable) return
+
+        if (isAuthenticated) {
+            addToCartBackend({
+                product_name: product.product_name,
+                product_id: product._id,
+                product_qty: quantity,
+                product_variant_id: selectedVariant?._id || null,
+                item_or_variant: selectedVariant ? 'variant' : 'item'
+            });
+        } else {
+            useCartStore.getState().addItem(product, quantity, selectedVariant);
+            toast.success("Item added to cart")
+        }
+
         setIsAdded(true)
         setTimeout(() => setIsAdded(false), 2000)
-        toast.success("Item added to cart")
     }
 
     const { mutate: addToWishlist } = useAddToWishlist()
@@ -477,7 +495,8 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                         <Button
                                             text={isAdded ? "ADDED TO CART" : "ADD TO CART"}
                                             onClick={handleAddToCart}
-                                            className={`w-full ${isAdded ? "bg-green-600 text-white" : "bg-black text-white hover:bg-gray-800"} font-medium py-2.5 px-5 rounded-full text-sm transition-all flex items-center justify-center gap-2`}
+                                            className={`w-full ${isAdded ? "bg-green-600 text-white" : "bg-black text-white hover:bg-gray-800"} font-medium py-3 px-5 rounded-full text-sm transition-all flex items-center justify-center gap-2`}
+                                            icon={isAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
                                         />
                                     )}
 

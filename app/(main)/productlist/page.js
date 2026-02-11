@@ -66,7 +66,7 @@ export default function ProductListPage() {
                             <p className="text-gray-500 font-medium">Loading products...</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-x-4 gap-y-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4  gap-x-4 gap-y-8">
                             {displayedProducts.map((product, i) => (
                                 <ProductCard key={product._id || product.id || i} product={product} />
                             ))}

@@ -12,6 +12,8 @@ import { useSidebarStore } from '@/store/useSidebarStore';
 import { getProductImageUrl } from '@/lib/productUtils';
 import { useGetProducts } from '@/hooks/useProduct';
 import { useGetWishlist } from '@/hooks/useWishlist';
+import { useCartStore } from '@/store/useCartStore';
+import { useGetCartCount } from '@/hooks/useCart';
 
 const Header = ({ variant = 'default' }) => {
 
@@ -79,6 +81,10 @@ const Header = ({ variant = 'default' }) => {
     const { data: wishlistData } = useGetWishlist(isAuthenticated);
     const wishlistCount = wishlistData?.data?.data?.length || 0;
 
+    const { data: backendCartCount } = useGetCartCount(isAuthenticated);
+    const localCartCount = useCartStore(state => state.getTotalItems());
+    const cartCount = isAuthenticated ? (backendCartCount?.totalItems || 0) : localCartCount;
+
     const handleChange = (e) => {
         setSearchText(e.target.value)
     }
@@ -87,7 +93,7 @@ const Header = ({ variant = 'default' }) => {
     const mobileProfileRef = useRef(null);
 
     return (
-        <header className='w-full border-b border-gray-200 bg-white sticky top-0 z-[50]'>
+        <header className='w-full border-b border-gray-200 bg-white sticky top-0 z-50'>
             <Container className="h-16 flex items-center justify-between gap-4">
                 <div className='flex items-center gap-2'>
 
@@ -99,7 +105,7 @@ const Header = ({ variant = 'default' }) => {
                         <Menu className="w-6 h-6" />
                     </button>
 
-                    <div className='flex-shrink-0'>
+                    <div className='shrink-0'>
                         <Link href="/"
                             className='flex items-center gap-2'>
                             <Image
@@ -120,7 +126,7 @@ const Header = ({ variant = 'default' }) => {
                     <div className='hidden md:flex flex-1 max-w-2xl mx-4 relative'>
                         <div className="relative w-full group">
                             <div className="flex items-center w-full bg-gray-100/80 hover:bg-gray-100 transition-colors rounded-full px-4 h-11 border border-transparent focus-within:border-gray-300 focus-within:bg-white focus-within:shadow-sm">
-                                <div className="flex-shrink-0 mr-3 opacity-50">
+                                <div className='shrink-0 mr-3 opacity-50'>
                                     <Search size={18} />
                                 </div>
 
@@ -135,13 +141,13 @@ const Header = ({ variant = 'default' }) => {
 
                                 {isSearching && <Loader2 className="animate-spin text-gray-400 w-4 h-4 mr-2" />}
 
-                                <div className="flex-shrink-0 ml-3 cursor-pointer hover:opacity-80 transition-opacity">
+                                <div className='shrink-0 ml-3 cursor-pointer hover:opacity-80 transition-opacity'>
                                     <Camera size={22} className="opacity-60" />
                                 </div>
                             </div>
 
                             {showResults && debouncedSearch && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[101]">
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-101">
                                     {isSearching ? (
                                         <div className="p-4 text-center text-gray-500 text-sm">Searching...</div>
                                     ) : products.length > 0 ? (
@@ -157,9 +163,9 @@ const Header = ({ variant = 'default' }) => {
                                                         setShowResults(false);
                                                         setSearchText("");
                                                     }}
-                                                    className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-none block"
+                                                    className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-none"
                                                 >
-                                                    <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
+                                                    <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 relative">
                                                         {(product.images?.[0] || product.product_images?.[0]) ? (
                                                             <Image
                                                                 src={getProductImageUrl(product.images?.[0] || product.product_images?.[0])}
@@ -204,10 +210,10 @@ const Header = ({ variant = 'default' }) => {
                     </div>
                 )}
 
-                <div className="flex items-center gap-2 lg:gap-6 flex-shrink-0">
+                <div className="flex items-center gap-2 lg:gap-6 shrink-0">
                     {(!isDashboard || user?.role !== 'vendor') && (
                         <>
-                            <button className='p-2 hover:bg-gray-50 rounded-full transition-colors hidden sm:flex'>
+                            <button className='p-2 hover:bg-gray-50 rounded-full transition-colors hidden sm:flex shrink-0'>
                                 <Image src="/Icons/ai_icon.png" alt="AI Tools" width={28} height={28} />
                             </button>
 
@@ -219,11 +225,11 @@ const Header = ({ variant = 'default' }) => {
                         {(!user || user.role !== 'vendor') && (
                             <>
                                 <Link href="/wishlist">
-                                    <button className='p-2 hover:bg-gray-50 rounded-full transition-colors relative'>
-                                        <Heart size={22} className="text-gray-600" />
+                                    <button className='p-2 hover:bg-gray-50 rounded-full transition-colors relative group/wishlist'>
+                                        <Heart size={22} className="text-gray-600 group-hover/wishlist:text-[#e09a74] transition-colors" />
                                         {wishlistCount > 0 && (
-                                            <span className="absolute top-1 right-1 bg-[#e09a74] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-                                                {wishlistCount}
+                                            <span className="absolute -top-0.5 -right-0.5 bg-[#e09a74] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm transition-transform duration-300 scale-110">
+                                                {wishlistCount > 99 ? '99+' : wishlistCount}
                                             </span>
                                         )}
                                     </button>
@@ -235,8 +241,13 @@ const Header = ({ variant = 'default' }) => {
                         )}
                         {(!user || user.role !== 'vendor') && (
                             <Link href="/cart">
-                                <button className='p-2 hover:bg-gray-50 rounded-full transition-colors'>
-                                    <ShoppingCart size={22} className="text-gray-600" />
+                                <button className='p-2 hover:bg-gray-50 rounded-full transition-colors relative group/cart'>
+                                    <ShoppingCart size={22} className="text-gray-600 group-hover/cart:text-[#e09a74] transition-colors" />
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 bg-[#e09a74] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm transition-transform duration-300 scale-110">
+                                            {cartCount > 99 ? '99+' : cartCount}
+                                        </span>
+                                    )}
                                 </button>
                             </Link>
                         )}

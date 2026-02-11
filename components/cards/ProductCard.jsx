@@ -8,10 +8,13 @@ import { Pagination, Autoplay } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import { getProductImageUrl, getVariantImageUrl, getColorCode, resolvePricing, calculateDiscount } from '@/lib/productUtils'
-import { Heart } from 'lucide-react'
+import { Heart, ShoppingCart, Check } from 'lucide-react'
 import { useAddToWishlist, useGetWishlist } from '@/hooks/useWishlist'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
+import { useCartStore } from '@/store/useCartStore'
+import { useAddToCart } from '@/hooks/useCart'
+import { toast } from '@/components/ui/Toast'
 
 const ProductCard = ({ product }) => {
     const isVariantCentric = Boolean(product.productId && typeof product.productId === 'object');
@@ -74,7 +77,27 @@ const ProductCard = ({ product }) => {
         setIsWishlisted(isInWishlist);
     }, [isInWishlist]);
 
-    const handleAddToCart = () => {
+    const { mutate: addToCartBackend } = useAddToCart();
+
+    const handleAddToCart = (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        if (isAuthenticated) {
+            addToCartBackend({
+                product_name: name,
+                product_id: rootProduct?._id,
+                product_qty: 1,
+                product_variant_id: variantItem?._id || null,
+                item_or_variant: isVariantCentric ? 'variant' : 'item'
+            });
+        } else {
+            useCartStore.getState().addItem(rootProduct, 1, variantItem);
+            toast.success(`${name} added to cart!`);
+        }
+
         setIsAdded(true);
         setTimeout(() => setIsAdded(false), 2000);
     };
@@ -217,12 +240,16 @@ const ProductCard = ({ product }) => {
             <div className="px-3 flex gap-2">
                 <Button
                     onClick={handleAddToCart}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 shadow-sm transform active:scale-95 transition-all text-[11px] font-bold border ${isAdded
+                    className={`flex-1 h-9 flex items-center justify-center gap-1.5 rounded-lg border text-[11px] font-medium transition-all duration-300 ${isAdded
                         ? 'bg-green-600 border-green-600 text-white'
                         : 'bg-[#e09a74] border-[#e09a74] text-white hover:bg-white hover:text-[#e09a74]'
                         }`}
                 >
-                    {!isAdded && <Image src="/Icons/Add Shopping Cart.svg" width={14} height={14} alt="" />}
+                    {isAdded ? (
+                        <Check className="w-3.5 h-3.5" />
+                    ) : (
+                        <ShoppingCart className="w-3.5 h-3.5" />
+                    )}
                     <span>{isAdded ? 'Added!' : 'Add to Cart'}</span>
                 </Button>
 

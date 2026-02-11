@@ -1,24 +1,25 @@
 'use client';
 
 import { toast as sonnerToast } from 'sonner';
+import CustomToast from './CustomToast';
 
 export const toast = {
   success: (message, title) =>
-    sonnerToast.success(title || message, {
-      description: title ? message : undefined,
-    }),
+    sonnerToast.custom((t) => (
+      <CustomToast t={t} message={message} title={title} type="success" />
+    )),
   error: (message, title) =>
-    sonnerToast.error(title || message, {
-      description: title ? message : undefined,
-    }),
+    sonnerToast.custom((t) => (
+      <CustomToast t={t} message={message} title={title} type="error" />
+    )),
   warning: (message, title) =>
-    sonnerToast.warning(title || message, {
-      description: title ? message : undefined,
-    }),
+    sonnerToast.custom((t) => (
+      <CustomToast t={t} message={message} title={title} type="warning" />
+    )),
   info: (message, title) =>
-    sonnerToast.info(title || message, {
-      description: title ? message : undefined,
-    }),
+    sonnerToast.custom((t) => (
+      <CustomToast t={t} message={message} title={title} type="info" />
+    )),
   ...sonnerToast,
 };
 
