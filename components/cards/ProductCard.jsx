@@ -8,12 +8,12 @@ import { Pagination, Autoplay } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import { getProductImageUrl, getVariantImageUrl, getColorCode, resolvePricing, calculateDiscount } from '@/lib/productUtils'
-import { Heart, ShoppingCart, Check } from 'lucide-react'
+import { Heart, ShoppingCart, X } from 'lucide-react'
 import { useAddToWishlist, useGetWishlist } from '@/hooks/useWishlist'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/useCartStore'
-import { useAddToCart } from '@/hooks/useCart'
+import { useAddToCart, useGetCart, useRemoveFromCart } from '@/hooks/useCart'
 import { toast } from '@/components/ui/Toast'
 
 const ProductCard = ({ product }) => {
@@ -78,28 +78,57 @@ const ProductCard = ({ product }) => {
     }, [isInWishlist]);
 
     const { mutate: addToCartBackend } = useAddToCart();
+    const { mutate: removeFromCartBackend } = useRemoveFromCart();
+    const { data: cartData } = useGetCart(isAuthenticated);
 
-    const handleAddToCart = (e) => {
+    const guestCart = useCartStore(state => state.cart);
+    const cartItems = isAuthenticated ? (cartData?.data || []) : guestCart;
+
+    // Cart matching logic
+    const cartItemId = variantItem
+        ? `${rootProduct._id}-${variantItem._id}`
+        : rootProduct._id;
+
+    const cartItem = cartItems.find(item =>
+        isAuthenticated
+            ? (isVariantCentric
+                ? item.product_variant_id?._id === variantItem?._id
+                : item.product_id?._id === rootProduct?._id && !item.product_variant_id)
+            : item.cartItemId === cartItemId
+    );
+
+    const isInCart = Boolean(cartItem);
+
+    const handleCartToggle = (e) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
         }
 
-        if (isAuthenticated) {
-            addToCartBackend({
-                product_name: name,
-                product_id: rootProduct?._id,
-                product_qty: 1,
-                product_variant_id: variantItem?._id || null,
-                item_or_variant: isVariantCentric ? 'variant' : 'item'
-            });
+        if (isInCart) {
+            if (isAuthenticated) {
+                removeFromCartBackend(cartItem._id);
+            } else {
+                useCartStore.getState().removeItem(cartItemId);
+                toast.success(`${name} removed from cart`);
+            }
         } else {
-            useCartStore.getState().addItem(rootProduct, 1, variantItem);
-            toast.success(`${name} added to cart!`);
-        }
+            if (isAuthenticated) {
+                addToCartBackend({
+                    product_name: name,
+                    product_id: rootProduct?._id,
+                    product_qty: 1,
+                    product_variant_id: variantItem?._id || null,
+                    item_or_variant: isVariantCentric ? 'variant' : 'item'
+                });
+            } else {
+                useCartStore.getState().addItem(rootProduct, 1, variantItem);
+                toast.success(`${name} added to cart!`);
+            }
 
-        setIsAdded(true);
-        setTimeout(() => setIsAdded(false), 2000);
+            setIsAdded(true);
+            setTimeout(() => setIsAdded(false), 2000);
+        }
     };
 
     const handleWishlist = (e) => {
@@ -190,11 +219,7 @@ const ProductCard = ({ product }) => {
                 <div className="flex flex-col flex-1 px-3">
                     <h4 className="text-[13px] font-semibold text-gray-800 uppercase tracking-wider mb-0.5 group-hover:text-[#e09a74] transition-colors">{name}</h4>
                     <h3 className="text-[9px] font-semibold text-gray-400 leading-tight mb-1 ">
-                        {rootProduct.createdBy?.name ||
-                            (rootProduct.createdBy?.first_name ? `${rootProduct.createdBy.first_name} ${rootProduct.createdBy.last_name || ''}` : null) ||
-                            rootProduct.vendorName ||
-                            (typeof brand === 'object' ? (brand.name || brand.brand_name) : brand) ||
-                            'Unknown Vendor'}
+                        {(typeof brand === 'object' ? (brand.name || brand.brand_name) : brand) ||'Unknown Vendor'}
                     </h3>
 
                     {displayAttrs.length > 0 && (
@@ -239,18 +264,18 @@ const ProductCard = ({ product }) => {
 
             <div className="px-3 flex gap-2">
                 <Button
-                    onClick={handleAddToCart}
-                    className={`flex-1 h-9 flex items-center justify-center gap-1.5 rounded-lg border text-[11px] font-medium transition-all duration-300 ${isAdded
-                        ? 'bg-green-600 border-green-600 text-white'
+                    onClick={handleCartToggle}
+                    className={`flex-1 h-9 flex items-center justify-center gap-1.5 rounded-lg border text-[11px] font-medium transition-all duration-300 ${isInCart || isAdded
+                        ? 'bg-green-700 hover:border-red-600 text-white font-semibold hover:bg-white hover:text-red-600'
                         : 'bg-[#e09a74] border-[#e09a74] text-white hover:bg-white hover:text-[#e09a74]'
                         }`}
                 >
-                    {isAdded ? (
-                        <Check className="w-3.5 h-3.5" />
+                    {isInCart || isAdded ? (
+                        <X className="w-3.5 h-3.5" />
                     ) : (
                         <ShoppingCart className="w-3.5 h-3.5" />
                     )}
-                    <span>{isAdded ? 'Added!' : 'Add to Cart'}</span>
+                    <span>{isInCart || isAdded ? 'Remove from Cart' : 'Add to Cart'}</span>
                 </Button>
 
                 <button
