@@ -1,15 +1,49 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { navItems } from "./nav-data";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { navItems as staticNavItems } from "./nav-data";
 import { NavbarItem } from "./navbar-item";
 import { MegaMenu } from "./mega-menu";
 import Container from "@/components/ui/Container";
+import { useGetCategoryTree } from "@/hooks/useCategory";
+import { getCategoryImageUrl } from "@/lib/productUtils";
 
 const Navbar = () => {
+    const { data: categoryTree, isLoading } = useGetCategoryTree();
     const [activeItem, setActiveItem] = useState(null);
     const scrollContainerRef = useRef(null);
     const timeoutRef = useRef(null);
+
+    const navItems = useMemo(() => {
+        const categories = categoryTree?.data || categoryTree;
+        if (!categories || !Array.isArray(categories)) return staticNavItems;
+
+        const dynamicItems = categories.map(cat => {
+            const staticItem = staticNavItems.find(s => s.name?.toLowerCase() === cat.name?.toLowerCase());
+
+            return {
+                name: cat.name,
+                image: cat.image ? getCategoryImageUrl(cat.image) : (staticItem?.image || "/mega-Images/Furniture.jpg"),
+                isSpecial: staticItem?.isSpecial || false,
+                hasDropdown: cat.children && cat.children.length > 0,
+                categories: cat.children ? cat.children.map(subCat => {
+                    const l3Links = subCat.children ? subCat.children.map(c => c.name) : [];
+                    const columns = [];
+                    for (let i = 0; i < l3Links.length; i += 4) {
+                        columns.push(l3Links.slice(i, i + 4));
+                    }
+
+                    return {
+                        name: subCat.name,
+                        hasSubmenu: subCat.children && subCat.children.length > 0,
+                        links: columns
+                    };
+                }) : []
+            };
+        });
+
+        return dynamicItems.length > 0 ? dynamicItems : staticNavItems;
+    }, [categoryTree]);
 
     const handleMouseEnter = (itemName) => {
         if (timeoutRef.current) {
@@ -84,17 +118,23 @@ const Navbar = () => {
                             ref={scrollContainerRef}
                             className="flex-1 overflow-x-hidden"
                         >
-                            <ul className="flex items-center justify-between w-full ">
-                                {navItems.map((item, index) => (
-                                    <NavbarItem
-                                        key={item.name}
-                                        item={item}
-                                        isFirst={index === 0}
-                                        activeItem={activeItem}
-                                        onMouseEnter={handleMouseEnter}
-                                        onMouseLeave={handleMouseLeave}
-                                    />
-                                ))}
+                            <ul className="flex items-center justify-between w-full min-h-[44px]">
+                                {isLoading ? (
+                                    Array.from({ length: 8 }).map((_, i) => (
+                                        <li key={i} className="h-8 w-24 bg-gray-100 animate-pulse rounded-full"></li>
+                                    ))
+                                ) : (
+                                    navItems.map((item, index) => (
+                                        <NavbarItem
+                                            key={item.name}
+                                            item={item}
+                                            isFirst={index === 0}
+                                            activeItem={activeItem}
+                                            onMouseEnter={handleMouseEnter}
+                                            onMouseLeave={handleMouseLeave}
+                                        />
+                                    ))
+                                )}
                             </ul>
                         </div>
 

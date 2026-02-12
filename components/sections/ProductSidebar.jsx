@@ -1,22 +1,12 @@
 "use client"
 import React, { useState } from 'react'
+import { formatCurrency } from '@/lib/productUtils'
 
 const filterCategories = [
     "Brand",
     "Price Range",
     "Color",
-    "Country of Origin",
     "Availability",
-    "Pattern",
-    "Metallic Finish",
-    "Features",
-    "Application",
-    "Content",
-    "Flammability",
-    "Abrasion",
-    "Climate Impact",
-    "Human Health Impact",
-    "Social Equity Impact"
 ]
 
 const ToggleSwitch = ({ label, checked, onChange }) => (
@@ -34,7 +24,14 @@ const ToggleSwitch = ({ label, checked, onChange }) => (
     </div>
 )
 
-const ProductSidebar = ({ activeFilters, setActiveFilters }) => {
+const ProductSidebar = ({
+    activeFilters,
+    setActiveFilters,
+    brands = [],
+    minPrice = 0,
+    maxPrice = 100000,
+    priceStep = 100
+}) => {
     const handleToggleChange = (toggleName, val) => {
         setActiveFilters(prev => ({
             ...prev,
@@ -42,13 +39,22 @@ const ProductSidebar = ({ activeFilters, setActiveFilters }) => {
         }))
     }
 
-    const handleBrandChange = (brand, checked) => {
+    const handleBrandChange = (brandId, checked) => {
         setActiveFilters(prev => ({
             ...prev,
             brands: checked
-                ? [...prev.brands, brand]
-                : prev.brands.filter(b => b !== brand)
+                ? [...prev.brands, brandId]
+                : prev.brands.filter(id => id !== brandId)
         }))
+    }
+
+    const handlePriceChange = (index, value) => {
+        const newRange = [...activeFilters.priceRange];
+        newRange[index] = Number(value);
+        setActiveFilters(prev => ({
+            ...prev,
+            priceRange: newRange
+        }));
     }
 
     const clearAll = () => {
@@ -56,6 +62,7 @@ const ProductSidebar = ({ activeFilters, setActiveFilters }) => {
             brands: [],
             colors: [],
             availability: [],
+            priceRange: [minPrice, maxPrice],
             toggles: {
                 commercial: false,
                 residential: false,
@@ -64,7 +71,7 @@ const ProductSidebar = ({ activeFilters, setActiveFilters }) => {
         })
     }
 
-    const [openSections, setOpenSections] = useState({ "Brand": true })
+    const [openSections, setOpenSections] = useState({ "Brand": true, "Price Range": true })
 
     const toggleSection = (section) => {
         setOpenSections(prev => ({
@@ -73,19 +80,20 @@ const ProductSidebar = ({ activeFilters, setActiveFilters }) => {
         }))
     }
 
-    const brandOptions = ["Sherwin-Williams", "Bedrosians Tile & Stone", "Porcelanosa", "Tarkett", "Arper"]
-
     return (
         <aside className="w-full h-full border-r-2 border-gray-200 overflow-y-auto no-scrollbar py-2 pr-6 pb-20">
             <div className="flex items-center justify-end mb-2">
-                {(activeFilters.brands.length > 0 || Object.values(activeFilters.toggles).some(v => v)) && (
-                    <button
-                        onClick={clearAll}
-                        className="text-[12px] font-semibold text-[#e09a74] hover:underline"
-                    >
-                        Clear All
-                    </button>
-                )}
+                {(activeFilters.brands.length > 0 ||
+                    Object.values(activeFilters.toggles).some(v => v) ||
+                    activeFilters.priceRange[0] !== minPrice ||
+                    activeFilters.priceRange[1] !== maxPrice) && (
+                        <button
+                            onClick={clearAll}
+                            className="text-[12px] font-semibold text-[#e09a74] hover:underline cursor-pointer"
+                        >
+                            Clear All
+                        </button>
+                    )}
             </div>
 
             <div className="flex flex-col mb-4">
@@ -116,23 +124,75 @@ const ProductSidebar = ({ activeFilters, setActiveFilters }) => {
                     >
                         {cat === "Brand" && (
                             <div className="flex flex-col gap-2.5 mt-1">
-                                {brandOptions.map(brand => (
-                                    <label key={brand} className="flex items-center gap-3 cursor-pointer group">
-                                        <div className="relative flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-gray-300 checked:bg-[#e09a74] checked:border-[#e09a74] transition-all"
-                                                checked={activeFilters.brands.includes(brand)}
-                                                onChange={(e) => handleBrandChange(brand, e.target.checked)}
-                                            />
-                                            <svg className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                        </div>
-                                        <span className="text-[15px] text-gray-600 group-hover:text-gray-900 transition-colors">{brand}</span>
-                                    </label>
-                                ))}
+                                {brands.length > 0 ? (
+                                    brands.map(brand => (
+                                        <label key={brand._id} className="flex items-center gap-3 cursor-pointer group">
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-gray-300 checked:bg-[#e09a74] checked:border-[#e09a74] transition-all"
+                                                    checked={activeFilters.brands.includes(brand._id)}
+                                                    onChange={(e) => handleBrandChange(brand._id, e.target.checked)}
+                                                />
+                                                <svg className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </div>
+                                            <span className="text-[15px] text-gray-600 group-hover:text-gray-900 transition-colors">{brand.name}</span>
+                                        </label>
+                                    ))
+                                ) : (
+                                    <p className="text-xs text-gray-400 italic">No brands found</p>
+                                )}
                             </div>
                         )}
-                        {cat !== "Brand" && (
+
+                        {cat === "Price Range" && (
+                            <div className="space-y-4 px-1">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex-1">
+                                        <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Min</label>
+                                        <input
+                                            type="number"
+                                            value={activeFilters.priceRange[0]}
+                                            onChange={(e) => handlePriceChange(0, e.target.value)}
+                                            min={minPrice}
+                                            max={activeFilters.priceRange[1]}
+                                            step={priceStep}
+                                            className="w-full h-9 px-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#e09a74] font-medium"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Max</label>
+                                        <input
+                                            type="number"
+                                            value={activeFilters.priceRange[1]}
+                                            onChange={(e) => handlePriceChange(1, e.target.value)}
+                                            min={activeFilters.priceRange[0]}
+                                            max={maxPrice}
+                                            step={priceStep}
+                                            className="w-full h-9 px-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#e09a74] font-medium"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <input
+                                        type="range"
+                                        min={minPrice}
+                                        max={maxPrice}
+                                        step={priceStep}
+                                        value={activeFilters.priceRange[1]}
+                                        onChange={(e) => handlePriceChange(1, e.target.value)}
+                                        className="w-full accent-[#e09a74]"
+                                    />
+                                    <div className="flex justify-between text-[11px] font-bold text-gray-500">
+                                        <span>{formatCurrency(activeFilters.priceRange[0])}</span>
+                                        <span>{formatCurrency(activeFilters.priceRange[1])}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {cat !== "Brand" && cat !== "Price Range" && (
                             <div className="flex flex-col gap-2 italic text-gray-400 text-[13px]">
                                 coming soon!!
                             </div>

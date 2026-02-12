@@ -108,7 +108,8 @@ export default function LoginForm() {
 
           <div className=" pt-2">
             <p className="text-[12px] text-[#4D4E58]">
-              By Clicking "Sign In", You Agree to <Link href="/terms" className="text-black underline">Our Terms of Use</Link> and <Link href="/privacy" className="text-black underline">Privacy Notice</Link>
+              By Clicking "Sign In", You Agree to <Link href="/terms" className="text-black underline">Our Terms of Use</Link> and <Link href="/privacy" className="text-black underline">Privacy Notice</Link>.
+              {' '}Arcmat profile <a href="/Arcmat PDF/Arcmat – Design-Stage Material Specification Framework (1).pdf" download="Arcmat_Design_Stage_Material_Specification_Framework.pdf" className="text-black underline">Download here</a>
             </p>
           </div>
 

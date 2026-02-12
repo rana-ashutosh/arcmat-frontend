@@ -1,23 +1,32 @@
-"use client"
-import React from 'react'
+import React, { useMemo } from 'react'
 import Image from 'next/image'
 import Container from '../ui/Container'
 import Button from '../ui/Button'
+import { useGetCategories } from '@/hooks/useCategory'
+import { Loader2 } from 'lucide-react'
 
-const categories = [
-    { name: 'All', count: null, active: true },
-    { name: 'Paints', count: 5 },
-    { name: 'Bathroom', count: 5 },
-    { name: 'Textiles', count: 5 },
-    { name: 'Surfaces', count: 5 },
-    { name: 'Tile', count: 5 },
-    { name: 'Flooring', count: 5 },
-    { name: 'Wallcovering', count: 5 },
-    { name: 'Bathroom', count: 5 },
-    { name: 'Textiles', count: 5 },
-]
+const ProductFilterBar = ({ selectedCategory, setSelectedCategory, onOpenFilters, categoryCounts = {} }) => {
+    const { data: categoriesData, isLoading } = useGetCategories({ level: 1 });
 
-const ProductFilterBar = ({ selectedCategory, setSelectedCategory, onOpenFilters }) => {
+    const dynamicCategories = useMemo(() => {
+        if (!categoriesData) return [{ name: 'All', id: 'All', count: categoryCounts['All'] }];
+
+        const uniqueNames = new Set();
+        const filtered = categoriesData.filter(cat => {
+            const isDuplicate = uniqueNames.has(cat.name);
+            uniqueNames.add(cat.name);
+            return !isDuplicate;
+        });
+
+        const mapped = filtered.map(cat => ({
+            name: cat.name,
+            id: cat._id || cat.id,
+            count: categoryCounts[cat._id || cat.id] || 0
+        }));
+
+        return [{ name: 'All', id: 'All', count: categoryCounts['All'] }, ...mapped];
+    }, [categoriesData, categoryCounts]);
+
     return (
         <section className="bg-white border-b-2 border-gray-200 py-3">
 
@@ -30,25 +39,34 @@ const ProductFilterBar = ({ selectedCategory, setSelectedCategory, onOpenFilters
                     <span className="hidden sm:inline text-[15px] font-medium">Filters</span>
                 </Button>
 
-                <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar scroll-smooth flex-1 py-1 px-1">
-                    {categories.map((cat, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => setSelectedCategory(cat.name)}
-                            className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full whitespace-nowrap transition-all text-[14px] sm:text-[15px] cursor-pointer ${selectedCategory === cat.name
-                                ? 'bg-[#e09a74] text-white shadow-sm font-semibold'
-                                : 'bg-[#f3f4f6] text-gray-600 hover:bg-gray-200'
-                                }`}
-                        >
-                            <span>{cat.name}</span>
-                            {cat.count && (
-                                <span className={`text-[12px] px-2 py-0.5 rounded-full font-bold ${selectedCategory === cat.name ? 'bg-black/20 text-white' : 'bg-gray-400 text-white'
-                                    }`}>
-                                    {cat.count}
-                                </span>
-                            )}
-                        </button>
-                    ))}
+                <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scroll-smooth py-1 px-1">
+                        {isLoading ? (
+                            <div className="flex items-center gap-2 px-4 py-2">
+                                <Loader2 className="w-4 h-4 text-[#e09a74] animate-spin" />
+                                <span className="text-sm text-gray-400">Loading categories...</span>
+                            </div>
+                        ) : (
+                            dynamicCategories.map((cat, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setSelectedCategory(cat.id)}
+                                    className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full whitespace-nowrap transition-all text-[14px] sm:text-[15px] cursor-pointer ${selectedCategory === cat.id
+                                        ? 'bg-[#e09a74] text-white shadow-sm font-semibold'
+                                        : 'bg-[#f3f4f6] text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    <span>{cat.name}</span>
+                                    {cat.count && (
+                                        <span className={`text-[12px] px-2 py-0.5 rounded-full font-bold ${selectedCategory === cat.id ? 'bg-black/20 text-white' : 'bg-gray-400 text-white'
+                                            }`}>
+                                            {cat.count}
+                                        </span>
+                                    )}
+                                </button>
+                            ))
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-1 sm:gap-3 shrink-0">

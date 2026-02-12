@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import ProductFilterBar from "@/components/sections/ProductFilterBar";
 import ProductSidebar from "@/components/sections/ProductSidebar";
 import ProductCard from "@/components/cards/ProductCard";
@@ -7,6 +7,8 @@ import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
 import Image from "next/image";
 import { useGetVariants } from "@/hooks/useProduct";
+import { useGetVendors } from "@/hooks/useVendor";
+import { resolvePricing, formatCurrency } from "@/lib/productUtils";
 import { Loader2 } from "lucide-react";
 
 export default function ProductListPage() {
@@ -17,6 +19,7 @@ export default function ProductListPage() {
         brands: [],
         colors: [],
         availability: [],
+        priceRange: [0, 500000], // Default range
         toggles: {
             commercial: false,
             residential: false,
@@ -26,20 +29,85 @@ export default function ProductListPage() {
 
     const { data: apiData, isLoading } = useGetVariants({
         status: 1,
-        search: selectedCategory !== "All" ? selectedCategory : undefined,
-        brand: activeFilters.brands.length > 0 ? activeFilters.brands[0] : undefined,
-        color: activeFilters.colors.length > 0 ? activeFilters.colors[0] : undefined,
+        limit: 1000,
     });
+
+    const { data: brandsData } = useGetVendors({ type: 'frontend' });
+    const brands = Array.isArray(brandsData) ? brandsData : (brandsData?.data || []);
 
     const products = apiData?.data?.data || [];
 
-    const filteredAndSortedProducts = useMemo(() => {
-        return products;
+    const { minPrice, maxPrice, priceStep } = useMemo(() => {
+        if (!products.length) return { minPrice: 0, maxPrice: 100000, priceStep: 1000 };
+        const prices = products.map(p => resolvePricing(p).price).filter(p => p > 0);
+        const min = Math.floor(Math.min(...prices) / 100) * 100;
+        const max = Math.ceil(Math.max(...prices) / 100) * 100;
+        return { minPrice: min, maxPrice: max, priceStep: 100 };
     }, [products]);
+
+    // Update price range when products change if it hasn't been set by user
+    useEffect(() => {
+        if (products.length && activeFilters.priceRange[1] === 500000) {
+            setActiveFilters(prev => ({ ...prev, priceRange: [minPrice, maxPrice] }));
+        }
+    }, [products, minPrice, maxPrice]);
+
+    const filteredAndSortedProducts = useMemo(() => {
+        return products.filter(variant => {
+            const rootProduct = variant.productId;
+            if (!rootProduct) return false;
+
+            const { price } = resolvePricing(variant);
+
+            // Price filtering
+            if (price < activeFilters.priceRange[0] || price > activeFilters.priceRange[1]) {
+                if (price > 0) return false; // Only exclude if has valid price and out of range
+            }
+
+            if (selectedCategory !== "All") {
+                const catMatch =
+                    rootProduct.categoryId === selectedCategory ||
+                    rootProduct.categoryId?._id === selectedCategory ||
+                    rootProduct.subcategoryId === selectedCategory ||
+                    rootProduct.subcategoryId?._id === selectedCategory ||
+                    rootProduct.subsubcategoryId === selectedCategory ||
+                    rootProduct.subsubcategoryId?._id === selectedCategory;
+
+                if (!catMatch) return false;
+            }
+
+            if (activeFilters.brands.length > 0) {
+                const brandId = rootProduct.brand?._id || rootProduct.brand;
+                if (!activeFilters.brands.includes(brandId)) return false;
+            }
+
+            if (activeFilters.colors.length > 0) {
+                if (!activeFilters.colors.includes(variant.color)) return false;
+            }
+
+            return true;
+        });
+    }, [products, selectedCategory, activeFilters]);
 
     const displayedProducts = useMemo(() => {
         return filteredAndSortedProducts.slice(0, visibleItems);
     }, [filteredAndSortedProducts, visibleItems]);
+
+    const categoryCounts = useMemo(() => {
+        const counts = { All: products.length };
+        products.forEach(variant => {
+            const rootProduct = variant.productId;
+            if (!rootProduct) return;
+
+            [rootProduct.categoryId, rootProduct.subcategoryId, rootProduct.subsubcategoryId].forEach(cat => {
+                const id = cat?._id || cat;
+                if (id) {
+                    counts[id] = (counts[id] || 0) + 1;
+                }
+            });
+        });
+        return counts;
+    }, [products]);
 
     return (
         <div className="min-h-screen">
@@ -48,6 +116,7 @@ export default function ProductListPage() {
                     selectedCategory={selectedCategory}
                     setSelectedCategory={setSelectedCategory}
                     onOpenFilters={() => setDrawerOpen(true)}
+                    categoryCounts={categoryCounts}
                 />
             </div>
 
@@ -125,6 +194,10 @@ export default function ProductListPage() {
                             <ProductSidebar
                                 activeFilters={activeFilters}
                                 setActiveFilters={setActiveFilters}
+                                brands={brands}
+                                minPrice={minPrice}
+                                maxPrice={maxPrice}
+                                priceStep={priceStep}
                             />
                         </div>
                         <div className="p-4 border-t">

@@ -307,7 +307,8 @@ export default function RegisterForm() {
           By Clicking "Create Account", You Agree to{' '}
           <Link href="/terms" className="text-[#4a5568] underline hover:text-[#2d3748]">Our Terms of Use</Link>{' '}
           and{' '}
-          <Link href="/privacy" className="text-[#4a5568] underline hover:text-[#2d3748]">Privacy Notice</Link>
+          <Link href="/privacy" className="text-[#4a5568] underline hover:text-[#2d3748]">Privacy Notice</Link>.
+          {' '}Arcmat profile <a href="/Arcmat PDF/Arcmat – Design-Stage Material Specification Framework (1).pdf" download="Arcmat_Design_Stage_Material_Specification_Framework.pdf" className="text-black underline">Download here</a>
         </p>
 
         <button

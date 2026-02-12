@@ -5,10 +5,8 @@ import { X, Upload, Check, Loader2, Image as ImageIcon } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import clsx from 'clsx';
-import { generateSlug } from '@/lib/productUtils';
+import { generateSlug, getCategoryImageUrl } from '@/lib/productUtils';
 import { useUpdateCategory } from '@/hooks/useCategory';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function EditCategoryModal({ isOpen, onClose, category, categories = [] }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,7 +40,7 @@ export default function EditCategoryModal({ isOpen, onClose, category, categorie
             });
 
             if (category.image) {
-                setPreviewImage(`${API_BASE_URL}/uploads/category/${category.image}`);
+                setPreviewImage(getCategoryImageUrl(category.image));
             } else {
                 setPreviewImage(null);
             }
