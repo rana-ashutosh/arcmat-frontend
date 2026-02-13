@@ -5,6 +5,23 @@ import Button from '@/components/ui/Button';
 const ProfileDetails = ({ vendor, onEdit }) => {
     if (!vendor) return null;
 
+    const formatAddress = (addr) => {
+        if (!addr) return "N/A";
+        if (typeof addr === 'string') return addr;
+
+        const parts = [
+            addr.first_name && addr.last_name ? `${addr.first_name} ${addr.last_name}` : null,
+            addr.address1,
+            addr.address2,
+            addr.city,
+            addr.state,
+            addr.country,
+            addr.pincode ? `PIN: ${addr.pincode}` : null
+        ].filter(Boolean);
+
+        return parts.length > 0 ? parts.join(', ') : "N/A";
+    };
+
     return (
         <div className="space-y-8">
             <div className="flex justify-between items-start">
@@ -60,11 +77,11 @@ const ProfileDetails = ({ vendor, onEdit }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
                 <div className="space-y-2">
                     <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Shipping Address</h4>
-                    <p className="text-gray-600 text-sm">{vendor.shippingAddress || "N/A"}</p>
+                    <p className="text-gray-600 text-sm">{formatAddress(vendor.shippingAddress)}</p>
                 </div>
                 <div className="space-y-2">
                     <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Billing Address</h4>
-                    <p className="text-gray-600 text-sm">{vendor.billingAddress || "N/A"}</p>
+                    <p className="text-gray-600 text-sm">{formatAddress(vendor.billingAddress)}</p>
                 </div>
             </div>
         </div>

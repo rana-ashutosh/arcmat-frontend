@@ -186,8 +186,7 @@ export default function BulkUploadModal() {
                 </div>
               </div>
 
-              {/* Guidelines */}
-              <div className="bg-orange-50/50 p-5 rounded-2xl border border-orange-100/50">
+              <div className="bg-orange-50/50 p-5 rounded-2xl border border-orange-100/50 space-y-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 shrink-0" />
                   <div className="text-sm">
@@ -195,19 +194,30 @@ export default function BulkUploadModal() {
                     <ul className="space-y-1.5 text-orange-800/80 text-[13px] font-medium">
                       {importType === 'product' ? (
                         <>
-                          <li>• Category columns must match Level 3 names exactly.</li>
-                          <li>• Product Name and SKU are required.</li>
-                          <li>• Multiple images can be comma-separated.</li>
+                          <li>• <strong>Category Name</strong> must match a <strong>Level 3</strong> (Sub-sub-category) exactly.</li>
+                          <li>• <strong>Product Name</strong>, <strong>Brand Name</strong>, and <strong>SKU Code</strong> are required.</li>
+                          <li>• Use commas to separate multiple image filenames.</li>
                         </>
                       ) : (
                         <>
-                          <li>• SKU Code is required for each variant.</li>
-                          <li>• Prices and Stock must be numeric.</li>
+                          <li>• <strong>SKU Code</strong> is required for each variant.</li>
+                          <li>• MRP, Selling Price, and Stock must be numbers.</li>
                           <li>• Variants will be linked to: <span className="font-bold text-orange-900">{productsList.find(p => (p._id || p.id) === selectedProductId)?.product_name || 'Selected Product'}</span></li>
                         </>
                       )}
                     </ul>
                   </div>
+                </div>
+
+                <div className="pt-2 border-t border-orange-100/50">
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/public/templates/sample_${importType === 'product' ? 'products' : 'variants'}.xlsx`}
+                    download
+                    className="flex items-center justify-center gap-2 py-2 px-4 bg-white border border-orange-200 rounded-xl text-xs font-bold text-[#e09a74] hover:bg-orange-50 transition-colors shadow-sm"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Download {importType === 'product' ? 'Product' : 'Variant'} Template
+                  </a>
                 </div>
               </div>
               <div className="pt-2">
@@ -240,7 +250,7 @@ export default function BulkUploadModal() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600 font-medium">Successfully Added</span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 font-bold">{result.details.success} products</span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 font-bold">{result.details.success} {importType === 'product' ? 'products' : 'variants'}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600 font-medium">Failed / Skipped</span>

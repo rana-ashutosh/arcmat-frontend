@@ -125,6 +125,10 @@ export default function ProductListPage() {
                     <ProductSidebar
                         activeFilters={activeFilters}
                         setActiveFilters={setActiveFilters}
+                        brands={brands}
+                        minPrice={minPrice}
+                        maxPrice={maxPrice}
+                        priceStep={priceStep}
                     />
                 </div>
 
