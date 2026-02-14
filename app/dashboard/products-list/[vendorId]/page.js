@@ -12,6 +12,7 @@ import Container from '@/components/ui/Container';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 import { productService } from '@/services/productService';
+import { useLoader } from '@/context/LoaderContext';
 
 
 // Components
@@ -33,6 +34,7 @@ export default function ProductsListPage() {
   const { vendorId } = useParams();
   const { getPublicProducts } = useProductStore();
   const { openProductFormModal, openBulkUploadModal } = useUIStore();
+  const { setLoading: setGlobalLoading } = useLoader();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -98,45 +100,62 @@ export default function ProductsListPage() {
         return;
       }
 
-      // Format data for Export
-      const exportData = productsToExport.map(p => {
-        // Flatten Variant Data
-        const minPrice = p.minPrice || (p.variants?.length ? Math.min(...p.variants.map(v => v.selling_price || 0)) : 0);
-        const maxPrice = p.maxPrice || (p.variants?.length ? Math.max(...p.variants.map(v => v.selling_price || 0)) : 0);
-        const totalStock = p.totalStock || (p.variants?.length ? p.variants.reduce((sum, v) => sum + (v.stock || 0), 0) : 0);
+      // Format data for Export (One row per variant)
+      const exportData = [];
 
-        return {
-          'Product Name': p.product_name,
-          'SKU Code': p.skucode || '',
-          'Product URL': p.product_url,
-
-          // Category Hierarchy
+      productsToExport.forEach(p => {
+        const baseProductInfo = {
+          'Product Name': p.product_name || '',
+          'Base SKU Code': p.skucode || '',
+          'Product URL': p.product_url || '',
           'Category (L1)': p.categoryId?.name || '',
           'Sub Category (L2)': p.subcategoryId?.name || '',
           'Sub-Sub Category (L3)': p.subsubcategoryId?.name || '',
-
-          // Pricing & Stock
-          'Price Range': minPrice === maxPrice ? minPrice : `${minPrice} - ${maxPrice}`,
-          'Total Stock': totalStock,
-
-          // Details
-          'Brand': p.brand?.name || p.brand || '', // Handle populated object or ID string
+          'Brand': p.brand?.name || p.brand || '',
           'Short Description': p.sort_description || '',
           'Description': p.description || '',
-
-          // SEO
           'Meta Title': p.meta_title || '',
           'Meta Keywords': p.meta_keywords || '',
           'Meta Description': p.meta_description || '',
-
-          // Status & Metadata
-          'Status': p.status === 1 ? 'Active' : 'Inactive',
+          'Product Status': p.status === 1 ? 'Active' : 'Inactive',
           'Created At': p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '',
-          'Updated At': p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : '',
-
-          // Images
-          'Images': (p.product_images || []).join(', ')
         };
+
+        if (p.variants && p.variants.length > 0) {
+          p.variants.forEach(v => {
+            // Calculate Attributes string from dynamicAttributes
+            const attributesStr = (v.dynamicAttributes || [])
+              .map(attr => `${attr.key}: ${attr.value}`)
+              .join(', ');
+
+            exportData.push({
+              ...baseProductInfo,
+              'Variant SKU Code': v.skucode || '',
+              'Variant Status': v.status === 1 ? 'Active' : 'Inactive',
+              'MRP Price': v.mrp_price || 0,
+              'Selling Price': v.selling_price || 0,
+              'Stock': v.stock || 0,
+              'Weight': v.weight || 0,
+              'Weight Type': v.weight_type || '',
+              'Attributes': attributesStr,
+              'Variant Images': (v.variant_images || []).join(', ')
+            });
+          });
+        } else {
+          // Fallback if no variants are found
+          exportData.push({
+            ...baseProductInfo,
+            'Variant SKU Code': 'N/A',
+            'Variant Status': 'N/A',
+            'MRP Price': 0,
+            'Selling Price': 0,
+            'Stock': 0,
+            'Weight': 0,
+            'Weight Type': '',
+            'Attributes': '',
+            'Variant Images': ''
+          });
+        }
       });
 
       const wb = XLSX.utils.book_new();
@@ -152,6 +171,7 @@ export default function ProductsListPage() {
       toast.error("Failed to export products");
     } finally {
       setIsExporting(false);
+      setGlobalLoading(false); // Ensure global loader is cleared
     }
   };
 
@@ -186,106 +206,124 @@ export default function ProductsListPage() {
         <BulkUploadModal />
 
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
               {isVendor ? 'My Inventory' : 'All Products'}
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-500 text-sm">
               {isVendor
                 ? 'Manage your prices, stock, and listings.'
                 : 'Browse our latest collection.'}
             </p>
           </div>
 
-          {/* VENDOR ADD BUTTON */}
+          {/* ACTIONS */}
           {isVendor && (
-            <div className="flex gap-3">
-              <div className="flex bg-white rounded-full border border-green-600 overflow-hidden h-[42px] items-center">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex bg-white rounded-full border border-green-600/30 overflow-hidden h-[42px] items-center shadow-sm">
                 <button
                   onClick={() => handleExport('xlsx')}
                   disabled={isExporting}
-                  className="px-4 py-2 hover:bg-green-50 text-green-700 text-sm font-medium transition-colors disabled:opacity-50 flex items-center h-full"
+                  className="px-5 py-2 hover:bg-green-50 text-green-700 text-sm font-semibold transition-colors disabled:opacity-50 flex items-center h-full"
                   title="Export as Excel"
                 >
-                  {isExporting ? <span className="animate-spin mr-1">⏳</span> : <Download className="w-4 h-4 mr-1" />}
+                  {isExporting ? <span className="animate-spin mr-2">⏳</span> : <Download className="w-4 h-4 mr-2" />}
                   Excel
                 </button>
-                <div className="w-px h-6 bg-green-200"></div>
+                <div className="w-px h-6 bg-green-100"></div>
                 <button
                   onClick={() => handleExport('csv')}
                   disabled={isExporting}
-                  className="px-4 py-2 hover:bg-green-50 text-green-700 text-sm font-medium transition-colors disabled:opacity-50 h-full"
+                  className="px-5 py-2 hover:bg-green-50 text-green-700 text-sm font-semibold transition-colors disabled:opacity-50 h-full"
                   title="Export as CSV"
                 >
                   CSV
                 </button>
               </div>
-              <Button
-                onClick={() => openBulkUploadModal()}
-                className="flex items-center rounded-full bg-white text-[#e09a74] cursor-pointer hover:bg-gray-50 min-w-[120px] py-2 px-4 border border-[#e09a74] duration-300"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Bulk Import
-              </Button>
-              <Link
-                href={`/dashboard/products-list/${effectiveVendorId}/add`}
-                className="flex items-center rounded-full bg-[#e09a74] text-white cursor-pointer min-w-[120px] py-2 px-4 border border-[#e09a74] hover:bg-white hover:text-[#e09a74] duration-300"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Product
-              </Link>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => openBulkUploadModal()}
+                  className="flex items-center rounded-full bg-white text-[#e09a74] hover:bg-orange-50 min-w-[130px] h-[42px] px-6 border border-[#e09a74] shadow-sm transition-all duration-300 font-semibold"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Bulk Import
+                </Button>
+                <Link
+                  href={`/dashboard/products-list/${effectiveVendorId}/add`}
+                  className="flex items-center rounded-full bg-[#e09a74] text-white min-w-[130px] h-[42px] px-6 border border-[#e09a74] hover:bg-[#d08963] shadow-md transition-all duration-300 font-semibold"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Product
+                </Link>
+              </div>
             </div>
           )}
         </div>
 
         {/* CONDITIONAL CONTENT */}
         {showManagementUI ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {isVendor && <AttributeCompletionBanner />}
-            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-col md:flex-row gap-4 items-center flex-1">
-                <div className="relative w-full md:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-5 items-stretch lg:items-center justify-between">
+              <div className="flex flex-col md:flex-row gap-4 flex-1">
+                <div className="relative flex-1 md:max-w-md group">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#e09a74] w-5 h-5 transition-colors" />
                   <input
                     type="text"
-                    placeholder="Search by name or SKU..."
+                    placeholder="Search by name, SKU or description..."
                     value={searchTerm}
                     onChange={handleSearchChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] transition-colors"
+                    className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-[#e09a74] focus:ring-4 focus:ring-orange-50 transition-all text-sm"
                   />
                 </div>
 
-                <select
-                  value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
-                >
-                  <option value="all">All Status</option>
-                  <option value="1">Active Only</option>
-                  <option value="0">Inactive Only</option>
-                </select>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Status</span>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                      className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-[#e09a74] text-sm font-medium transition-all"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="1">Active</option>
+                      <option value="0">Inactive</option>
+                    </select>
+                  </div>
 
-                <select
-                  value={orderBy}
-                  onChange={(e) => { setOrderBy(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
-                >
-                  <option value="createdAt">Date Created</option>
-                  <option value="product_name">Product Name</option>
-                </select>
-
-                <select
-                  value={sortOrder}
-                  onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
-                >
-                  <option value="DESC">Descending</option>
-                  <option value="ASC">Ascending</option>
-                </select>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sort</span>
+                    <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+                      <select
+                        value={orderBy}
+                        onChange={(e) => { setOrderBy(e.target.value); setCurrentPage(1); }}
+                        className="pl-4 pr-2 py-2.5 bg-transparent outline-none focus:text-[#e09a74] text-sm font-medium transition-all"
+                      >
+                        <option value="createdAt">Date</option>
+                        <option value="product_name">Name</option>
+                        <option value="skucode">SKU</option>
+                      </select>
+                      <div className="w-px h-6 bg-gray-200"></div>
+                      <select
+                        value={sortOrder}
+                        onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}
+                        className="pl-2 pr-4 py-2.5 bg-transparent outline-none focus:text-[#e09a74] text-sm font-medium transition-all"
+                      >
+                        <option value="DESC">Newest</option>
+                        <option value="ASC">Oldest</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Total: {totalItems} products</span>
+
+              <div className="flex items-center px-4 py-2 bg-orange-50/50 rounded-xl border border-orange-100">
+                <span className="text-xs font-semibold text-[#e09a74]">
+                  {totalItems} total products found
+                </span>
               </div>
             </div>
 

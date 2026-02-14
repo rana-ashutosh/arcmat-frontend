@@ -29,8 +29,6 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
         weight_type: 'ml',
         status: 'Active',
         brand: '',
-        size: '',
-        color: '',
         newarrivedproduct: 'Inactive',
         trendingproduct: 'Inactive',
         featuredproduct: 'Inactive',
@@ -63,8 +61,6 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
                 weight_type: editingVariant.weight_type || 'ml',
                 status: editingVariant.status || 'Active',
                 brand: editingVariant.brand || '',
-                size: editingVariant.size || '',
-                color: editingVariant.color || '',
                 newarrivedproduct: editingVariant.newarrivedproduct || 'Inactive',
                 trendingproduct: editingVariant.trendingproduct || 'Inactive',
                 featuredproduct: editingVariant.featuredproduct || 'Inactive',
@@ -315,12 +311,13 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">SKU Code</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">SKU Code *</label>
                                     <input
                                         name="skucode"
                                         value={formData.skucode}
                                         onChange={handleChange}
                                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74]"
+                                        required
                                     />
                                 </div>
                                 <div>
@@ -353,60 +350,6 @@ export default function AddVariantModal({ isOpen, onClose, productId, parentProd
                     {activeTab === 'attributes' && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Size</label>
-                                    {allAttributes.find(a => a.attributeName.toLowerCase() === 'size') ? (
-                                        <div className="relative">
-                                            <select
-                                                name="size"
-                                                value={formData.size}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] appearance-none bg-white"
-                                            >
-                                                <option value="">Select Size</option>
-                                                {allAttributes.find(a => a.attributeName.toLowerCase() === 'size').attributeValues.map(v => (
-                                                    <option key={v} value={v}>{v}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                                        </div>
-                                    ) : (
-                                        <input
-                                            name="size"
-                                            value={formData.size}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm"
-                                            placeholder="e.g. XL, 42, Large"
-                                        />
-                                    )}
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Color</label>
-                                    {allAttributes.find(a => a.attributeName.toLowerCase() === 'color') ? (
-                                        <div className="relative">
-                                            <select
-                                                name="color"
-                                                value={formData.color}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] appearance-none bg-white"
-                                            >
-                                                <option value="">Select Color</option>
-                                                {allAttributes.find(a => a.attributeName.toLowerCase() === 'color').attributeValues.map(v => (
-                                                    <option key={v} value={v}>{v}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                                        </div>
-                                    ) : (
-                                        <input
-                                            name="color"
-                                            value={formData.color}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm"
-                                            placeholder="e.g. Royal Blue"
-                                        />
-                                    )}
-                                </div>
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Brand</label>
                                     {allAttributes.find(a => a.attributeName.toLowerCase() === 'brand') ? (

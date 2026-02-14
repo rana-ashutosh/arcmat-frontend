@@ -49,8 +49,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                 setAttributes(editingVariant.dynamicAttributes);
             } else {
                 const legacyAttrs = [];
-                if (editingVariant.size) legacyAttrs.push({ key: 'Size', value: editingVariant.size });
-                if (editingVariant.color) legacyAttrs.push({ key: 'Color', value: editingVariant.color });
                 if (editingVariant.brand) legacyAttrs.push({ key: 'Brand', value: editingVariant.brand });
                 setAttributes(legacyAttrs.length > 0 ? legacyAttrs : [{ key: '', value: '' }]);
             }
@@ -142,11 +140,6 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
             const validAttributes = attributes.filter(a => a.key && a.value);
             if (validAttributes.length > 0) {
                 submissionData.append('dynamicAttributes', JSON.stringify(validAttributes));
-
-                validAttributes.forEach(attr => {
-                    if (attr.key.toLowerCase() === 'size') submissionData.append('size', attr.value);
-                    if (attr.key.toLowerCase() === 'color') submissionData.append('color', attr.value);
-                });
             }
 
             if (editingVariant) {
@@ -176,7 +169,7 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
     return (
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="mb-8 border-b pb-4">
-                <h2 className="text-2xl font-bold text-gray-900">{editingVariant ? 'Edit Variant Details' : 'Step 2: Variant Details'}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{editingVariant ? 'Edit Variant Details' : 'Variant Details'}</h2>
                 <p className="text-gray-500 mt-1">Add pricing, stock and variation details for this product.</p>
                 <p className="text-xs font-mono text-gray-400 mt-2">Product ID: {productId}</p>
             </div>

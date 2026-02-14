@@ -222,11 +222,6 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     <>
       {isVariantFormOpen ? (
         <div className="space-y-6">
-          <div className="flex items-center justify-between mb-4">
-            <Button variant="outline" onClick={() => setIsVariantFormOpen(false)} className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" /> Back to Product
-            </Button>
-          </div>
           <VariantForm
             productId={productId}
             editingVariant={editingVariant}
@@ -352,8 +347,18 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex flex-wrap gap-1">
-                              {v.size && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full">Size: {v.size}</span>}
-                              {v.color && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full">Color: {v.color}</span>}
+                              {v.dynamicAttributes && v.dynamicAttributes.length > 0 ? (
+                                v.dynamicAttributes.map((attr, idx) => (
+                                  <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 text-[10px] rounded-full">
+                                    {attr.key}: {attr.value}
+                                  </span>
+                                ))
+                              ) : (
+                                <>
+                                  {v.size && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full">Size: {v.size}</span>}
+                                  {v.color && <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full">Color: {v.color}</span>}
+                                </>
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-4 text-sm font-bold">{formatCurrency(v.selling_price)}</td>

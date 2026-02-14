@@ -64,7 +64,7 @@ export default function AddProductPage() {
                             <p className="text-sm text-gray-500">
                                 {createdProductId
                                     ? `Created: ${createdProductData?.product_name || 'Base Product'}`
-                                    : 'Step 1: Provide basic product information.'}
+                                    : 'Provide basic product information.'}
                             </p>
                         </div>
                     </div>
