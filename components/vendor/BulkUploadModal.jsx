@@ -3,24 +3,41 @@
 import { useState } from 'react';
 import { useBulkImportProduct, useGetProducts } from '@/hooks/useProduct';
 import { toast } from '@/components/ui/Toast';
-import { X, Upload, FileText, CheckCircle, AlertCircle, Package, Layers, Download } from 'lucide-react';
+import { X, Upload, FileText, CheckCircle, AlertCircle, Package, Layers, Download, ImageIcon } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useUIStore } from '@/store/useUIStore';
 import { useAuth } from '@/hooks/useAuth';
 import clsx from 'clsx';
 import * as XLSX from 'xlsx';
+import { productService } from '@/services/productService';
 
 export default function BulkUploadModal() {
   const { isBulkUploadModalOpen, closeBulkUploadModal } = useUIStore();
   const { user } = useAuth();
-  const [file, setFile] = useState(null);
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [zipFile, setZipFile] = useState(null);
+  const [csvFile, setCsvFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState(null);
-  const [importType, setImportType] = useState('product'); // 'product' or 'variant'
+  const [importType, setImportType] = useState('product');
+  const [imageUploadComplete, setImageUploadComplete] = useState(false);
+  const [productUploadComplete, setProductUploadComplete] = useState(false);
 
   const bulkImportMutation = useBulkImportProduct();
 
-  const handleFileChange = (e) => {
+  const handleZipFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (selectedFile.name.endsWith('.zip')) {
+        setZipFile(selectedFile);
+      } else {
+        toast.error('Please upload a valid ZIP file');
+      }
+    }
+  };
+
+  const handleCsvFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       const validTypes = [
@@ -31,7 +48,7 @@ export default function BulkUploadModal() {
       if (validTypes.includes(selectedFile.type) ||
         selectedFile.name.endsWith('.csv') ||
         selectedFile.name.endsWith('.xlsx')) {
-        setFile(selectedFile);
+        setCsvFile(selectedFile);
         setResult(null);
       } else {
         toast.error('Please upload a valid CSV or Excel file');
@@ -39,19 +56,54 @@ export default function BulkUploadModal() {
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) return;
+  const handleZipUpload = async () => {
+    if (!zipFile) return;
+
+    setIsUploading(true);
+    try {
+      const response = await productService.bulkImageUpload(zipFile);
+      toast.success(`Successfully uploaded ${response.data.uploadedCount} images`);
+      setImageUploadComplete(true);
+      setCurrentStep(2);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to upload images');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCsvUpload = async () => {
+    if (!csvFile) return;
 
     setIsUploading(true);
     try {
       const response = await bulkImportMutation.mutateAsync({
-        file,
-        type: importType
+        file: csvFile,
+        type: 'product'
       });
       setResult(response.data);
-      toast.success('Bulk import completed successfully');
+      toast.success('Products imported successfully');
+      setProductUploadComplete(true);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to upload products');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleVariantUpload = async () => {
+    if (!csvFile) return;
+
+    setIsUploading(true);
+    try {
+      const response = await bulkImportMutation.mutateAsync({
+        file: csvFile,
+        type: 'variant'
+      });
+      setResult(response.data);
+      toast.success('Variants imported successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to upload variants');
     } finally {
       setIsUploading(false);
     }
@@ -72,18 +124,27 @@ export default function BulkUploadModal() {
   };
 
   const handleClose = () => {
-    setFile(null);
+    setCurrentStep(1);
+    setZipFile(null);
+    setCsvFile(null);
     setResult(null);
     setImportType('product');
+    setImageUploadComplete(false);
+    setProductUploadComplete(false);
     closeBulkUploadModal();
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 2) {
+      setCsvFile(null);
+    }
   };
 
   if (!isBulkUploadModalOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
-        {/* Header */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
@@ -91,7 +152,7 @@ export default function BulkUploadModal() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Bulk Import Hub</h2>
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Sync your catalog efficiently</p>
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Step-by-step upload process</p>
             </div>
           </div>
           <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 cursor-pointer">
@@ -99,112 +160,242 @@ export default function BulkUploadModal() {
           </button>
         </div>
 
+        <div className="px-6 py-4 border-b border-gray-100 bg-white">
+          <div className="flex items-center justify-center gap-2">
+            {[
+              { num: 1, label: 'Images', icon: ImageIcon },
+              { num: 2, label: 'Products', icon: Package },
+              { num: 3, label: 'Variants', icon: Layers }
+            ].map((step, idx) => (
+              <div key={step.num} className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <div className={clsx(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+                    currentStep === step.num ? "bg-[#e09a74] text-white shadow-md" :
+                      currentStep > step.num ? "bg-green-500 text-white" :
+                        "bg-gray-200 text-gray-500"
+                  )}>
+                    {currentStep > step.num ? <CheckCircle className="w-4 h-4" /> : step.num}
+                  </div>
+                  <span className={clsx(
+                    "text-sm font-semibold",
+                    currentStep >= step.num ? "text-gray-900" : "text-gray-400"
+                  )}>
+                    {step.label}
+                  </span>
+                </div>
+                {idx < 2 && (
+                  <div className={clsx(
+                    "w-12 h-0.5 mx-3",
+                    currentStep > step.num ? "bg-green-500" : "bg-gray-200"
+                  )} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {!result ? (
             <>
-              {/* Import Mode Toggle */}
-              <div className="grid grid-cols-2 gap-3 p-1 bg-gray-100 rounded-xl">
-                <button
-                  onClick={() => setImportType('product')}
-                  className={clsx(
-                    "flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all",
-                    importType === 'product' ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-                  )}
-                >
-                  <Package className="w-4 h-4" />
-                  Product Details
-                </button>
-                <button
-                  onClick={() => setImportType('variant')}
-                  className={clsx(
-                    "flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all",
-                    importType === 'variant' ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-                  )}
-                >
-                  <Layers className="w-4 h-4" />
-                  Variant Details
-                </button>
-              </div>
-
-              {/* Upload Zone */}
-              <div className="space-y-4">
-                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center hover:bg-gray-100/50 transition-all cursor-pointer relative group">
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                    accept=".csv, .xlsx, .xls"
-                  />
-                  <div className="flex flex-col items-center">
-                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all">
-                      <FileText className="w-7 h-7 text-[#e09a74]" />
-                    </div>
-                    {file ? (
-                      <div className="flex flex-col items-center">
-                        <span className="text-md font-bold text-gray-900 truncate max-w-[250px]">{file.name}</span>
-                        <span className="text-xs text-green-600 font-bold mt-1 bg-green-50 px-3 py-1 rounded-full">File Ready</span>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-sm font-bold text-gray-900">Drop your file here or click to browse</p>
-                        <p className="text-[11px] text-gray-400 font-bold mt-2 uppercase tracking-widest">Excel or CSV formats supported</p>
-                      </>
-                    )}
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <ImageIcon className="w-5 h-5 text-[#e09a74]" />
+                    <h3 className="text-lg font-bold text-gray-900">Step 1: Upload Product Images (ZIP)</h3>
                   </div>
-                </div>
-              </div>
 
-              <div className="bg-orange-50/50 p-5 rounded-2xl border border-orange-100/50 space-y-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 shrink-0" />
-                  <div className="text-sm">
-                    <p className="font-bold text-orange-900 mb-1">Import Guidelines</p>
-                    <ul className="space-y-1.5 text-orange-800/80 text-[13px] font-medium">
-                      {importType === 'product' ? (
-                        <>
-                          <li>• All three category levels (L1, L2, L3) are required.</li>
-                          <li>• Brand ID or Brand Name is required.</li>
-                          <li>• Base SKU Code and Product URL are mandatory.</li>
-                        </>
+                  <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center hover:bg-gray-100/50 transition-all cursor-pointer relative group">
+                    <input
+                      type="file"
+                      onChange={handleZipFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                      accept=".zip"
+                    />
+                    <div className="flex flex-col items-center">
+                      <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all">
+                        <FileText className="w-7 h-7 text-[#e09a74]" />
+                      </div>
+                      {zipFile ? (
+                        <div className="flex flex-col items-center">
+                          <span className="text-md font-bold text-gray-900 truncate max-w-[250px]">{zipFile.name}</span>
+                          <span className="text-xs text-green-600 font-bold mt-1 bg-green-50 px-3 py-1 rounded-full">File Ready</span>
+                        </div>
                       ) : (
                         <>
-                          <li>• Product Base SKU Code is required to map variants.</li>
-                          <li>• Variant SKU Code must be unique.</li>
-                          <li>• Attributes format: "Size: XL | Color: Red"</li>
-                          <li>• Variants will be linked automatically via Base SKU.</li>
+                          <p className="text-sm font-bold text-gray-900">Drop your ZIP file here or click to browse</p>
+                          <p className="text-[11px] text-gray-400 font-bold mt-2 uppercase tracking-widest">ZIP format only</p>
                         </>
                       )}
-                    </ul>
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100/50">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-bold text-orange-900 mb-1">Important</p>
+                        <ul className="space-y-1 text-orange-800/80 text-[13px] font-medium">
+                          <li>• ZIP file should contain all product/variant images</li>
+                          <li>• Supported formats: JPG, PNG, GIF, WEBP</li>
+                          <li>• All existing brand images will be replaced</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleZipUpload}
+                    disabled={!zipFile || isUploading}
+                    className="w-full bg-[#e09a74] text-white py-3.5 rounded-lg font-bold hover:bg-[#d08963] disabled:opacity-50 shadow-lg shadow-orange-100"
+                  >
+                    {isUploading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Uploading Images...
+                      </div>
+                    ) : (
+                      'Upload Images & Continue'
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Package className="w-5 h-5 text-[#e09a74]" />
+                    <h3 className="text-lg font-bold text-gray-900">Step 2: Upload Products (CSV/Excel)</h3>
+                  </div>
+
+                  <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center hover:bg-gray-100/50 transition-all cursor-pointer relative group">
+                    <input
+                      type="file"
+                      onChange={handleCsvFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                      accept=".csv, .xlsx, .xls"
+                    />
+                    <div className="flex flex-col items-center">
+                      <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all">
+                        <FileText className="w-7 h-7 text-[#e09a74]" />
+                      </div>
+                      {csvFile ? (
+                        <div className="flex flex-col items-center">
+                          <span className="text-md font-bold text-gray-900 truncate max-w-[250px]">{csvFile.name}</span>
+                          <span className="text-xs text-green-600 font-bold mt-1 bg-green-50 px-3 py-1 rounded-full">File Ready</span>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-sm font-bold text-gray-900">Drop your file here or click to browse</p>
+                          <p className="text-[11px] text-gray-400 font-bold mt-2 uppercase tracking-widest">Excel or CSV formats supported</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100/50">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-bold text-orange-900 mb-1">Product Import Guidelines</p>
+                        <ul className="space-y-1 text-orange-800/80 text-[13px] font-medium">
+                          <li>• All three category levels (L1, L2, L3) are required</li>
+                          <li>• Brand ID or Brand Name is required</li>
+                          <li>• Base SKU Code and Product URL are mandatory (and must be unique)</li>
+                          <li>• Image names in CSV should match uploaded ZIP files from Step 1</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleCsvUpload}
+                    disabled={!csvFile || isUploading}
+                    className="w-full bg-[#e09a74] text-white py-3.5 rounded-lg font-bold hover:bg-[#d08963] disabled:opacity-50 shadow-lg shadow-orange-100"
+                  >
+                    {isUploading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Processing File...
+                      </div>
+                    ) : (
+                      'Import Products & Continue'
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Layers className="w-5 h-5 text-[#e09a74]" />
+                    <h3 className="text-lg font-bold text-gray-900">Step 3: Upload Variants (Optional)</h3>
+                  </div>
+
+                  <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-10 text-center hover:bg-gray-100/50 transition-all cursor-pointer relative group">
+                    <input
+                      type="file"
+                      onChange={handleCsvFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                      accept=".csv, .xlsx, .xls"
+                    />
+                    <div className="flex flex-col items-center">
+                      <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all">
+                        <FileText className="w-7 h-7 text-[#e09a74]" />
+                      </div>
+                      {csvFile ? (
+                        <div className="flex flex-col items-center">
+                          <span className="text-md font-bold text-gray-900 truncate max-w-[250px]">{csvFile.name}</span>
+                          <span className="text-xs text-green-600 font-bold mt-1 bg-green-50 px-3 py-1 rounded-full">File Ready</span>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-sm font-bold text-gray-900">Drop your file here or click to browse</p>
+                          <p className="text-[11px] text-gray-400 font-bold mt-2 uppercase tracking-widest">Excel or CSV formats supported</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100/50">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-bold text-orange-900 mb-1">Variant Import Guidelines</p>
+                        <ul className="space-y-1 text-orange-800/80 text-[13px] font-medium">
+                          <li>• Product Base SKU Code is required to map variants</li>
+                          <li>• Variant SKU Code must be unique</li>
+                          <li>• Attributes format: "Size: XL | Color: Red"</li>
+                          <li>• Variants will be linked automatically via Base SKU</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleClose}
+                      className="flex-1 bg-gray-200 text-gray-700 py-3.5 rounded-lg font-bold hover:bg-gray-300"
+                    >
+                      Skip & Finish
+                    </Button>
+                    <Button
+                      onClick={handleVariantUpload}
+                      disabled={!csvFile || isUploading}
+                      className="flex-1 bg-[#e09a74] text-white py-3.5 rounded-lg font-bold hover:bg-[#d08963] disabled:opacity-50 shadow-lg shadow-orange-100"
+                    >
+                      {isUploading ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Processing...
+                        </div>
+                      ) : (
+                        'Import Variants'
+                      )}
+                    </Button>
                   </div>
                 </div>
-
-                <div className="pt-2 border-t border-orange-100/50">
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/public/templates/sample_${importType === 'product' ? 'products' : 'variants'}.xlsx`}
-                    download
-                    className="flex items-center justify-center gap-2 py-2 px-4 bg-white border border-orange-200 rounded-xl text-xs font-bold text-[#e09a74] hover:bg-orange-50 transition-colors shadow-sm"
-                  >
-                    <FileText className="w-4 h-4" />
-                    Download {importType === 'product' ? 'Product' : 'Variant'} Template
-                  </a>
-                </div>
-              </div>
-              <div className="pt-2">
-                <Button
-                  onClick={handleUpload}
-                  disabled={!file || isUploading}
-                  className="w-full bg-[#e09a74] text-white py-3.5 rounded-lg font-bold hover:bg-[#d08963] disabled:opacity-50 shadow-lg shadow-orange-100"
-                >
-                  {isUploading ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Processing File...
-                    </div>
-                  ) : (
-                    'Start Bulk Import'
-                  )}
-                </Button>
-              </div>
+              )}
             </>
           ) : (
             <div className="text-center py-4">
@@ -275,12 +466,33 @@ export default function BulkUploadModal() {
                 )}
               </div>
 
-              <Button
-                onClick={handleClose}
-                className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors"
-              >
-                Close & View Updates
-              </Button>
+              {result && currentStep === 2 ? (
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleClose}
+                    className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-300"
+                  >
+                    Skip & Finish
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setCurrentStep(3);
+                      setCsvFile(null);
+                      setResult(null);
+                    }}
+                    className="flex-1 bg-[#e09a74] text-white py-3 rounded-lg font-bold hover:bg-[#d08963]"
+                  >
+                    Continue to Variants
+                  </Button>
+                </div>
+              ) : result && currentStep === 3 ? (
+                <Button
+                  onClick={handleClose}
+                  className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors"
+                >
+                  Close & View Updates
+                </Button>
+              ) : null}
             </div>
           )}
         </div>

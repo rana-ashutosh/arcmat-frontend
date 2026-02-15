@@ -122,5 +122,22 @@ export const productService = {
             },
         });
         return response.data;
+    },
+
+    bulkImageUpload: async (zipFile) => {
+        const formData = new FormData();
+        formData.append('zipFile', zipFile);
+        const response = await api.post('/product/bulk-image-upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+
+    // Bulk Activate All Products and Variants for a Vendor
+    bulkActivateProducts: async (vendorId) => {
+        const response = await api.post('/product/bulk-activate', { vendorId });
+        return response.data;
     }
 };

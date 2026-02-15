@@ -40,7 +40,7 @@
         {
             "id": "users",
             "label": "Users",
-            "icon": "User",
+            "icon": "Users",
             "href": "/dashboard/users"
         },
         {

@@ -28,6 +28,8 @@ import ProductFormModal from '@/components/vendor/ProductFormModal';
 import BulkUploadModal from '@/components/vendor/BulkUploadModal';
 import RoleGuard from '@/components/auth/RoleGaurd';
 
+import ConfirmActivateModal from '@/components/vendor/ConfirmActivateModal';
+
 // Product List Page
 export default function ProductsListPage() {
   const { user, loading: authLoading } = useAuth();
@@ -43,6 +45,8 @@ export default function ProductsListPage() {
   const [orderBy, setOrderBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('DESC');
   const [isExporting, setIsExporting] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
+  const [showActivateModal, setShowActivateModal] = useState(false);
 
   // Use vendorId from URL if available, otherwise fallback to user ID
   const effectiveVendorId = vendorId || user?._id || user?.id;
@@ -76,6 +80,29 @@ export default function ProductsListPage() {
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
   const isLoading = authLoading || productsLoading;
+
+  const handleActivateAll = async () => {
+    if (!effectiveVendorId) {
+      toast.error('Vendor ID is required');
+      return;
+    }
+
+    setIsActivating(true);
+    try {
+      const response = await productService.bulkActivateProducts(effectiveVendorId);
+      toast.success(
+        `Successfully activated ${response.data.productsActivated} products and ${response.data.variantsActivated} variants!`
+      );
+      setShowActivateModal(false);
+      // Refresh the page to show updated statuses
+      window.location.reload();
+    } catch (error) {
+      console.error('Bulk activate failed', error);
+      toast.error(error.response?.data?.message || 'Failed to activate products');
+    } finally {
+      setIsActivating(false);
+    }
+  };
 
   const handleExport = async (format = 'xlsx') => {
     if (!effectiveVendorId) return;
@@ -112,6 +139,7 @@ export default function ProductsListPage() {
           'Sub Category (L2)': p.subcategoryId?.name || '',
           'Sub-Sub Category (L3)': p.subsubcategoryId?.name || '',
           'Brand': p.brand?.name || p.brand || '',
+          'Images': (p.product_images || []).join(', '),
           'Short Description': p.sort_description || '',
           'Description': p.description || '',
           'Meta Title': p.meta_title || '',
@@ -204,6 +232,12 @@ export default function ProductsListPage() {
         {/* Invisible Modals */}
         <ProductFormModal />
         <BulkUploadModal />
+        <ConfirmActivateModal
+          isOpen={showActivateModal}
+          onClose={() => setShowActivateModal(false)}
+          onConfirm={handleActivateAll}
+          isLoading={isActivating}
+        />
 
         {/* HEADER */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -218,9 +252,21 @@ export default function ProductsListPage() {
             </p>
           </div>
 
-          {/* ACTIONS */}
-          {isVendor && (
+          {/* ACTIONS - Only show when viewing specific vendor's products */}
+          {vendorId && (
             <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setShowActivateModal(true)}
+                disabled={isActivating}
+                className="flex items-center px-5 py-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md transition-all h-[42px]"
+                title="Activate all products and variants"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Activate All
+              </button>
+
               <div className="flex bg-white rounded-full border border-green-600/30 overflow-hidden h-[42px] items-center shadow-sm">
                 <button
                   onClick={() => handleExport('xlsx')}

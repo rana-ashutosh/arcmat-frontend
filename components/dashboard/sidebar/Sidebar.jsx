@@ -14,6 +14,7 @@ import {
   Heart,
   ShoppingBag,
   User,
+  Users,
   LayoutDashboard,
   Image
 } from 'lucide-react';
@@ -32,6 +33,7 @@ const ICON_MAP = {
   ShoppingBag,
   Heart,
   User,
+  Users,
   LayoutDashboard,
   Image
 };
