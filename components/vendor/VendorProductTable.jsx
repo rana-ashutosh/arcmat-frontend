@@ -151,7 +151,7 @@ export default function VendorProductTable({ products = [] }) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
-                      onClick={() => router.push(`/dashboard/products-list/${effectiveVendorId}/edit/${id}`)}
+                      onClick={() => router.push(`/dashboard/products-list/${product.createdBy._id || effectiveVendorId}/edit/${id}`)}
                       className="p-2 text-[#e09a74] hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
                       title="Edit Product"
                     >

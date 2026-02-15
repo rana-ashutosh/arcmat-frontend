@@ -255,17 +255,19 @@ export default function ProductsListPage() {
           {/* ACTIONS - Only show when viewing specific vendor's products */}
           {vendorId && (
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => setShowActivateModal(true)}
-                disabled={isActivating}
-                className="flex items-center px-5 py-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md transition-all h-[42px]"
-                title="Activate all products and variants"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Activate All
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => setShowActivateModal(true)}
+                  disabled={isActivating}
+                  className="flex items-center px-5 py-2.5 bg-green-600 text-white rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md transition-all h-[42px]"
+                  title="Activate all products and variants"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Activate All
+                </button>
+              )}
 
               <div className="flex bg-white rounded-full border border-green-600/30 overflow-hidden h-[42px] items-center shadow-sm">
                 <button

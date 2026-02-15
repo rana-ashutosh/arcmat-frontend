@@ -12,7 +12,7 @@ import { useGetVariants, useDeleteVariant } from '@/hooks/useVariant';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { generateSlug, getProductImageUrl, getVariantImageUrl, parseAttributes, formatCurrency, formatSKU } from '@/lib/productUtils';
 
-const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) => {
+const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting, vendorId }) => {
   const { user } = useAuth();
   const { data: categoryData } = useGetCategories();
   const { data: attributeData } = useGetAttributes();
@@ -207,6 +207,11 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting }) =
     }
 
     if (user?._id) submissionData.append('user_id', user._id);
+
+    // Include vendorId if provided (for admin creating products for vendors)
+    if (vendorId) {
+      submissionData.append('vendorId', vendorId);
+    }
 
     if (initialData) {
       submissionData.append('existingImages', JSON.stringify(existingImages));

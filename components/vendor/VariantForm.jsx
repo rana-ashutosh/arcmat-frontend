@@ -123,6 +123,15 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Validate productId is present
+        if (!productId) {
+            console.error('Product ID is missing! Cannot create variant.');
+            toast.error("Product ID is required for variant upload. Please try creating the product again.");
+            return;
+        }
+
+        console.log('Creating variant for productId:', productId);
+
         if (newImages.length === 0 && existingImages.length === 0) {
             toast.error("At least one variant image is required");
             return;
@@ -150,6 +159,12 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                 submissionData.append('variant_images', image);
             });
 
+            // Log FormData contents for debugging
+            console.log('Submitting variant with productId:', productId);
+            for (let pair of submissionData.entries()) {
+                console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
+            }
+
             if (editingVariant) {
                 await updateVariantMutation.mutateAsync({ id: variantId, data: submissionData });
                 toast.success('Variant updated successfully!');
@@ -160,6 +175,7 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
 
             if (onComplete) onComplete();
         } catch (error) {
+            console.error('Variant submission error:', error);
             toast.error(error.response?.data?.message || 'Failed to save variant');
         } finally {
             setIsSubmitting(false);
