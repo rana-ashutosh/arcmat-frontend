@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import ProductFilterBar from "@/components/sections/ProductFilterBar";
 import ProductSidebar from "@/components/sections/ProductSidebar";
 import ProductCard from "@/components/cards/ProductCard";
@@ -10,22 +11,32 @@ import { useGetVariants } from "@/hooks/useProduct";
 import { useGetVendors } from "@/hooks/useVendor";
 import { resolvePricing, formatCurrency } from "@/lib/productUtils";
 import { Loader2 } from "lucide-react";
+import CompareBar from "@/components/ui/CompareBar";
+import CompareModal from "@/components/ui/CompareModal";
+import { parseFiltersFromURL, buildURLFromFilters } from "@/lib/urlParamsUtils";
 
 export default function ProductListPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
     const [selectedCategory, setSelectedCategory] = useState("All");
+    const [categoryName, setCategoryName] = useState("");
     const [isDrawerOpen, setDrawerOpen] = useState(false);
     const [visibleItems, setVisibleItems] = useState(15);
     const [activeFilters, setActiveFilters] = useState({
         brands: [],
         colors: [],
         availability: [],
-        priceRange: [0, 500000], // Default range
+        priceRange: [0, 500000],
         toggles: {
             commercial: false,
             residential: false,
             allColorways: false
         }
     });
+
+    const [isInitialized, setIsInitialized] = useState(false);
 
     const { data: apiData, isLoading } = useGetVariants({
         status: 1,
@@ -45,12 +56,40 @@ export default function ProductListPage() {
         return { minPrice: min, maxPrice: max, priceStep: 100 };
     }, [products]);
 
-    // Update price range when products change if it hasn't been set by user
     useEffect(() => {
-        if (products.length && activeFilters.priceRange[1] === 500000) {
+        const parsed = parseFiltersFromURL(searchParams);
+        setSelectedCategory(parsed.category);
+        setCategoryName(parsed.categoryName);
+        setActiveFilters(parsed.filters);
+        setIsInitialized(true);
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (products.length && activeFilters.priceRange[1] === 500000 && isInitialized) {
             setActiveFilters(prev => ({ ...prev, priceRange: [minPrice, maxPrice] }));
         }
-    }, [products, minPrice, maxPrice]);
+    }, [products, minPrice, maxPrice, isInitialized]);
+
+    const updateURL = (newCategory, newCategoryName, newFilters) => {
+        if (!isInitialized) return;
+
+        const params = buildURLFromFilters(newCategory, newCategoryName, newFilters);
+        const newUrl = params ? `${pathname}?${params}` : pathname;
+        router.push(newUrl, { scroll: false });
+    };
+
+    const handleCategoryChange = (categoryId) => {
+        setSelectedCategory(categoryId);
+        updateURL(categoryId, '', activeFilters);
+    };
+    const handleFiltersChange = (newFiltersOrCallback) => {
+        const newFilters = typeof newFiltersOrCallback === 'function'
+            ? newFiltersOrCallback(activeFilters)
+            : newFiltersOrCallback;
+
+        setActiveFilters(newFilters);
+        updateURL(selectedCategory, categoryName, newFilters);
+    };
 
     const filteredAndSortedProducts = useMemo(() => {
         return products.filter(variant => {
@@ -59,9 +98,8 @@ export default function ProductListPage() {
 
             const { price } = resolvePricing(variant);
 
-            // Price filtering
             if (price < activeFilters.priceRange[0] || price > activeFilters.priceRange[1]) {
-                if (price > 0) return false; // Only exclude if has valid price and out of range
+                if (price > 0) return false;
             }
 
             if (selectedCategory !== "All") {
@@ -109,12 +147,20 @@ export default function ProductListPage() {
         return counts;
     }, [products]);
 
+    const availableColors = useMemo(() => {
+        const colors = new Set();
+        products.forEach(variant => {
+            if (variant.color) colors.add(variant.color);
+        });
+        return Array.from(colors).sort();
+    }, [products]);
+
     return (
         <div className="min-h-screen">
             <div className="sticky top-16 z-40">
                 <ProductFilterBar
                     selectedCategory={selectedCategory}
-                    setSelectedCategory={setSelectedCategory}
+                    setSelectedCategory={handleCategoryChange}
                     onOpenFilters={() => setDrawerOpen(true)}
                     categoryCounts={categoryCounts}
                 />
@@ -124,8 +170,9 @@ export default function ProductListPage() {
                 <div className="hidden lg:block w-72 shrink-0 h-[calc(100vh-200px)] sticky top-48 overflow-y-auto no-scrollbar pb-10">
                     <ProductSidebar
                         activeFilters={activeFilters}
-                        setActiveFilters={setActiveFilters}
+                        setActiveFilters={handleFiltersChange}
                         brands={brands}
+                        availableColors={availableColors}
                         minPrice={minPrice}
                         maxPrice={maxPrice}
                         priceStep={priceStep}
@@ -160,15 +207,6 @@ export default function ProductListPage() {
                     {filteredAndSortedProducts.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 grayscale opacity-50">
                             <p className="text-xl font-medium text-gray-500">Coming Soon</p>
-                            <Button
-                                onClick={() => {
-                                    setSelectedCategory("All");
-                                    setActiveFilters({ brands: [], colors: [], availability: [], toggles: { commercial: false, residential: false, allColorways: false } });
-                                }}
-                                className="mt-4 text-[#e09a74] font-semibold hover:underline"
-                            >
-                                Clear all filters
-                            </Button>
                         </div>
                     )}
                 </main>
@@ -197,8 +235,9 @@ export default function ProductListPage() {
                         <div className="flex-1 overflow-y-auto px-4 py-2">
                             <ProductSidebar
                                 activeFilters={activeFilters}
-                                setActiveFilters={setActiveFilters}
+                                setActiveFilters={handleFiltersChange}
                                 brands={brands}
+                                availableColors={availableColors}
                                 minPrice={minPrice}
                                 maxPrice={maxPrice}
                                 priceStep={priceStep}
@@ -215,6 +254,9 @@ export default function ProductListPage() {
                     </div>
                 </div>
             </div>
+
+            <CompareBar />
+            <CompareModal />
         </div>
     );
 }

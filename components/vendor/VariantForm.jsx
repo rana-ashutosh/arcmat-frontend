@@ -221,6 +221,7 @@ export default function VariantForm({ productId, vendorId, onComplete, editingVa
                         <input
                             name="stock"
                             type="number"
+                            min="0"
                             value={formData.stock}
                             onChange={handleChange}
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#e09a74] transition-all"

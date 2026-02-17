@@ -61,8 +61,24 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
 
     const availableAttributes = React.useMemo(() => {
         if (!hasVariants) return []
-        const keys = ['color', 'size', 'weight']
-        return keys.filter(key => variants.some(v => v[key]))
+        const keysMap = new Map()
+        variants.forEach(v => {
+            if (v.dynamicAttributes && Array.isArray(v.dynamicAttributes)) {
+                v.dynamicAttributes.forEach(attr => {
+                    if (attr.key) {
+                        const low = attr.key.toLowerCase()
+                        if (!keysMap.has(low)) keysMap.set(low, attr.key)
+                    }
+                })
+            }
+            ['color', 'size', 'weight'].forEach(k => {
+                if (v[k]) {
+                    const low = k.toLowerCase()
+                    if (!keysMap.has(low)) keysMap.set(low, k)
+                }
+            })
+        })
+        return Array.from(keysMap.values())
     }, [variants, hasVariants])
 
     React.useEffect(() => {
@@ -74,7 +90,12 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                 setSelectedVariant(defaultVariant)
                 const initialAttrs = {}
                 availableAttributes.forEach(key => {
-                    if (defaultVariant[key]) initialAttrs[key] = defaultVariant[key]
+                    const dynAttr = defaultVariant.dynamicAttributes?.find(a => a.key === key)
+                    if (dynAttr) {
+                        initialAttrs[key] = dynAttr.value
+                    } else if (defaultVariant[key]) {
+                        initialAttrs[key] = defaultVariant[key]
+                    }
                 })
                 setSelectedAttributes(initialAttrs)
             }
@@ -96,7 +117,12 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
         const matchingVariant = variants.find(v => {
             return availableAttributes.every(attrKey => {
                 const targetValue = attrKey === key ? value : newAttributes[attrKey]
-                return !targetValue || v[attrKey] === targetValue
+                if (!targetValue) return true
+
+                const dynAttr = v.dynamicAttributes?.find(a => a.key === attrKey)
+                if (dynAttr) return dynAttr.value === targetValue
+
+                return v[attrKey] === targetValue
             })
         })
 
@@ -109,7 +135,12 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
         setSelectedVariant(v)
         const newAttrs = {}
         availableAttributes.forEach(key => {
-            if (v[key]) newAttrs[key] = v[key]
+            const dynAttr = v.dynamicAttributes?.find(a => a.key === key)
+            if (dynAttr) {
+                newAttrs[key] = dynAttr.value
+            } else if (v[key]) {
+                newAttrs[key] = v[key]
+            }
         })
         setSelectedAttributes(newAttrs)
     }
@@ -143,7 +174,12 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
     const displayImages = images.length ? images : ['/Icons/arcmatlogo.svg']
 
     const handleAddToCart = () => {
-        if (!isPurchasable) return
+        if (!inStock) {
+            toast.warning("This product is currently out of stock");
+            return;
+        }
+
+        if (!isPurchasable) return;
 
         if (isAuthenticated) {
             addToCartBackend({
@@ -302,21 +338,19 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                         </span>
                                     </div>
                                     {hasVariants && selectedVariant && (
-                                        <p className="text-sm py-1 text-gray-500 mt-1 flex items-center gap-2">
+                                        <div className="text-sm py-1 text-gray-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                                             <span>SKU: {selectedVariant.skucode || selectedVariant._id}</span>
-                                            {selectedVariant.color && (
-                                                <>
-                                                    <span className="text-gray-300">|</span>
-                                                    <span>Color: <span className="text-gray-700 font-medium">{selectedVariant.color}</span></span>
-                                                </>
-                                            )}
-                                            {selectedVariant.size && (
-                                                <>
-                                                    <span className="text-gray-300">|</span>
-                                                    <span>Size: <span className="text-gray-700 font-medium">{selectedVariant.size}</span></span>
-                                                </>
-                                            )}
-                                        </p>
+                                            {availableAttributes.map(key => {
+                                                const val = selectedAttributes[key]
+                                                if (!val) return null
+                                                return (
+                                                    <React.Fragment key={key}>
+                                                        <span className="text-gray-300">|</span>
+                                                        <span className="capitalize">{key}: <span className="text-gray-700 font-medium">{val}</span></span>
+                                                    </React.Fragment>
+                                                )
+                                            })}
+                                        </div>
                                     )}
                                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">{name}</h1>
                                     <p className="text-base text-gray-700 leading-relaxed mb-4">{subtitle}</p>
@@ -332,7 +366,8 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                                         ? getVariantImageUrl(v.variant_images[0])
                                                         : displayImages[0];
                                                     const isSelected = selectedVariant?._id === v._id;
-                                                    const variantColorCode = v.color ? getColorCode(v.color) : null
+                                                    const variantColor = v.color || v.dynamicAttributes?.find(a => a.key?.toLowerCase() === 'color')?.value
+                                                    const variantColorCode = variantColor ? getColorCode(variantColor) : null
 
                                                     return (
                                                         <button
@@ -376,29 +411,37 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                     {hasVariants && (
                                         <div className="mt-4 mb-6 space-y-4">
                                             {availableAttributes.map(attrKey => {
-                                                // Get unique values for this attribute
-                                                const uniqueValues = [...new Set(variants.map(v => v[attrKey]).filter(Boolean))]
+                                                const uniqueValues = [...new Set(variants.map(v => {
+                                                    const dynAttr = v.dynamicAttributes?.find(a => a.key === attrKey)
+                                                    return dynAttr ? dynAttr.value : v[attrKey]
+                                                }).filter(Boolean))]
 
                                                 if (uniqueValues.length === 0) return null
 
                                                 return (
                                                     <div key={attrKey}>
                                                         <h4 className="text-sm font-medium text-gray-900 mb-2 capitalize">
-                                                            {attrKey === 'color' ? 'Select Color' : `${attrKey}:`}
+                                                            {attrKey.toLowerCase() === 'color' ? 'Select Color' : `${attrKey}:`}
                                                         </h4>
                                                         <div className="flex flex-wrap gap-2">
                                                             {uniqueValues.map(value => {
                                                                 const isSelected = selectedAttributes[attrKey] === value
 
                                                                 // Dependent Selection: Check if this value is compatible with other current selections
-                                                                const isCompatible = variants.some(v =>
-                                                                    v[attrKey] === value &&
-                                                                    availableAttributes.every(ak =>
-                                                                        ak === attrKey || !selectedAttributes[ak] || v[ak] === selectedAttributes[ak]
-                                                                    )
-                                                                )
+                                                                const isCompatible = variants.some(v => {
+                                                                    const dynAttr = v.dynamicAttributes?.find(a => a.key === attrKey)
+                                                                    const currentVal = dynAttr ? dynAttr.value : v[attrKey]
 
-                                                                if (attrKey === 'color') {
+                                                                    return currentVal === value &&
+                                                                        availableAttributes.every(ak => {
+                                                                            if (ak === attrKey || !selectedAttributes[ak]) return true
+                                                                            const otherDynAttr = v.dynamicAttributes?.find(a => a.key === ak)
+                                                                            const otherVal = otherDynAttr ? otherDynAttr.value : v[ak]
+                                                                            return otherVal === selectedAttributes[ak]
+                                                                        })
+                                                                })
+
+                                                                if (attrKey.toLowerCase() === 'color') {
                                                                     // Color Swatch style
                                                                     const colorCode = getColorCode(value)
                                                                     const isWhite = value.toLowerCase() === 'white'
@@ -409,20 +452,23 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                                                             onClick={() => handleAttributeSelect(attrKey, value)}
                                                                             disabled={!isCompatible}
                                                                             className={`
-                                                                                flex items-center gap-2 p-1 rounded-full border transition-all
+                                                                                relative flex items-center justify-center w-10 h-10 rounded-full border transition-all
                                                                                 ${isSelected
-                                                                                    ? 'border-gray-900 ring-1 ring-gray-900 bg-gray-50 text-gray-900 font-medium'
+                                                                                    ? 'border-[#e09a74] ring-2 ring-[#e09a74]/20 shadow-sm'
                                                                                     : isCompatible
-                                                                                        ? 'border-gray-200 text-gray-600 hover:border-gray-400'
-                                                                                        : 'border-gray-100 text-gray-300 cursor-not-allowed opacity-50 grayscale'
+                                                                                        ? 'border-gray-200 hover:border-gray-400'
+                                                                                        : 'border-gray-100 cursor-not-allowed opacity-50'
                                                                                 }
                                                                             `}
                                                                             title={value}
                                                                         >
                                                                             <span
-                                                                                className={`w-8 h-8 rounded-full border ${isWhite ? 'border-gray-200' : 'border-transparent'}`}
+                                                                                className={`w-7 h-7 rounded-full border ${isWhite ? 'border-gray-200' : 'border-transparent'}`}
                                                                                 style={{ backgroundColor: colorCode }}
                                                                             />
+                                                                            {isSelected && (
+                                                                                <div className="absolute inset-0 rounded-full border-2 border-[#e09a74] -m-[2px]" />
+                                                                            )}
                                                                         </button>
                                                                     )
                                                                 }

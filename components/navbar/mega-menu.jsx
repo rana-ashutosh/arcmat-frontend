@@ -27,12 +27,14 @@ export const MegaMenu = ({ item, setActiveItem, handleMouseLeave }) => {
                     hoveredCategory={hoveredCategory}
                     setHoveredCategory={setHoveredCategory}
                     itemName={item.name}
+                    parentCategoryId={item.id}
                 />
 
                 <MegaMenuContent
                     activeCategory={activeCategory}
                     hoveredCategory={hoveredCategory}
                     image={item.image}
+                    categoryData={activeCategory}
                 />
             </div>
         </div>

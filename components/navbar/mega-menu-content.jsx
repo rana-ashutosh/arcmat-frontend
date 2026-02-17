@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "./utils";
 
-export const MegaMenuContent = ({ activeCategory, hoveredCategory, image }) => {
+export const MegaMenuContent = ({ activeCategory, hoveredCategory, image, categoryData }) => {
     return (
         <div className="flex-1 bg-[#ead4ce] p-8 flex justify-between gap-12 min-w-[600px]">
             <div
@@ -18,16 +18,24 @@ export const MegaMenuContent = ({ activeCategory, hoveredCategory, image }) => {
                 <div className="grid grid-cols-2 gap-x-12 gap-y-8">
                     {activeCategory?.links?.map((column, colIndex) => (
                         <ul key={colIndex} className="space-y-3">
-                            {column.map((link) => (
-                                <li key={link}>
-                                    <Link
-                                        href="/productlist"
-                                        className="text-sm text-[hsl(20,10%,15%)]/80 hover:text-[hsl(20,10%,15%)] transition-colors block font-normal"
-                                    >
-                                        {link}
-                                    </Link>
-                                </li>
-                            ))}
+                            {column.map((link) => {
+                                const linkCategoryData = categoryData?.children?.find(
+                                    child => child.name === link
+                                );
+                                const categoryId = linkCategoryData?._id || linkCategoryData?.id || '';
+                                const categoryName = encodeURIComponent(link);
+
+                                return (
+                                    <li key={link}>
+                                        <Link
+                                            href={categoryId ? `/productlist?category=${categoryId}&categoryName=${categoryName}` : "/productlist"}
+                                            className="text-sm text-[hsl(20,10%,15%)]/80 hover:text-[hsl(20,10%,15%)] transition-colors block font-normal"
+                                        >
+                                            {link}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     ))}
                 </div>

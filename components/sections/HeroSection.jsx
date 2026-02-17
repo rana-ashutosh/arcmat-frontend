@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Button from '../ui/Button';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -9,29 +9,28 @@ import { Autoplay } from 'swiper/modules';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { toast } from '../ui/Toast';
-
-const heroBannerImages = [
-  {
-    src: '/Images/Banner.png',
-    alt: 'ArcMat Banner',
-  },
-  {
-    src: '/Images/Hospitality.jpg',
-    alt: 'Hospitality Project',
-  },
-  {
-    src: '/Images/Kitchen.png',
-    alt: 'Kitchen Project',
-  },
-  {
-    src: '/Images/Residence.png',
-    alt: 'Residence Project',
-  },
-];
+import bannerService from '@/services/bannerService';
 
 const HeroSection = () => {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const [banners, setBanners] = useState([]);
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await bannerService.getAllBanners();
+
+        if (response && response.data) {
+          const heroBanners = response.data.filter(b => b.banner_type === 'Hero' && b.status === 1);
+          setBanners(heroBanners);
+        }
+      } catch (error) {
+      }
+    };
+
+    fetchBanners();
+  }, []);
 
   const handleCTAClick = () => {
     if (isAuthenticated) {
@@ -39,6 +38,17 @@ const HeroSection = () => {
     } else {
       router.push('/auth/register');
     }
+  };
+
+  const getImageUrl = (filename) => {
+    if (!filename) return '/Images/Banner.png';
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
+
+    const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+
+    return `${baseUrl}/public/uploads/banner/${cleanFilename}`;
   };
 
   return (
@@ -50,28 +60,44 @@ const HeroSection = () => {
           disableOnInteraction: false,
           pauseOnMouseEnter: false,
         }}
-        loop={true}
+        loop={banners.length > 1}
         speed={950}
         slidesPerView={1}
         allowTouchMove={false}
         className="absolute inset-0 w-full h-full z-0"
         aria-label="Main hero images slider"
       >
-        {heroBannerImages.map((img, idx) => (
-          <SwiperSlide key={idx} className="h-full">
+        {banners.length > 0 ? (
+          banners.map((banner, idx) => (
+            <SwiperSlide key={banner._id || idx} className="h-full">
+              <div className="relative w-full h-full min-h-[80vh] sm:min-h-screen">
+                <Image
+                  src={getImageUrl(banner.banner)}
+                  alt={banner.banner_alt || 'Hero Banner'}
+                  fill
+                  sizes="100dvw"
+                  className="object-cover object-center w-full h-full"
+                  priority={idx === 0}
+                />
+                <span className="sr-only">{banner.banner_alt}</span>
+              </div>
+            </SwiperSlide>
+          ))
+        ) : (
+
+          <SwiperSlide className="h-full">
             <div className="relative w-full h-full min-h-[80vh] sm:min-h-screen">
               <Image
-                src={img.src}
-                alt={img.alt}
+                src='/Images/Banner.png'
+                alt='Default Banner'
                 fill
                 sizes="100dvw"
                 className="object-cover object-center w-full h-full"
-                priority={idx === 0}
+                priority
               />
-              <span className="sr-only">{img.alt}</span>
             </div>
           </SwiperSlide>
-        ))}
+        )}
       </Swiper>
 
       <div className="absolute inset-0 bg-black/60 z-10"></div>

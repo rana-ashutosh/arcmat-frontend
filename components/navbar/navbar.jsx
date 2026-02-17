@@ -23,9 +23,11 @@ const Navbar = () => {
 
             return {
                 name: cat.name,
+                id: cat._id || cat.id,
                 image: cat.image ? getCategoryImageUrl(cat.image) : (staticItem?.image || "/mega-Images/Furniture.jpg"),
                 isSpecial: staticItem?.isSpecial || false,
                 hasDropdown: cat.children && cat.children.length > 0,
+                categoryData: cat,
                 categories: cat.children ? cat.children.map(subCat => {
                     const l3Links = subCat.children ? subCat.children.map(c => c.name) : [];
                     const columns = [];
@@ -35,8 +37,10 @@ const Navbar = () => {
 
                     return {
                         name: subCat.name,
+                        id: subCat._id || subCat.id,
                         hasSubmenu: subCat.children && subCat.children.length > 0,
-                        links: columns
+                        links: columns,
+                        children: subCat.children
                     };
                 }) : []
             };

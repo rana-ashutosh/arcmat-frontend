@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Container from '../ui/Container'
 import Button from '../ui/Button'
 import { useGetCategories } from '@/hooks/useCategory'
+import { useCompareStore } from '@/store/useCompareStore'
 import { Loader2 } from 'lucide-react'
 
 const ProductFilterBar = ({ selectedCategory, setSelectedCategory, onOpenFilters, categoryCounts = {} }) => {
@@ -26,6 +27,14 @@ const ProductFilterBar = ({ selectedCategory, setSelectedCategory, onOpenFilters
 
         return [{ name: 'All', id: 'All', count: categoryCounts['All'] }, ...mapped];
     }, [categoriesData, categoryCounts]);
+
+    const comparedCount = useCompareStore(state => state.comparedProducts.length);
+    const openCompareModal = useCompareStore(state => state.openCompareModal);
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     return (
         <section className="bg-white border-b-2 border-gray-200 py-3">
@@ -85,8 +94,11 @@ const ProductFilterBar = ({ selectedCategory, setSelectedCategory, onOpenFilters
                         <Image src="/Icons/Vector_2.svg" width={15} height={15} alt="Search" className="opacity-60" />
                     </Button>
 
-                    <Button text="Compare"
-                        className="hidden sm:block ml-1 sm:ml-2 px-4 sm:px-7 py-2 sm:py-2.5 bg-white border border-gray-200 rounded-2xl hover:bg-[#e09a74] hover:text-white transition-colors text-[14px] sm:text-[15px] font-bold text-gray-700 shadow-sm cursor-pointer whitespace-nowrap">
+                    <Button
+                        onClick={() => openCompareModal()}
+                        className="hidden sm:block ml-1 sm:ml-2 px-4 sm:px-7 py-2 sm:py-2.5 bg-white border border-gray-200 rounded-2xl hover:bg-[#e09a74] hover:text-white transition-colors text-[14px] sm:text-[15px] font-bold text-gray-700 shadow-sm cursor-pointer whitespace-nowrap"
+                    >
+                        Compare {mounted && comparedCount > 0 && `(${comparedCount})`}
                     </Button>
                 </div>
 
