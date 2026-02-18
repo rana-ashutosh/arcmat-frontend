@@ -139,5 +139,17 @@ export const productService = {
     bulkActivateProducts: async (vendorId) => {
         const response = await api.post('/product/bulk-activate', { vendorId });
         return response.data;
+    },
+
+    // Export Product Data (Products, Variants, Images ZIP)
+    exportProductData: async (vendorId = null) => {
+        const params = {};
+        if (vendorId) params.vendorId = vendorId;
+
+        const response = await api.get('/product/export-data', {
+            params,
+            responseType: 'blob' // Important for binary download
+        });
+        return response.data;
     }
 };

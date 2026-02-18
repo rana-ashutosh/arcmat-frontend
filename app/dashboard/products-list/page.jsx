@@ -111,6 +111,27 @@ export default function ProductsListPage() {
         }
     };
 
+    const handleDataExport = async () => {
+        setIsExporting(true);
+        try {
+            const blob = await productService.exportProductData(effectiveVendorId);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `product_data_export_${new Date().toISOString().split('T')[0]}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success("Product data exported successfully");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to export product data");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     const handlePageChange = (page) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -160,7 +181,7 @@ export default function ProductsListPage() {
 
                 {showManagementUI && (
                     <div className="flex gap-3">
-                        <div className="flex bg-white rounded-full border border-green-600 overflow-hidden h-[42px] items-center">
+                        {/* <div className="flex bg-white rounded-full border border-green-600 overflow-hidden h-[42px] items-center">
                             <button
                                 onClick={() => handleExport('xlsx')}
                                 disabled={isExporting}
@@ -177,9 +198,17 @@ export default function ProductsListPage() {
                             >
                                 CSV
                             </button>
-                        </div>
+                        </div> */}
                         {isVendor && (
                             <>
+                                <Button
+                                    onClick={handleDataExport}
+                                    disabled={isExporting}
+                                    className="flex items-center rounded-full bg-white text-blue-600 cursor-pointer hover:bg-gray-50 min-w-[120px] py-2 px-4 border border-blue-600 duration-300 ml-2"
+                                >
+                                    <Package className="w-4 h-4 mr-2" />
+                                    Export Data
+                                </Button>
                                 <Button
                                     onClick={() => openBulkUploadModal()}
                                     className="flex items-center rounded-full bg-white text-[#e09a74] cursor-pointer hover:bg-gray-50 min-w-[120px] py-2 px-4 border border-[#e09a74] duration-300"
@@ -249,7 +278,7 @@ export default function ProductsListPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500">Total: {paginationData?.totalItems||0} products</span>
+                            <span className="text-sm text-gray-500">Total: {paginationData?.totalItems || 0} products</span>
                         </div>
                     </div>
 
@@ -260,10 +289,10 @@ export default function ProductsListPage() {
 
                         {(paginationData?.totalItems) > 0 && (
                             <Pagination
-                                currentPage={paginationData?.currentPage||1}
-                                totalPages={paginationData?.totalPages||1}
-                                pageSize={paginationData?.pageSize||10}
-                                totalItems={paginationData?.totalItems||0}
+                                currentPage={paginationData?.currentPage || 1}
+                                totalPages={paginationData?.totalPages || 1}
+                                pageSize={paginationData?.pageSize || 10}
+                                totalItems={paginationData?.totalItems || 0}
                                 onPageChange={handlePageChange}
                                 onPageSizeChange={handlePageSizeChange}
                             />

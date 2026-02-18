@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Upload, Download } from 'lucide-react';
+import { Plus, Search, Upload, Download, Package } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductStore } from '@/store/useProductStore';
@@ -86,6 +86,28 @@ export default function ProductsListPage() {
       toast.error(error.response?.data?.message || 'Failed to activate products');
     } finally {
       setIsActivating(false);
+    }
+  };
+
+  const handleDataExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await productService.exportProductData(effectiveVendorId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `product_data_export_${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Product data exported successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to export product data");
+    } finally {
+      setIsExporting(false);
+      setGlobalLoading(false);
     }
   };
 
@@ -253,7 +275,7 @@ export default function ProductsListPage() {
                 </button>
               )}
 
-              <div className="flex bg-white rounded-full border border-green-600/30 overflow-hidden h-[42px] items-center shadow-sm">
+              {/* <div className="flex bg-white rounded-full border border-green-600/30 overflow-hidden h-[42px] items-center shadow-sm">
                 <button
                   onClick={() => handleExport('xlsx')}
                   disabled={isExporting}
@@ -272,9 +294,17 @@ export default function ProductsListPage() {
                 >
                   CSV
                 </button>
-              </div>
+              </div> */}
 
               <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleDataExport}
+                  disabled={isExporting}
+                  className="flex items-center rounded-full bg-white text-blue-600 hover:bg-blue-50 min-w-[130px] h-[42px] px-6 border border-blue-600 shadow-sm transition-all duration-300 font-semibold"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Export Data
+                </Button>
                 <Button
                   onClick={() => openBulkUploadModal()}
                   className="flex items-center rounded-full bg-white text-[#e09a74] hover:bg-orange-50 min-w-[130px] h-[42px] px-6 border border-[#e09a74] shadow-sm transition-all duration-300 font-semibold"
@@ -354,7 +384,7 @@ export default function ProductsListPage() {
 
               <div className="flex items-center px-4 py-2 bg-orange-50/50 rounded-xl border border-orange-100">
                 <span className="text-xs font-semibold text-[#e09a74]">
-                  {paginationData?.totalItems||0} total products found
+                  {paginationData?.totalItems || 0} total products found
                 </span>
               </div>
             </div>
@@ -365,10 +395,10 @@ export default function ProductsListPage() {
               <VendorProductTable products={apiProducts} />
               {(paginationData?.totalItems) > 0 && (
                 <Pagination
-                  currentPage={paginationData?.currentPage||1}
-                  totalPages={paginationData?.totalPages||1}
-                  pageSize={paginationData?.pageSize||10}
-                  totalItems={paginationData?.totalItems||0}
+                  currentPage={paginationData?.currentPage || 1}
+                  totalPages={paginationData?.totalPages || 1}
+                  pageSize={paginationData?.pageSize || 10}
+                  totalItems={paginationData?.totalItems || 0}
                   onPageChange={handlePageChange}
                   onPageSizeChange={handlePageSizeChange}
                 />
