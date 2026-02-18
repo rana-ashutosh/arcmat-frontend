@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useCompareStore } from '@/store/useCompareStore'
-import { X, ShoppingCart, Trash2, Check, AlertCircle } from 'lucide-react'
+import { X, ShoppingCart, Trash2, Check, AlertCircle, ChevronRight } from 'lucide-react'
 import { getProductImageUrl, getVariantImageUrl, formatCurrency, resolvePricing } from '@/lib/productUtils'
 import { useAddToCart } from '@/hooks/useCart'
 import { useAuth } from '@/hooks/useAuth'
@@ -10,7 +10,7 @@ import { useCartStore } from '@/store/useCartStore'
 import { toast } from 'sonner'
 import clsx from 'clsx'
 
-const CompareModal = () => {
+const CompareSidebar = () => {
     const isCompareModalOpen = useCompareStore(state => state.isCompareModalOpen);
     const closeCompareModal = useCompareStore(state => state.closeCompareModal);
     const comparedProducts = useCompareStore(state => state.comparedProducts);
@@ -23,7 +23,7 @@ const CompareModal = () => {
         setMounted(true);
     }, []);
 
-    if (!mounted || !isCompareModalOpen) return null;
+    if (!mounted) return null;
 
     const handleAddToCart = (product) => {
         const isVariantCentric = Boolean(product.productId && typeof product.productId === 'object');
@@ -68,13 +68,18 @@ const CompareModal = () => {
     const allAttrKeys = Array.from(allAttrKeysMap.values());
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-            <div
-                className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
-                onClick={closeCompareModal}
-            />
+        <div className={clsx(
+            "fixed inset-y-0 right-0 z-[100] flex transition-transform duration-300 ease-in-out bg-white shadow-2xl border-l border-gray-200",
+            isCompareModalOpen ? "translate-x-0" : "translate-x-full"
+        )}
+            style={{ width: 'min(90vw, 1200px)' }}
+        >
 
-            <div className="bg-white w-full max-w-7xl h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200">
+            {/* Toggle Button (Visible when closed? No, usually handled by other UI) 
+                But we need a close button inside.
+            */}
+
+            <div className="flex flex-col w-full h-full">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white sticky top-0 z-20">
                     <div>
@@ -85,14 +90,18 @@ const CompareModal = () => {
                         onClick={closeCompareModal}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-900"
                     >
-                        <X className="w-5 h-5" />
+                        <ChevronRight className="w-6 h-6" />
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-auto custom-scrollbar bg-gray-50/50">
-                    <div className="min-w-[800px] lg:min-w-full inline-block align-top">
-                        <div className="grid divide-y divide-gray-100 bg-white shadow-sm ring-1 ring-gray-900/5 my-6 mx-6 rounded-xl overflow-hidden">
+                <div className="flex-1 overflow-auto custom-scrollbar bg-gray-50/50 p-6">
+                    {comparedProducts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                            <p>No items to compare.</p>
+                        </div>
+                    ) : (
+                        <div className="grid divide-y divide-gray-100 bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden inline-block align-top min-w-full">
 
                             {/* Product Header Row */}
                             <div className="grid" style={{ gridTemplateColumns: `200px repeat(${comparedProducts.length}, minmax(280px, 1fr))` }}>
@@ -117,7 +126,7 @@ const CompareModal = () => {
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
 
-                                            <div className="relative aspect-square w-40 h-40 mx-auto mb-4 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+                                            <div className="relative aspect-square w-32 h-32 mx-auto mb-4 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
                                                 <Image
                                                     src={imageUrl}
                                                     alt={root.product_name || ''}
@@ -194,14 +203,13 @@ const CompareModal = () => {
                                 </div>
                             ))}
 
-                            {/* Specifications / Other Details (Static) */}
+                            {/* Stock / Availability */}
                             <div className="grid" style={{ gridTemplateColumns: `200px repeat(${comparedProducts.length}, minmax(280px, 1fr))` }}>
                                 {/* <div className="p-4 px-6 bg-gray-50/80 text-sm font-medium text-gray-600 flex items-center">
                                     Availability
                                 </div> */}
                                 {/* {comparedProducts.map((product) => {
                                     const stock = product.stock || (product.productId?.stock) || 0;
-                                    console.log('hi', product)
                                     return (
                                         <div key={product._id || product.id} className="p-4 px-6 border-l border-gray-100 flex items-center justify-center">
                                             {stock > 0 ? (
@@ -236,7 +244,7 @@ const CompareModal = () => {
                                 ))}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
@@ -260,4 +268,4 @@ const CompareModal = () => {
     )
 }
 
-export default CompareModal
+export default CompareSidebar
