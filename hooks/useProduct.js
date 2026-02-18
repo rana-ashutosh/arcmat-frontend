@@ -18,7 +18,7 @@ export const VARIANT_KEYS = {
 };
 
 // Hook to fetch products
-export const useGetProducts = ({ userId, page, limit, enabled = true, ...otherFilters } = {}) => {
+export const useGetProducts = ({ userId, page = 1, limit = 10, enabled = true, ...otherFilters } = {}) => {
     return useQuery({
         queryKey: PRODUCT_KEYS.list({ userId, page, limit, ...otherFilters }),
         queryFn: () => productService.getAllProducts({
@@ -26,7 +26,7 @@ export const useGetProducts = ({ userId, page, limit, enabled = true, ...otherFi
             user_id: userId,
             page,
             limit,
-            offset: (page - 1) * limit,
+            offset: (Number(page) - 1) * Number(limit),
             q: otherFilters.search,
             search: otherFilters.search,
             keyword: otherFilters.search,

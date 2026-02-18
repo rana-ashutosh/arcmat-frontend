@@ -63,22 +63,7 @@ export default function ProductsListPage() {
   });
 
   const apiProducts = apiResponse?.data?.data || apiResponse?.data || apiResponse?.products || [];
-  const totalItems =
-    apiResponse?.data?.totalCount ??
-    apiResponse?.totalCount ??
-    apiResponse?.data?.total ??
-    apiResponse?.total ??
-    apiResponse?.data?.count ??
-    apiResponse?.count ??
-    apiResponse?.data?.total_products ??
-    apiResponse?.total_products ??
-    (apiProducts.length === pageSize
-      ? (pageSize * currentPage + 1)
-      : (pageSize * (currentPage - 1) + apiProducts.length)
-    );
-
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
-
+  const paginationData = apiResponse?.data?.pagination
   const isLoading = authLoading || productsLoading;
 
   const handleActivateAll = async () => {
@@ -111,7 +96,6 @@ export default function ProductsListPage() {
       // Fetch ALL products matching current filters for export
       const response = await productService.getAllProducts({
         userid: effectiveVendorId,
-        user_id: effectiveVendorId,
         page: 1,
         limit: 10000, // Fetch up to 10k items for export
         search: searchTerm,
@@ -370,7 +354,7 @@ export default function ProductsListPage() {
 
               <div className="flex items-center px-4 py-2 bg-orange-50/50 rounded-xl border border-orange-100">
                 <span className="text-xs font-semibold text-[#e09a74]">
-                  {totalItems} total products found
+                  {paginationData?.totalItems||0} total products found
                 </span>
               </div>
             </div>
@@ -379,12 +363,12 @@ export default function ProductsListPage() {
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <VendorProductTable products={apiProducts} />
-              {totalItems > 0 && (
+              {(paginationData?.totalItems) > 0 && (
                 <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  pageSize={pageSize}
-                  totalItems={totalItems}
+                  currentPage={paginationData?.currentPage||1}
+                  totalPages={paginationData?.totalPages||1}
+                  pageSize={paginationData?.pageSize||10}
+                  totalItems={paginationData?.totalItems||0}
                   onPageChange={handlePageChange}
                   onPageSizeChange={handlePageSizeChange}
                 />

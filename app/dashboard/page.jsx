@@ -68,6 +68,7 @@ export default function DashboardPage() {
 
     const { data: allProductsData, isLoading: isLoadingAll } = useGetProducts({
         userId: user?.role === 'vendor' ? user?._id : undefined,
+        page: 1,
         limit: 1000,
         status: 'all',
         enabled: mounted && (user?.role === 'vendor' || user?.role === 'admin')
