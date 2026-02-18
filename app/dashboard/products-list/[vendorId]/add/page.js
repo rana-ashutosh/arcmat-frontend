@@ -27,26 +27,21 @@ export default function AddProductPage() {
     const handleCreateProduct = async (formData) => {
         try {
             const response = await createProductMutation.mutateAsync(formData);
-            console.log('Full product creation response:', response);
 
             toast.success('Basic details saved! Now add a variant.');
 
             // Try multiple paths to extract product ID
             const newProduct = response?.data?.data || response?.data || response;
-            console.log('Extracted product:', newProduct);
 
             const productId = newProduct?._id || newProduct?.id;
-            console.log('Extracted productId:', productId);
 
             if (productId) {
                 setCreatedProductId(productId);
                 setCreatedProductData(newProduct);
             } else {
-                console.error('Failed to extract product ID from response:', response);
                 toast.error('Product created but failed to retrieve ID. Please try again.');
             }
         } catch (error) {
-            console.error('Create product error:', error);
             const msg = error.response?.data?.message || error.message || 'Failed to create product';
             toast.error(msg);
         }

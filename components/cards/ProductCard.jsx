@@ -318,18 +318,22 @@ const ProductCard = ({ product }) => {
 
             <div className="px-3 flex gap-2">
                 <Button
-                    onClick={handleCartToggle}
-                    className={`flex-1 h-9 flex items-center justify-center gap-1.5 rounded-lg border text-[11px] font-medium transition-all duration-300 ${isInCart || isAdded
-                        ? 'bg-green-700 hover:border-red-600 text-white font-semibold hover:bg-white hover:text-red-600'
-                        : 'bg-[#e09a74] border-[#e09a74] text-white hover:bg-white hover:text-[#e09a74]'
+                    onClick={isOutOfStock && !isInCart ? undefined : handleCartToggle}
+                    disabled={isOutOfStock && !isInCart}
+                    className={`flex-1 h-9 flex items-center justify-center gap-1.5 rounded-lg border text-[11px] font-medium transition-all duration-300 ${isOutOfStock && !isInCart
+                            ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                            : isInCart || isAdded
+                                ? 'bg-green-700 hover:border-red-600 text-white font-semibold hover:bg-white hover:text-red-600'
+                                : 'bg-[#e09a74] border-[#e09a74] text-white hover:bg-white hover:text-[#e09a74]'
                         }`}
                 >
-                    {isInCart || isAdded ? (
-                        <X className="w-3.5 h-3.5" />
+                    {isOutOfStock && !isInCart ? (
+                        <span>Out of Stock</span>
+                    ) : isInCart || isAdded ? (
+                        <><X className="w-3.5 h-3.5" /><span>Remove from Cart</span></>
                     ) : (
-                        <ShoppingCart className="w-3.5 h-3.5" />
+                        <><ShoppingCart className="w-3.5 h-3.5" /><span>Add to Cart</span></>
                     )}
-                    <span>{isInCart || isAdded ? 'Remove from Cart' : 'Add to Cart'}</span>
                 </Button>
 
                 <button

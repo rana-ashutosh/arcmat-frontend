@@ -93,7 +93,6 @@ export default function AddBannerPage() {
             toast.success('Banner created successfully!');
             router.push('/dashboard/banners');
         } catch (error) {
-            console.error('Error creating banner:', error);
             toast.error(error.response?.data?.message || 'Failed to create banner');
         } finally {
             setIsSubmitting(false);

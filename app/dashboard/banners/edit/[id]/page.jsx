@@ -116,7 +116,6 @@ export default function EditBannerPage() {
             toast.success('Banner updated successfully!');
             router.push('/dashboard/banners');
         } catch (error) {
-            console.error('Error updating banner:', error);
             toast.error(error.response?.data?.message || 'Failed to update banner');
         } finally {
             setIsSubmitting(false);

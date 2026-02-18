@@ -54,7 +54,6 @@ export const useGetProduct = (id) => {
         queryFn: () => productService.getProductById(id),
         enabled: !!id,
         onSuccess(data) {
-            console.log('Product fetched successfully!', data);
             return data
         }
     });

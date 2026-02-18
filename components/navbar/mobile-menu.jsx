@@ -1,15 +1,17 @@
 "use client";
 
 import { useSidebarStore } from "@/store/useSidebarStore";
-import { navItems } from "./nav-data";
+import { navItems as staticNavItems } from "./nav-data";
 import { X, ChevronDown, ChevronRight, Search, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "./utils";
 import { useAuth } from "@/hooks/useAuth";
 import Logo from "../ui/logo.jsx";
+import { useGetCategoryTree } from "@/hooks/useCategory";
+import { getCategoryImageUrl } from "@/lib/productUtils";
 
 export const MobileMenu = () => {
     const { isMobileOpen, setMobileOpen } = useSidebarStore();
@@ -17,6 +19,44 @@ export const MobileMenu = () => {
     const [openIndex, setOpenIndex] = useState(null);
     const [openSubIndex, setOpenSubIndex] = useState(null);
     const pathname = usePathname();
+
+    const { data: categoryTree } = useGetCategoryTree();
+
+    const navItems = useMemo(() => {
+        const categories = categoryTree?.data || categoryTree;
+        if (!categories || !Array.isArray(categories)) return staticNavItems;
+
+        const dynamicItems = categories.map(cat => {
+            const staticItem = staticNavItems.find(s => s.name?.toLowerCase() === cat.name?.toLowerCase());
+
+            return {
+                name: cat.name,
+                id: cat._id || cat.id,
+                // image: cat.image ? getCategoryImageUrl(cat.image) : (staticItem?.image || "/mega-Images/Furniture.jpg"), // Image not used in mobile menu top level yet, but good to have
+                isSpecial: staticItem?.isSpecial || false,
+                hasDropdown: cat.children && cat.children.length > 0,
+                // categoryData: cat,
+                categories: cat.children ? cat.children.map(subCat => {
+                    const l3Links = subCat.children ? subCat.children.map(c => c.name) : [];
+                    const columns = [];
+                    // Keep the column structure to be consistent with data structure, though we flat() it in render
+                    for (let i = 0; i < l3Links.length; i += 4) {
+                        columns.push(l3Links.slice(i, i + 4));
+                    }
+
+                    return {
+                        name: subCat.name,
+                        id: subCat._id || subCat.id,
+                        hasSubmenu: subCat.children && subCat.children.length > 0,
+                        links: columns,
+                        children: subCat.children
+                    };
+                }) : []
+            };
+        });
+
+        return dynamicItems.length > 0 ? dynamicItems : staticNavItems;
+    }, [categoryTree]);
 
     // Close menu when clicking outside or on escape
     useEffect(() => {
@@ -157,16 +197,22 @@ export const MobileMenu = () => {
                                                                                 className="overflow-hidden"
                                                                             >
                                                                                 <div className="pl-4 pr-2 py-2 grid grid-cols-1 gap-1">
-                                                                                    {category.links.flat().map((link) => (
-                                                                                        <Link
-                                                                                            key={link}
-                                                                                            href="/productlist"
-                                                                                            onClick={() => setMobileOpen(false)}
-                                                                                            className="block py-2 px-3 text-sm text-gray-500 hover:text-[#e09a74] hover:bg-[#e09a74]/5 rounded-md transition-all"
-                                                                                        >
-                                                                                            {link}
-                                                                                        </Link>
-                                                                                    ))}
+                                                                                    {category.links.flat().map((link) => {
+                                                                                        const linkCategoryData = category.children?.find(child => child.name === link);
+                                                                                        const categoryId = linkCategoryData?._id || linkCategoryData?.id || '';
+                                                                                        const href = categoryId ? `/productlist?category=${categoryId}` : "/productlist";
+
+                                                                                        return (
+                                                                                            <Link
+                                                                                                key={link}
+                                                                                                href={href}
+                                                                                                onClick={() => setMobileOpen(false)}
+                                                                                                className="block py-2 px-3 text-sm text-gray-500 hover:text-[#e09a74] hover:bg-[#e09a74]/5 rounded-md transition-all"
+                                                                                            >
+                                                                                                {link}
+                                                                                            </Link>
+                                                                                        );
+                                                                                    })}
                                                                                 </div>
                                                                             </motion.div>
                                                                         )}

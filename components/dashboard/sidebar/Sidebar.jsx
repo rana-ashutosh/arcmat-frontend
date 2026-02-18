@@ -16,7 +16,8 @@ import {
   User,
   Users,
   LayoutDashboard,
-  Image
+  Image,
+  HardHat
 } from 'lucide-react';
 import clsx from 'clsx';
 import useAuthStore from '@/store/useAuthStore';
@@ -35,7 +36,8 @@ const ICON_MAP = {
   User,
   Users,
   LayoutDashboard,
-  Image
+  Image,
+  HardHat
 };
 
 const mapIcons = (items) => items.map(item => ({
@@ -82,6 +84,10 @@ export default function Sidebar() {
       if (item.requiresAuth && !isAuthenticated) return false;
 
       if ((item.id === 'categories' || item.id === 'attributes' || item.id === 'users' || item.id === 'banners') && !isAdmin) {
+        return false;
+      }
+
+      if (item.vendorOnly && !isVendor) {
         return false;
       }
 

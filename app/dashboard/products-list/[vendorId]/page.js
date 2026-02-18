@@ -82,7 +82,6 @@ export default function ProductsListPage() {
       // Refresh the page to show updated statuses
       window.location.reload();
     } catch (error) {
-      console.error('Bulk activate failed', error);
       toast.error(error.response?.data?.message || 'Failed to activate products');
     } finally {
       setIsActivating(false);
@@ -201,7 +200,6 @@ export default function ProductsListPage() {
 
       toast.success(`Successfully exported ${productsToExport.length} products as ${format.toUpperCase()}`);
     } catch (error) {
-      console.error("Export failed", error);
       toast.error("Failed to export products");
     } finally {
       setIsExporting(false);

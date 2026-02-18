@@ -21,7 +21,6 @@ export default function ProductListPage() {
     const pathname = usePathname();
 
     const [selectedCategory, setSelectedCategory] = useState("All");
-    const [categoryName, setCategoryName] = useState("");
     const [isDrawerOpen, setDrawerOpen] = useState(false);
     const [visibleItems, setVisibleItems] = useState(15);
     const [activeFilters, setActiveFilters] = useState({
@@ -59,7 +58,6 @@ export default function ProductListPage() {
     useEffect(() => {
         const parsed = parseFiltersFromURL(searchParams);
         setSelectedCategory(parsed.category);
-        setCategoryName(parsed.categoryName);
         setActiveFilters(parsed.filters);
         setIsInitialized(true);
     }, [searchParams]);
@@ -70,17 +68,17 @@ export default function ProductListPage() {
         }
     }, [products, minPrice, maxPrice, isInitialized]);
 
-    const updateURL = (newCategory, newCategoryName, newFilters) => {
+    const updateURL = (newCategory, newFilters) => {
         if (!isInitialized) return;
 
-        const params = buildURLFromFilters(newCategory, newCategoryName, newFilters);
+        const params = buildURLFromFilters(newCategory, newFilters);
         const newUrl = params ? `${pathname}?${params}` : pathname;
         router.push(newUrl, { scroll: false });
     };
 
     const handleCategoryChange = (categoryId) => {
         setSelectedCategory(categoryId);
-        updateURL(categoryId, '', activeFilters);
+        updateURL(categoryId, activeFilters);
     };
     const handleFiltersChange = (newFiltersOrCallback) => {
         const newFilters = typeof newFiltersOrCallback === 'function'
@@ -88,7 +86,7 @@ export default function ProductListPage() {
             : newFiltersOrCallback;
 
         setActiveFilters(newFilters);
-        updateURL(selectedCategory, categoryName, newFilters);
+        updateURL(selectedCategory, newFilters);
     };
 
     const filteredAndSortedProducts = useMemo(() => {

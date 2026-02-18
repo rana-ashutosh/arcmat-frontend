@@ -16,6 +16,9 @@ export default function ProductCard({ product }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
 
+  const stock = product.stock ?? product.variants?.[0]?.stock ?? 0;
+  const isOutOfStock = stock === 0;
+
   const discount = product.mrp > product.price
     ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
     : 0;
@@ -97,6 +100,7 @@ export default function ProductCard({ product }) {
         <button
           onClick={(e) => {
             e.preventDefault();
+            if (isOutOfStock) return;
             if (isAuthenticated) {
               addToCartBackend({
                 product_name: product.name,
@@ -111,17 +115,21 @@ export default function ProductCard({ product }) {
             setIsAdded(true);
             setTimeout(() => setIsAdded(false), 2000);
           }}
-          className={`w-full border-2 py-2.5 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isAdded
-            ? 'bg-green-600 border-green-600 text-white'
-            : 'bg-white border-gray-200 text-gray-700 hover:bg-[#d9a88a] hover:border-[#d9a88a] hover:text-white'
+          disabled={isOutOfStock}
+          className={`w-full border-2 py-2.5 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isOutOfStock
+              ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+              : isAdded
+                ? 'bg-green-600 border-green-600 text-white'
+                : 'bg-white border-gray-200 text-gray-700 hover:bg-[#d9a88a] hover:border-[#d9a88a] hover:text-white'
             }`}
         >
-          {isAdded ? (
-            <Check className="w-5 h-5" />
+          {isOutOfStock ? (
+            'Out of Stock'
+          ) : isAdded ? (
+            <><Check className="w-5 h-5" /> Added!</>
           ) : (
-            <ShoppingCart className="w-5 h-5" />
+            <><ShoppingCart className="w-5 h-5" /> Add to Cart</>
           )}
-          {isAdded ? 'Added!' : 'Add to Cart'}
         </button>
       </div>
     </div>

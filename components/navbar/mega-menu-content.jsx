@@ -23,12 +23,11 @@ export const MegaMenuContent = ({ activeCategory, hoveredCategory, image, catego
                                     child => child.name === link
                                 );
                                 const categoryId = linkCategoryData?._id || linkCategoryData?.id || '';
-                                const categoryName = encodeURIComponent(link);
 
                                 return (
                                     <li key={link}>
                                         <Link
-                                            href={categoryId ? `/productlist?category=${categoryId}&categoryName=${categoryName}` : "/productlist"}
+                                            href={categoryId ? `/productlist?category=${categoryId}` : "/productlist"}
                                             className="text-sm text-[hsl(20,10%,15%)]/80 hover:text-[hsl(20,10%,15%)] transition-colors block font-normal"
                                         >
                                             {link}

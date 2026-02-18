@@ -57,7 +57,6 @@ function VerifyOtpContent() {
                 toast.success('Email verified successfully!', 'Success');
             },
             onError: (error) => {
-                console.error(error);
                 toast.error(error.response?.data?.message || 'Verification failed. Please try again.', 'Verification Failed');
             }
         });

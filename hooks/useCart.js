@@ -28,7 +28,6 @@ export const useAddToCart = () => {
             toast.success("Item added to cart");
         },
         onError: (error) => {
-            console.error('Add to Cart Error:', error);
             toast.error("Failed to add item to cart");
         }
     });
@@ -43,7 +42,6 @@ export const useUpdateCartQuantity = () => {
             queryClient.invalidateQueries(['cartCount']);
         },
         onError: (error) => {
-            console.error('Update Quantity Error:', error);
             toast.error("Failed to update quantity");
         }
     });
@@ -59,7 +57,6 @@ export const useRemoveFromCart = () => {
             toast.success("Item removed from cart");
         },
         onError: (error) => {
-            console.error('Remove From Cart Error:', error);
             toast.error("Failed to remove item");
         }
     });
