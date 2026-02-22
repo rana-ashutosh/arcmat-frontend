@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Package, Search, ArrowLeft, Plus, Check, Info, Store, X, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
 import { useGetBrandInventory, useUpsertProductOverride } from '@/hooks/useRetailer';
@@ -14,10 +14,13 @@ export default function BrandInventoryPage() {
     const router = useRouter();
     const brandId = params.brandId;
 
+    const searchParams = useSearchParams();
+    const retailerIdFromParams = searchParams.get('retailerId');
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
 
     const { data: inventoryData, isLoading } = useGetBrandInventory(brandId, {
+        retailerId: retailerIdFromParams,
         page: currentPage,
         limit: 12,
         search: searchTerm || undefined
@@ -63,9 +66,10 @@ export default function BrandInventoryPage() {
                 mrp_price: Number(formData.mrp_price),
                 selling_price: Number(formData.selling_price),
                 stock: Number(formData.stock),
-                isActive: true
+                isActive: true,
+                retailerId: retailerIdFromParams
             });
-            toast.success(`${selectedItem.product.product_name} added to your inventory`);
+            toast.success(`${selectedItem.product.product_name} added to inventory`);
             setIsModalOpen(false);
         } catch (error) {
             toast.error(error.message || 'Failed to add product');

@@ -15,8 +15,7 @@ export const LoaderProvider = ({ children }) => {
 
     useEffect(() => {
         // Stop loading on route change completion
-        const timer = setTimeout(() => setLoading(false), 500);
-        return () => clearTimeout(timer);
+        setLoading(false);
     }, [pathname, searchParams]);
 
     useEffect(() => {

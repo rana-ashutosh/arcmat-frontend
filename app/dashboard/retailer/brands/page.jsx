@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Store, Package, ExternalLink, Search, Check, Plus, ArrowRight } from 'lucide-react';
 import useAuthStore from '@/store/useAuthStore';
 import { useGetBrands } from '@/hooks/useBrand';
@@ -10,11 +11,13 @@ import { toast } from '@/components/ui/Toast';
 import clsx from 'clsx';
 
 export default function RetailerBrandsPage() {
-    const [view, setView] = useState('my-brands'); // 'my-brands' or 'explore'
+    const searchParams = useSearchParams();
+    const retailerId = searchParams.get('retailerId');
+    const [view, setView] = useState(retailerId ? 'my-brands' : 'my-brands'); // 'my-brands' or 'explore'
     const [searchTerm, setSearchTerm] = useState('');
 
     const { data: allBrandsData, isLoading: allLoading } = useGetBrands();
-    const { data: myBrandsData, isLoading: myLoading } = useGetRetailerBrands();
+    const { data: myBrandsData, isLoading: myLoading } = useGetRetailerBrands(retailerId);
     const updateBrands = useUpdateRetailerBrands();
 
     const allBrands = Array.isArray(allBrandsData?.data)
@@ -33,8 +36,8 @@ export default function RetailerBrandsPage() {
 
     const handleJoinBrand = async (brandId) => {
         try {
-            await updateBrands.mutateAsync({ brandId, action: 'add' });
-            toast.success('Brand added to your dealing list');
+            await updateBrands.mutateAsync({ brandId, action: 'add', retailerId });
+            toast.success('Brand added to reselling list');
         } catch (error) {
             toast.error('Failed to add brand');
         }
@@ -42,8 +45,8 @@ export default function RetailerBrandsPage() {
 
     const handleLeaveBrand = async (brandId) => {
         try {
-            await updateBrands.mutateAsync({ brandId, action: 'remove' });
-            toast.success('Brand removed from your dealing list');
+            await updateBrands.mutateAsync({ brandId, action: 'remove', retailerId });
+            toast.success('Brand removed from reselling list');
         } catch (error) {
             toast.error('Failed to remove brand');
         }
@@ -60,9 +63,11 @@ export default function RetailerBrandsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Brand Partnerships</h1>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+                        {retailerId ? 'Manage Retailer Partnerships' : 'Brand Partnerships'}
+                    </h1>
                     <p className="text-gray-500 text-sm mt-1">
-                        Manage your relationships with suppliers and discover new brands.
+                        {retailerId ? `Managing brands for Retailer ID: ${retailerId}` : 'Manage your relationships with suppliers and discover new brands.'}
                     </p>
                 </div>
 
@@ -75,7 +80,7 @@ export default function RetailerBrandsPage() {
                         )}
                     >
                         <Check className={clsx("w-4 h-4", view === 'my-brands' ? "text-green-500" : "hidden")} />
-                        My Brands
+                        Partnered Brands
                         <span className="ml-1 px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded-md text-[10px]">{myBrands.length}</span>
                     </button>
                     <button
@@ -118,7 +123,7 @@ export default function RetailerBrandsPage() {
                     <h3 className="text-xl font-bold text-gray-900">No brands found</h3>
                     <p className="text-gray-500 text-center max-w-xs mt-2">
                         {view === 'my-brands'
-                            ? "You haven&apos;t partnered with any brands yet. Switch to explore to find partners!"
+                            ? "No partnered brands found."
                             : "No brands match your search criteria."}
                     </p>
                 </div>
@@ -172,29 +177,33 @@ export default function RetailerBrandsPage() {
                                     {isJoined ? (
                                         <>
                                             <Link
-                                                href={`/dashboard/retailer/brands/${brand._id || brand.id}/inventory`}
+                                                href={`/dashboard/retailer/brands/${brand._id || brand.id}/inventory${retailerId ? `?retailerId=${retailerId}` : ''}`}
                                                 className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#1a202c] text-white rounded-2xl text-xs font-bold hover:bg-black transition-all shadow-lg"
                                             >
                                                 <Package className="w-4 h-4" />
                                                 Inventory
                                             </Link>
-                                            <button
-                                                onClick={() => handleLeaveBrand(brand._id || brand.id)}
-                                                className="px-4 py-3 border border-red-50 text-red-400 rounded-2xl hover:bg-red-50 transition-colors"
-                                                title="Leave Brand"
-                                            >
-                                                <XIcon className="w-4 h-4" />
-                                            </button>
+                                            {!retailerId && (
+                                                <button
+                                                    onClick={() => handleLeaveBrand(brand._id || brand.id)}
+                                                    className="px-4 py-3 border border-red-50 text-red-400 rounded-2xl hover:bg-red-50 transition-colors"
+                                                    title="Leave Brand"
+                                                >
+                                                    <XIcon className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </>
                                     ) : (
-                                        <button
-                                            onClick={() => handleJoinBrand(brand._id || brand.id)}
-                                            className="flex-1 flex items-center justify-center gap-3 py-4 bg-[#e09a74] text-white rounded-2xl text-sm font-black hover:bg-[#d08a64] transition-all shadow-lg shadow-[#e09a74]/20"
-                                        >
-                                            <Plus className="w-5 h-5" />
-                                            Partner with Brand
-                                            <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                                        </button>
+                                        !retailerId && (
+                                            <button
+                                                onClick={() => handleJoinBrand(brand._id || brand.id)}
+                                                className="flex-1 flex items-center justify-center gap-3 py-4 bg-[#e09a74] text-white rounded-2xl text-sm font-black hover:bg-[#d08a64] transition-all shadow-lg shadow-[#e09a74]/20"
+                                            >
+                                                <Plus className="w-5 h-5" />
+                                                Partner with Brand
+                                                <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                            </button>
+                                        )
                                     )}
                                 </div>
                             </div>

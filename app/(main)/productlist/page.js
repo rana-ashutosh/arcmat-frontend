@@ -8,6 +8,7 @@ import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
 import Image from "next/image";
 import { useGetVariants } from "@/hooks/useProduct";
+import { useGetRetailerProducts } from "@/hooks/useRetailer";
 import { useGetVendors } from "@/hooks/useVendor";
 import { resolvePricing, formatCurrency } from "@/lib/productUtils";
 import { Loader2 } from "lucide-react";
@@ -44,8 +45,8 @@ export default function ProductListPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(12);
 
-    const { data: apiData, isLoading } = useGetVariants({
-        status: 1,
+    const { data: apiData, isLoading } = useGetRetailerProducts({
+        type: 'storefront',
         page: currentPage,
         limit: pageSize,
         categoryId: selectedCategory !== "All" ? selectedCategory : undefined,
@@ -60,7 +61,7 @@ export default function ProductListPage() {
     const brands = Array.isArray(brandsData) ? brandsData : (brandsData?.data || []);
 
     const products = apiData?.data?.data || apiData?.data || [];
-    const paginationData = apiData?.data?.pagination || apiData?.pagination;
+    const paginationData = apiData?.data?.pagination || apiData?.pagination || apiData?.data?.pagination;
     const metadata = apiData?.data?.metadata || apiData?.metadata;
 
     const { minPrice, maxPrice, priceStep } = useMemo(() => {
@@ -209,7 +210,7 @@ export default function ProductListPage() {
             </Container>
 
             <div
-                className={`fixed inset-0 z-[100] transition-opacity duration-300 ${isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                className={`fixed inset-0 z-100 transition-opacity duration-300 ${isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
             >
                 <div
                     className="absolute inset-0 bg-black/50 backdrop-blur-sm"

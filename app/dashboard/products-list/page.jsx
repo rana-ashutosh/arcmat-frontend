@@ -114,7 +114,7 @@ export default function ProductsListPage() {
     const handleDataExport = async () => {
         setIsExporting(true);
         try {
-            const blob = await productService.exportProductData(effectiveBrandId);
+            const blob = await productService.exportProductData(effectiveVendorId);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

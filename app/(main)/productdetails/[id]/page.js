@@ -3,7 +3,7 @@ import React from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import ProductDetailView from "@/components/sections/ProductDetailView"
 import Container from "@/components/ui/Container"
-import { useGetProduct } from '@/hooks/useProduct'
+import { useGetRetailerProductDetail } from '@/hooks/useRetailer'
 import { Loader2 } from 'lucide-react'
 
 const ProductDetailPage = () => {
@@ -12,7 +12,7 @@ const ProductDetailPage = () => {
     const id = params.id
     const variantId = searchParams.get('variantId')
 
-    const { data: apiResponse, isLoading, error } = useGetProduct(id)
+    const { data: apiResponse, isLoading, error } = useGetRetailerProductDetail(id)
     const product = apiResponse?.data?.data
 
     if (isLoading) {

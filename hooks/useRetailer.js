@@ -3,15 +3,16 @@ import { retailerService } from '../services/retailerService';
 
 export const RETAILER_KEYS = {
     all: ['retailer'],
-    brands: () => [...RETAILER_KEYS.all, 'brands'],
+    brands: (retailerId) => [...RETAILER_KEYS.all, 'brands', { retailerId }],
     brandInventory: (brandId, params) => [...RETAILER_KEYS.all, 'brands', brandId, 'inventory', params],
     products: (params) => [...RETAILER_KEYS.all, 'products', params],
+    detail: (id) => [...RETAILER_KEYS.all, 'products', 'detail', id],
 };
 
-export const useGetRetailerBrands = () => {
+export const useGetRetailerBrands = (retailerId) => {
     return useQuery({
-        queryKey: RETAILER_KEYS.brands(),
-        queryFn: retailerService.getRetailerBrands,
+        queryKey: RETAILER_KEYS.brands(retailerId),
+        queryFn: () => retailerService.getRetailerBrands(retailerId),
     });
 };
 
@@ -32,6 +33,14 @@ export const useGetRetailerProducts = (params = {}) => {
     });
 };
 
+export const useGetRetailerProductDetail = (productId) => {
+    return useQuery({
+        queryKey: RETAILER_KEYS.detail(productId),
+        queryFn: () => retailerService.getRetailerProductDetail(productId),
+        enabled: !!productId,
+    });
+};
+
 export const useGetBrandInventory = (brandId, params = {}) => {
     return useQuery({
         queryKey: RETAILER_KEYS.brandInventory(brandId, params),
@@ -47,6 +56,16 @@ export const useUpsertProductOverride = () => {
             if (data.id) return retailerService.updateProductOverride(data.id, data);
             return retailerService.upsertProductOverride(data);
         },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: RETAILER_KEYS.products() });
+        },
+    });
+};
+
+export const useDeleteProductOverride = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: retailerService.deleteProductOverride,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: RETAILER_KEYS.products() });
         },

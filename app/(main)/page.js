@@ -1,10 +1,18 @@
 import HeroSection from "@/components/sections/HeroSection";
 import CategoryCarousel from '@/components/sections/CategoryCarousel';
 import BentoGrid from "@/components/layouts/BentoGrid/BentoGrid";
-import WeeklySelections from "@/components/layouts/WeeklySelections/WeeklySelections";
-import InspirationGallery from "@/components/layouts/InspirationGallery/InspirationGallery";
-import LeadingBrands from "@/components/sections/LeadingBrands";
+import dynamic from "next/dynamic";
 import Container from "@/components/ui/Container";
+
+const WeeklySelections = dynamic(() => import("@/components/layouts/WeeklySelections/WeeklySelections"), {
+  loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-2xl mx-4 my-10" />
+});
+const InspirationGallery = dynamic(() => import("@/components/layouts/InspirationGallery/InspirationGallery"), {
+  loading: () => <div className="h-96 animate-pulse bg-gray-100 rounded-2xl mx-4 my-10" />
+});
+const LeadingBrands = dynamic(() => import("@/components/sections/LeadingBrands"), {
+  loading: () => <div className="h-40 animate-pulse bg-gray-100 rounded-2xl mx-4 my-10" />
+});
 
 export default function Page() {
   return (

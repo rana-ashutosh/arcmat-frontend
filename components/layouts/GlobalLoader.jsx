@@ -9,7 +9,7 @@ export default function GlobalLoader() {
     if (!loading) return null;
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-[9999] h-screen w-screen backdrop-blur-sm">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-9999 h-screen w-screen backdrop-blur-[2px]">
             <Loader />
         </div>
     );

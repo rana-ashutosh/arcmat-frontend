@@ -18,15 +18,16 @@ export const VARIANT_KEYS = {
 };
 
 // Hook to fetch products
-export const useGetProducts = ({ userId, page = 1, limit = 10, enabled = true, ...otherFilters } = {}) => {
+export const useGetProducts = ({ userId, page = 1, limit = 10, enabled = true, onlyRetailerProducts = 'false', ...otherFilters } = {}) => {
     return useQuery({
-        queryKey: PRODUCT_KEYS.list({ userId, page, limit, ...otherFilters }),
+        queryKey: PRODUCT_KEYS.list({ userId, page, limit, onlyRetailerProducts, ...otherFilters }),
         queryFn: () => productService.getAllProducts({
             userid: userId,
             user_id: userId,
             page,
             limit,
             offset: (Number(page) - 1) * Number(limit),
+            onlyRetailerProducts,
             q: otherFilters.search,
             search: otherFilters.search,
             keyword: otherFilters.search,
@@ -42,7 +43,10 @@ export const useGetProducts = ({ userId, page = 1, limit = 10, enabled = true, .
 export const useGetVariants = (filters = {}) => {
     return useQuery({
         queryKey: VARIANT_KEYS.list(filters),
-        queryFn: () => productService.getAllVariants(filters),
+        queryFn: () => productService.getAllVariants({
+            onlyRetailerProducts: 'false', // Default to false for common hooks, override in storefront
+            ...filters
+        }),
         enabled: filters.enabled !== false,
     });
 };

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Search, Package, Store, Plus, X, Edit2, AlertCircle, Trash2 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { Search, Package, Store, Plus, X, Edit2, AlertCircle, ArrowLeft, Trash2 } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { useGetRetailerProducts, useUpsertProductOverride, useDeleteProductOverride } from '@/hooks/useRetailer';
 import { getProductImageUrl } from '@/lib/productUtils';
 import Pagination from '@/components/ui/Pagination';
@@ -11,14 +11,18 @@ import Button from '@/components/ui/Button';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import clsx from 'clsx';
 
-export default function RetailerProductsPage() {
-    const searchParams = useSearchParams();
+export default function RetailerAdminInventoryPage() {
+    const params = useParams();
+    const router = useRouter();
+    const retailerId = params.retailerId;
+
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingItem, setEditingItem] = useState(null);
     const [deletingItem, setDeletingItem] = useState(null);
 
     const { data: apiResponse, isLoading, refetch } = useGetRetailerProducts({
+        retailerId,
         page: currentPage,
         limit: 12,
         search: searchTerm || undefined,
@@ -35,7 +39,7 @@ export default function RetailerProductsPage() {
 
         try {
             await deleteOverride.mutateAsync(deletingItem._id);
-            toast.success('Product removed from inventory');
+            toast.success('Product removed from retailer inventory');
             setDeletingItem(null);
             refetch();
         } catch (error) {
@@ -47,12 +51,14 @@ export default function RetailerProductsPage() {
         e.preventDefault();
         const formData = new FormData(e.target);
         const data = {
+            id: editingItem._id,
             productId: editingItem.product?._id,
             variantId: editingItem.variant?._id,
             mrp_price: Number(formData.get('mrp_price')),
             selling_price: Number(formData.get('selling_price')),
             stock: Number(formData.get('stock')),
-            isActive: formData.get('isActive') === 'on'
+            isActive: formData.get('isActive') === 'on',
+            retailerId: retailerId // Pass retailerId for admin override
         };
 
         try {
@@ -67,21 +73,23 @@ export default function RetailerProductsPage() {
 
     return (
         <div className="p-6 space-y-6">
+            {/* Breadcrumb */}
+            <button
+                onClick={() => router.back()}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors group"
+            >
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                Back to Users
+            </button>
+
             {/* Header */}
             <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">My Inventory</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">Retailer Inventory</h1>
                     <p className="text-gray-500 text-sm mt-1">
-                        Manage your custom pricing and stock for reselling products.
+                        Managing inventory for Retailer ID: <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">{retailerId}</span>
                     </p>
                 </div>
-                <Link
-                    href="/dashboard/retailer/brands"
-                    className="px-4 py-2 bg-[#e09a74] text-white rounded-xl text-sm font-semibold hover:bg-[#d08a64] transition-all shadow-sm flex items-center gap-2"
-                >
-                    <Plus className="w-4 h-4" />
-                    Add More Products
-                </Link>
             </div>
 
             {/* Search bar */}
@@ -90,7 +98,7 @@ export default function RetailerProductsPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                         type="text"
-                        placeholder="Search your inventory..."
+                        placeholder="Search retailer inventory..."
                         value={searchTerm}
                         onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] text-sm"
@@ -111,8 +119,7 @@ export default function RetailerProductsPage() {
             ) : retailerProducts.length === 0 ? (
                 <div className="text-center py-24 bg-white rounded-2xl border border-dashed border-gray-200">
                     <Package className="w-12 h-12 text-gray-100 mx-auto mb-3" />
-                    <h3 className="text-gray-500 font-medium">Your inventory is empty</h3>
-                    <p className="text-gray-400 text-sm mt-1">Visit your partnered brands to add items.</p>
+                    <h3 className="text-gray-500 font-medium">This retailer's inventory is empty</h3>
                 </div>
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -157,7 +164,7 @@ export default function RetailerProductsPage() {
 
                                     <div className="mt-4 grid grid-cols-2 gap-4">
                                         <div>
-                                            <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Your Price</p>
+                                            <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">Price</p>
                                             <p className="text-sm font-black text-gray-900">
                                                 ₹{item.selling_price?.toLocaleString() || '0'}
                                             </p>
@@ -213,7 +220,7 @@ export default function RetailerProductsPage() {
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditingItem(null)} />
                     <div className="bg-white rounded-3xl w-full max-w-md relative shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                            <h2 className="text-xl font-black text-gray-900 tracking-tight">Manage Inventory</h2>
+                            <h2 className="text-xl font-black text-gray-900 tracking-tight">Manage Override</h2>
                             <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
                                 <X className="w-5 h-5 text-gray-400" />
                             </button>
@@ -246,7 +253,7 @@ export default function RetailerProductsPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Your Selling Price (₹)</label>
+                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Selling Price (₹)</label>
                                     <input
                                         type="number"
                                         name="selling_price"
@@ -258,7 +265,7 @@ export default function RetailerProductsPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Available Stock</label>
+                                <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Stock</label>
                                 <input
                                     type="number"
                                     name="stock"
@@ -271,7 +278,6 @@ export default function RetailerProductsPage() {
                             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                                 <div>
                                     <p className="text-sm font-bold text-gray-900">Make product live</p>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Visibility on your storefront</p>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" name="isActive" defaultChecked={editingItem.isActive} className="sr-only peer" />
@@ -290,7 +296,7 @@ export default function RetailerProductsPage() {
                                 <Button
                                     type="submit"
                                     loading={upsertOverride.isPending}
-                                    className="flex-1 !py-4 bg-[#e09a74] text-white rounded-2xl text-sm font-black hover:bg-[#d08a64] uppercase tracking-widest shadow-lg shadow-[#e09a74]/20"
+                                    className="flex-1 py-4! bg-[#e09a74] text-white rounded-2xl text-sm font-black hover:bg-[#d08a64] uppercase tracking-widest shadow-lg shadow-[#e09a74]/20"
                                 >
                                     Save Changes
                                 </Button>
@@ -305,7 +311,7 @@ export default function RetailerProductsPage() {
                 onClose={() => setDeletingItem(null)}
                 onConfirm={handleDelete}
                 title="Remove Product"
-                message={`Are you sure you want to remove ${deletingItem?.product?.product_name} from your inventory? This action cannot be undone.`}
+                message={`Are you sure you want to remove ${deletingItem?.product?.product_name} from this retailer's inventory? This action cannot be undone.`}
                 confirmText="Remove"
                 cancelText="Cancel"
                 type="danger"

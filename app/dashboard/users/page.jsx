@@ -233,6 +233,15 @@ export default function UsersPage() {
                                                         <PackageSearch className="w-4 h-4" />
                                                     </Link>
                                                 )}
+                                                {u.role === 'retailer' && (
+                                                    <Link
+                                                        href={`/dashboard/retailer/inventory/${u._id}`}
+                                                        className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                                                        title="View Inventory"
+                                                    >
+                                                        <PackageSearch className="w-4 h-4" />
+                                                    </Link>
+                                                )}
                                                 <button
                                                     onClick={() => handleToggleStatus(u)}
                                                     className={clsx(
