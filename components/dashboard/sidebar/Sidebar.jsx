@@ -17,7 +17,8 @@ import {
   Users,
   LayoutDashboard,
   Image,
-  HardHat
+  HardHat,
+  Store
 } from 'lucide-react';
 import clsx from 'clsx';
 import useAuthStore from '@/store/useAuthStore';
@@ -37,7 +38,8 @@ const ICON_MAP = {
   Users,
   LayoutDashboard,
   Image,
-  HardHat
+  HardHat,
+  Store
 };
 
 const mapIcons = (items) => items.map(item => ({
@@ -47,6 +49,7 @@ const mapIcons = (items) => items.map(item => ({
 
 const VENDOR_MENU_ITEMS = mapIcons(sidebarData.VENDOR_MENU_ITEMS);
 const USER_MENU_ITEMS = mapIcons(sidebarData.USER_MENU_ITEMS);
+const RETAILER_MENU_ITEMS = mapIcons(sidebarData.RETAILER_MENU_ITEMS);
 
 export default function Sidebar() {
   const { isCollapsed, toggleSidebar, isMobileOpen, setMobileOpen } = useSidebarStore();
@@ -70,12 +73,18 @@ export default function Sidebar() {
   const safeCollapsed = isMobileOpen ? false : isCollapsed;
 
   // Determine menu items based on role
-  const isVendor = user?.role === 'vendor';
+  const isBrand = user?.role === 'brand';
   const isAdmin = user?.role === 'admin';
-  const menuItems = isVendor || isAdmin ? VENDOR_MENU_ITEMS : USER_MENU_ITEMS;
+  const isRetailer = user?.role === 'retailer';
+
+  let menuItems;
+  if (isBrand || isAdmin) menuItems = VENDOR_MENU_ITEMS;
+  else if (isRetailer) menuItems = RETAILER_MENU_ITEMS;
+  else menuItems = USER_MENU_ITEMS;
+
   const visibleItems = menuItems
     .map(item => {
-      if (isVendor && item.id === 'products-list' && (user?._id || user?.id)) {
+      if (isBrand && item.id === 'products-list' && (user?._id || user?.id)) {
         return { ...item, href: `/dashboard/products-list/${user._id || user.id}` };
       }
       return item;
@@ -87,7 +96,7 @@ export default function Sidebar() {
         return false;
       }
 
-      if (item.vendorOnly && !isVendor) {
+      if (item.vendorOnly && !isBrand) {
         return false;
       }
 

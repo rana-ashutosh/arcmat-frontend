@@ -14,19 +14,19 @@ export const useProductStore = create((set, get) => ({
     return products.filter((p) => p.isActive && !p.isHidden);
   },
 
-  // Get products by vendor
-  getVendorProducts: (vendorId) => {
+  // Get products by brand
+  getBrandProducts: (brandId) => {
     const { products } = get();
-    return products.filter((p) => p.vendorId === vendorId);
+    return products.filter((p) => p.brandId === brandId);
   },
 
-  // Get vendor products with missing attributes
-  getProductsWithMissingAttributes: (vendorId) => {
+  // Get brand products with missing attributes
+  getProductsWithMissingAttributes: (brandId) => {
     const { products } = get();
-    const vendorProducts = products.filter((p) => p.vendorId === vendorId);
+    const brandProducts = products.filter((p) => p.brandId === brandId);
 
     // Filter by attributeStatus or check dynamically to be safe
-    return vendorProducts.filter(product => {
+    return brandProducts.filter(product => {
       // Trust the status if it exists, or calculate it
       // For now, let's allow dynamic check to be robust
       const missing = getMissingAttributes(product);

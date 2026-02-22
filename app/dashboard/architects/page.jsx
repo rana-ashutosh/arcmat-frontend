@@ -191,7 +191,7 @@ export default function ArchitectsPage() {
     const totalArchitects = STATIC_ARCHITECTS.length;
 
     return (
-        <RoleGuard allowedRoles={['vendor']}>
+        <RoleGuard allowedRoles={['brand']}>
             <div className="p-6 max-w-5xl mx-auto">
 
                 <div className="flex items-center gap-3 mb-2">

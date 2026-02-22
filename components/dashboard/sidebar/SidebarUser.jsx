@@ -21,8 +21,8 @@ const SidebarUser = memo(({ isCollapsed, mounted }) => {
             return 'Guest';
         }
         switch (user.role) {
-            case 'vendor':
-                return 'Vendor';
+            case 'brand':
+                return 'Brand';
             case 'customer':
                 return 'Professional';
             case 'admin':

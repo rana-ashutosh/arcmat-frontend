@@ -11,11 +11,31 @@ import VariantForm from './VariantForm';
 import { useGetVariants, useDeleteVariant } from '@/hooks/useVariant';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { generateSlug, getProductImageUrl, getVariantImageUrl, parseAttributes, formatCurrency, formatSKU } from '@/lib/productUtils';
+import useAuthStore from '@/store/useAuthStore';
+import { useGetBrands } from '@/hooks/useBrand';
 
 const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting, vendorId }) => {
-  const { user } = useAuth();
+  const { user, activeBrand, selectedBrands } = useAuthStore();
   const { data: categoryData } = useGetCategories();
   const { data: attributeData } = useGetAttributes();
+  const { data: brandsData } = useGetBrands();
+
+  const isAdmin = user?.role === 'admin';
+  // API may return: array | { data: [...] } | { data: { status, data: [...] } }
+  const rawBrands = brandsData?.data;
+  const allBrands = Array.isArray(rawBrands)
+    ? rawBrands
+    : Array.isArray(rawBrands?.data)
+      ? rawBrands.data
+      : [];
+  // selectedBrands from auth store may be ObjectIds or brand objects — normalise to string IDs
+  const selectedBrandIds = (selectedBrands || []).map(b =>
+    typeof b === 'object' ? (b._id || b.id)?.toString() : b?.toString()
+  );
+  const userBrands = isAdmin ? allBrands : allBrands.filter(b =>
+    selectedBrandIds.includes((b._id || b.id)?.toString())
+  );
+
 
   const [editingVariant, setEditingVariant] = useState(null);
   const [isVariantFormOpen, setIsVariantFormOpen] = useState(false);
@@ -39,6 +59,7 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting, ven
     categoryId: '',
     subcategoryId: '',
     subsubcategoryId: '',
+    brand: '',
   });
 
   const [productAttributes, setProductAttributes] = useState([]);
@@ -59,6 +80,7 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting, ven
         meta_title: initialData.meta_title || '',
         meta_keywords: initialData.meta_keywords || '',
         meta_description: initialData.meta_description || '',
+        brand: initialData.brand?._id || initialData.brand || '',
       });
 
       const catId = initialData.categoryId?._id || initialData.categoryId || '';
@@ -80,9 +102,14 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting, ven
         setExistingImages(initialData.product_images);
         const existingPreviews = initialData.product_images.map(getProductImageUrl);
         setPreviewImages(existingPreviews);
+        if (!initialData && activeBrand) {
+          // activeBrand may be a full object {_id, name,...} or just an id string
+          setFormData(prev => ({ ...prev, brand: activeBrand?._id || activeBrand }));
+        }
       }
     }
-  }, [initialData]);
+  }, [initialData, activeBrand]);
+
 
   // Scroll to top when switching between product and variant forms
   useEffect(() => {
@@ -208,9 +235,11 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting, ven
 
     if (user?._id) submissionData.append('user_id', user._id);
 
-    // Include vendorId if provided (for admin creating products for vendors)
-    if (vendorId) {
-      submissionData.append('vendorId', vendorId);
+    // Use 'brand' instead of 'brandId' to match refactored backend
+    if (formData.brand) {
+      submissionData.append('brand', formData.brand);
+    } else if (activeBrand) {
+      submissionData.append('brand', activeBrand?._id || activeBrand);
     }
 
     if (initialData) {
@@ -278,6 +307,22 @@ const ProductForm = ({ initialData = null, onSubmit, onCancel, isSubmitting, ven
                 {l3Categories.map(c => <option key={c._id || c.id} value={c._id || c.id}>{c.name}</option>)}
               </select>
             </div>
+            {(isAdmin || (userBrands.length > 1)) && (
+              <div className="mt-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Assign to Brand *</label>
+                <select
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none"
+                >
+                  <option value="">Select Brand</option>
+                  {userBrands.map(b => (
+                    <option key={b._id || b.id} value={b._id || b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">

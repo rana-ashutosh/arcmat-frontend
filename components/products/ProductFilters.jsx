@@ -86,7 +86,7 @@ export default function ProductFilters() {
           onChange={(e) => setSelectedVendors(e.target.value ? [parseInt(e.target.value)] : [])}
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#d9a88a]"
         >
-          <option value="">All Vendors</option>
+          <option value="">All Brands</option>
           {vendors.map((vendor) => (
             <option key={vendor.id} value={vendor.id}>
               {vendor.name}

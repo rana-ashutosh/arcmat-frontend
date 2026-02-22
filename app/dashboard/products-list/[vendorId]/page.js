@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Plus, Search, Upload, Download, Package } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import useAuthStore from '@/store/useAuthStore';
 import { useProductStore } from '@/store/useProductStore';
 import { useGetProducts } from '@/hooks/useProduct';
 import { useUIStore } from '@/store/useUIStore';
@@ -33,6 +34,7 @@ import ConfirmActivateModal from '@/components/vendor/ConfirmActivateModal';
 // Product List Page
 export default function ProductsListPage() {
   const { user, loading: authLoading } = useAuth();
+  const { activeBrand } = useAuthStore();
   const { vendorId } = useParams();
   const { getPublicProducts } = useProductStore();
   const { openProductFormModal, openBulkUploadModal } = useUIStore();
@@ -67,14 +69,10 @@ export default function ProductsListPage() {
   const isLoading = authLoading || productsLoading;
 
   const handleActivateAll = async () => {
-    if (!effectiveVendorId) {
-      toast.error('Vendor ID is required');
-      return;
-    }
 
     setIsActivating(true);
     try {
-      const response = await productService.bulkActivateProducts(effectiveVendorId);
+      const response = await productService.bulkActivateProducts(vendorId);
       toast.success(
         `Successfully activated ${response.data.productsActivated} products and ${response.data.variantsActivated} variants!`
       );
@@ -91,7 +89,7 @@ export default function ProductsListPage() {
   const handleDataExport = async () => {
     setIsExporting(true);
     try {
-      const blob = await productService.exportProductData(effectiveVendorId);
+      const blob = await productService.exportProductData(vendorId);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -211,8 +209,8 @@ export default function ProductsListPage() {
   if (authLoading) return <div className="p-6">Loading...</div>;
 
   const isAdmin = user?.role === 'admin';
-  const isVendor = user?.role === 'vendor';
-  const showManagementUI = isAdmin || isVendor;
+  const isBrand = user?.role === 'brand';
+  const showManagementUI = isAdmin || isBrand;
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -230,7 +228,7 @@ export default function ProductsListPage() {
   };
 
   return (
-    <RoleGuard allowedRoles={['admin', 'vendor']}>
+    <RoleGuard allowedRoles={['admin', 'brand']}>
       <Container className="py-6 space-y-6">
 
         {/* Invisible Modals */}
@@ -247,10 +245,10 @@ export default function ProductsListPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              {isVendor ? 'My Inventory' : 'All Products'}
+              {isBrand ? 'My Inventory' : 'All Products'}
             </h1>
             <p className="text-gray-500 text-sm">
-              {isVendor
+              {isBrand
                 ? 'Manage your prices, stock, and listings.'
                 : 'Browse our latest collection.'}
             </p>
@@ -273,27 +271,6 @@ export default function ProductsListPage() {
                 </button>
               )}
 
-              {/* <div className="flex bg-white rounded-full border border-green-600/30 overflow-hidden h-[42px] items-center shadow-sm">
-                <button
-                  onClick={() => handleExport('xlsx')}
-                  disabled={isExporting}
-                  className="px-5 py-2 hover:bg-green-50 text-green-700 text-sm font-semibold transition-colors disabled:opacity-50 flex items-center h-full"
-                  title="Export as Excel"
-                >
-                  {isExporting ? <span className="animate-spin mr-2">⏳</span> : <Download className="w-4 h-4 mr-2" />}
-                  Excel
-                </button>
-                <div className="w-px h-6 bg-green-100"></div>
-                <button
-                  onClick={() => handleExport('csv')}
-                  disabled={isExporting}
-                  className="px-5 py-2 hover:bg-green-50 text-green-700 text-sm font-semibold transition-colors disabled:opacity-50 h-full"
-                  title="Export as CSV"
-                >
-                  CSV
-                </button>
-              </div> */}
-
               <div className="flex items-center gap-3">
                 <Button
                   onClick={handleDataExport}
@@ -303,20 +280,24 @@ export default function ProductsListPage() {
                   <Package className="w-4 h-4 mr-2" />
                   Export Data
                 </Button>
-                <Button
-                  onClick={() => openBulkUploadModal()}
-                  className="flex items-center rounded-full bg-white text-[#e09a74] hover:bg-orange-50 min-w-[130px] h-[42px] px-6 border border-[#e09a74] shadow-sm transition-all duration-300 font-semibold"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Bulk Import
-                </Button>
-                <Link
-                  href={`/dashboard/products-list/${effectiveVendorId}/add`}
-                  className="flex items-center rounded-full bg-[#e09a74] text-white min-w-[130px] h-[42px] px-6 border border-[#e09a74] hover:bg-[#d08963] shadow-md transition-all duration-300 font-semibold"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Product
-                </Link>
+                {!isAdmin && (
+                  <>
+                    <Button
+                      onClick={() => openBulkUploadModal()}
+                      className="flex items-center rounded-full bg-white text-[#e09a74] hover:bg-orange-50 min-w-[130px] h-[42px] px-6 border border-[#e09a74] shadow-sm transition-all duration-300 font-semibold"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Bulk Import
+                    </Button>
+                    <Link
+                      href={`/dashboard/products-list/${effectiveVendorId}/add`}
+                      className="flex items-center rounded-full bg-[#e09a74] text-white min-w-[130px] h-[42px] px-6 border border-[#e09a74] hover:bg-[#d08963] shadow-md transition-all duration-300 font-semibold"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Product
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -325,7 +306,7 @@ export default function ProductsListPage() {
         {/* CONDITIONAL CONTENT */}
         {showManagementUI ? (
           <div className="space-y-6">
-            {isVendor && <AttributeCompletionBanner />}
+            {isBrand && <AttributeCompletionBanner />}
 
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-5 items-stretch lg:items-center justify-between">
               <div className="flex flex-col md:flex-row gap-4 flex-1">
@@ -387,7 +368,7 @@ export default function ProductsListPage() {
               </div>
             </div>
 
-            {isVendor && <BulkActionsBar products={apiProducts} />}
+            {isBrand && <BulkActionsBar products={apiProducts} />}
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <VendorProductTable products={apiProducts} />

@@ -57,6 +57,46 @@
             "href": "/dashboard/help"
         }
     ],
+    "RETAILER_MENU_ITEMS": [
+        {
+            "id": "dashboard",
+            "label": "Dashboard",
+            "icon": "LayoutDashboard",
+            "href": "/dashboard/retailer"
+        },
+        {
+            "id": "retailer-brands",
+            "label": "Brands",
+            "icon": "Store",
+            "href": "/dashboard/retailer/brands",
+            "requiresAuth": true
+        },
+        {
+            "id": "retailer-products",
+            "label": "My Inventory",
+            "icon": "Package",
+            "href": "/dashboard/retailer/inventory",
+            "requiresAuth": true
+        },
+        {
+            "id": "orders",
+            "label": "My Orders",
+            "icon": "ShoppingBag",
+            "href": "/dashboard/retailer/orders"
+        },
+        {
+            "id": "profile",
+            "label": "Profile",
+            "icon": "User",
+            "href": "/profile"
+        },
+        {
+            "id": "help",
+            "label": "Help",
+            "icon": "HelpCircle",
+            "href": "/dashboard/help"
+        }
+    ],
     "USER_MENU_ITEMS": [
         {
             "id": "dashboard",

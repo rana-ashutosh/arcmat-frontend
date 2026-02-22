@@ -9,8 +9,10 @@ const useAuthStoreBase = create(
       user: null,
       token: null,
       isAuthenticated: false,
-      isLoading: true, // Start loading to block UI until check is done
-      currentVendorId: null,
+      isLoading: true,
+      currentBrandId: null,
+      selectedBrands: [],
+      activeBrand: null, // Current brand context (for multi-brand admins)
 
       // --- ACTIONS ---
       login: (userData, token) => {
@@ -22,15 +24,19 @@ const useAuthStoreBase = create(
           document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Strict`; // 1 day
         }
 
-        const vendorId = finalUser?.role === 'vendor'
-          ? (finalUser.vendorId || finalUser.id)
+        const brandId = finalUser?.role === 'brand'
+          ? (finalUser.brandId || finalUser.id)
           : null;
+
+        const brands = finalUser?.selectedBrands || [];
 
         set({
           user: finalUser,
           token: token,
           isAuthenticated: true,
-          currentVendorId: vendorId,
+          currentBrandId: brandId,
+          selectedBrands: brands,
+          activeBrand: brands.length > 0 ? brands[0] : null,
           isLoading: false
         });
       },
@@ -56,13 +62,16 @@ const useAuthStoreBase = create(
           const userData = rawData?.data || rawData?.user || rawData;
 
 
-          const vendorId = userData?.role === 'vendor' ? (userData.vendorId || userData.id) : null;
+          const brandId = userData?.role === 'brand' ? (userData.brandId || userData.id) : null;
+          const brands = userData?.selectedBrands || [];
 
           set({
             user: userData,
             token,
             isAuthenticated: true,
-            currentVendorId: vendorId,
+            currentBrandId: brandId,
+            selectedBrands: brands,
+            activeBrand: brands.length > 0 ? brands[0] : null,
             isLoading: false
           });
 
@@ -81,7 +90,9 @@ const useAuthStoreBase = create(
           user: null,
           token: null,
           isAuthenticated: false,
-          currentVendorId: null,
+          currentBrandId: null,
+          selectedBrands: [],
+          activeBrand: null,
           isLoading: false
         });
         localStorage.removeItem('auth-storage');
@@ -95,12 +106,14 @@ const useAuthStoreBase = create(
         await get().initializeAuth();
       },
 
-      // Helper to manually update role/vendorId if needed
-      setRole: (role, vendorId = null) =>
+      // Helper to manually update role/brandId if needed
+      setRole: (role, brandId = null) =>
         set((state) => ({
           user: { ...state.user, role },
-          currentVendorId: vendorId
+          currentBrandId: brandId
         })),
+
+      setActiveBrand: (brandId) => set({ activeBrand: brandId }),
     }),
     {
       name: 'auth-storage',

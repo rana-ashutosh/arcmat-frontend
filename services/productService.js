@@ -136,15 +136,15 @@ export const productService = {
     },
 
     // Bulk Activate All Products and Variants for a Vendor
-    bulkActivateProducts: async (vendorId) => {
-        const response = await api.post('/product/bulk-activate', { vendorId });
+    bulkActivateProducts: async (brand) => {
+        const response = await api.post('/product/bulk-activate', { brand });
         return response.data;
     },
 
     // Export Product Data (Products, Variants, Images ZIP)
-    exportProductData: async (vendorId = null) => {
+    exportProductData: async (brandId = null) => {
         const params = {};
-        if (vendorId) params.vendorId = vendorId;
+        if (brandId) params.brandId = brandId;
 
         const response = await api.get('/product/export-data', {
             params,

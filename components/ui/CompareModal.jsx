@@ -129,7 +129,7 @@ const CompareModal = () => {
 
                                             <div className="text-center">
                                                 <div className="text-xs font-bold text-[#e09a74] uppercase tracking-wider mb-1">
-                                                    {typeof root.brand === 'object' ? (root.brand.name || root.brand.brand_name) : root.brand}
+                                                    {(root.brand && typeof root.brand === 'object') ? (root.brand.name || root.brand.brand_name) : (root.brand || 'Arcmat')}
                                                 </div>
                                                 <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-[40px] mb-2">
                                                     {root.product_name || root.name}

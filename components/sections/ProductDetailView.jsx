@@ -318,7 +318,7 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                 <div className="mb-4">
                                     {product.brand && (
                                         <Link href="#" className="text-2xl font-extrabold text-gray-600 hover:text-[#e09a74] transition-colors mb-2 inline-block">
-                                            {typeof product.brand === 'object' ? (product.brand.name || product.brand.brand_name) : product.brand}
+                                            {(product.brand && typeof product.brand === 'object') ? (product.brand.name || product.brand.brand_name) : (product.brand || 'Arcmat')}
                                         </Link>
                                     )}
                                     {/* BADGES SECTION */}
@@ -600,7 +600,7 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                             <section className="bg-white rounded-xl border border-gray-100 p-5">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Overview</h3>
                                 <div className="text-sm md:text-base text-gray-600 leading-relaxed whitespace-pre-line wrap-break-word overflow-hidden"
-                                    dangerouslySetInnerHTML={{ __html: description || `Premium quality ${subtitle?.toLowerCase() || ''} from ${typeof product.brand === 'object' ? (product.brand.name || product.brand.brand_name) : (product.brand || 'Arcmat')}.` }}
+                                    dangerouslySetInnerHTML={{ __html: description || `Premium quality ${subtitle?.toLowerCase() || ''} from ${(product.brand && typeof product.brand === 'object') ? (product.brand.name || product.brand.brand_name) : (product.brand || 'Arcmat')}.` }}
                                 />
                             </section>
 
@@ -643,7 +643,7 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                     {
                                         title: 'Shipping & Dimensions', content: <div className="space-y-4 p-3">
                                             <ul className="space-y-2">
-                                                {(product.dimensions || ['Standard sizing applies', 'Contact vendor for custom dimensions']).map((dim, idx) => (
+                                                {(product.dimensions || ['Standard sizing applies', 'Contact brand for custom dimensions']).map((dim, idx) => (
                                                     <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
                                                         <span className="mt-1 w-1.5 h-1.5 rounded-full bg-gray-400" />{dim}
                                                     </li>

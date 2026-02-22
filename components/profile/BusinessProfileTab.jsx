@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useGetVendor, useCreateVendor, useUpdateVendor } from '@/hooks/useVendor';
 import ProfileDetails from '@/components/profile/ProfileDetails';
 import ProfileForm from '@/components/profile/ProfileForm';
@@ -9,35 +10,36 @@ import { Loader2 } from 'lucide-react';
 
 const BusinessProfileTab = () => {
     const { user } = useAuth();
+    const fetchUser = useAuthStore((s) => s.fetchUser);
     const { setLoading } = useLoader();
     const userId = user?._id || user?.id;
 
-    // Hooks for vendor data
-    const { data: vendorData, isLoading: isVendorLoading } = useGetVendor(userId);
+    // Hooks for brand data
+    const { data: brandData, isLoading: isBrandLoading } = useGetVendor(userId);
     const { mutate: createVendor, isPending: isCreating } = useCreateVendor();
     const { mutate: updateVendor, isPending: isUpdating } = useUpdateVendor();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [currentVendor, setCurrentVendor] = useState(null);
+    const [currentBrand, setCurrentBrand] = useState(null);
 
     // Update loader state
     useEffect(() => {
-        setLoading(isVendorLoading);
-    }, [isVendorLoading, setLoading]);
+        setLoading(isBrandLoading);
+    }, [isBrandLoading, setLoading]);
 
-    // Process vendor data
+    // Process brand data
     useEffect(() => {
-        if (vendorData) {
-            const vendor = vendorData.data || vendorData.vendor || vendorData;
-            if (vendor && typeof vendor === 'object' && !Array.isArray(vendor)) {
-                setCurrentVendor(vendor);
+        if (brandData) {
+            const brand = brandData.data || brandData.vendor || brandData;
+            if (brand && typeof brand === 'object' && !Array.isArray(brand)) {
+                setCurrentBrand(brand);
             } else {
-                setCurrentVendor(null);
+                setCurrentBrand(null);
             }
         } else {
-            setCurrentVendor(null);
+            setCurrentBrand(null);
         }
-    }, [vendorData]);
+    }, [brandData]);
 
     const fileToBase64 = (file) => {
         return new Promise((resolve, reject) => {
@@ -60,7 +62,7 @@ const BusinessProfileTab = () => {
                 isActive: data.isActive
             };
 
-            if (!currentVendor && user) {
+            if (!currentBrand && user) {
                 payload.userId = user._id || user.id;
             }
 
@@ -69,8 +71,8 @@ const BusinessProfileTab = () => {
                 payload.logo = base64Logo;
             }
 
-            if (currentVendor) {
-                updateVendor({ id: currentVendor._id || currentVendor.id, data: payload }, {
+            if (currentBrand) {
+                updateVendor({ id: currentBrand._id || currentBrand.id, data: payload }, {
                     onSuccess: () => {
                         toast.success('Profile updated successfully', 'Success');
                         setIsEditing(false);
@@ -81,9 +83,11 @@ const BusinessProfileTab = () => {
                 });
             } else {
                 createVendor(payload, {
-                    onSuccess: () => {
-                        toast.success('Profile created successfully', 'Success');
+                    onSuccess: async () => {
+                        toast.success('Brand profile created successfully', 'Success');
                         setIsEditing(false);
+                        // Re-fetch auth session so selectedBrands/activeBrand updates immediately
+                        await fetchUser();
                     },
                     onError: (error) => {
                         toast.error(error.message || 'Failed to create profile', 'Error');
@@ -95,7 +99,7 @@ const BusinessProfileTab = () => {
         }
     };
 
-    if (isVendorLoading) {
+    if (isBrandLoading) {
         return (
             <div className="flex justify-center items-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
@@ -107,21 +111,21 @@ const BusinessProfileTab = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white">
                 <h2 className="text-xl font-bold text-gray-800">
-                    {currentVendor ? 'Business Profile' : 'Create Business Profile'}
+                    {currentBrand ? 'Business Profile' : 'Create Business Profile'}
                 </h2>
             </div>
 
             <div className="p-8">
-                {!currentVendor || isEditing ? (
+                {!currentBrand || isEditing ? (
                     <ProfileForm
-                        vendor={currentVendor}
+                        brand={currentBrand}
                         onSubmit={handleCreateOrUpdate}
-                        onCancel={currentVendor ? () => setIsEditing(false) : null}
+                        onCancel={currentBrand ? () => setIsEditing(false) : null}
                         isSubmitting={isCreating || isUpdating}
                     />
                 ) : (
                     <ProfileDetails
-                        vendor={currentVendor}
+                        brand={currentBrand}
                         onEdit={() => setIsEditing(true)}
                     />
                 )}

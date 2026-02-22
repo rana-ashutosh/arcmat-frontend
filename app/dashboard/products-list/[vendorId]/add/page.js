@@ -52,7 +52,7 @@ export default function AddProductPage() {
     };
 
     return (
-        <RoleGuard allowedRoles={['admin', 'vendor']}>
+        <RoleGuard allowedRoles={['admin', 'brand']}>
             <Container className="py-8 max-w-5xl mx-auto">
                 {/* Progress Header */}
                 <div className="flex items-center justify-between mb-12">

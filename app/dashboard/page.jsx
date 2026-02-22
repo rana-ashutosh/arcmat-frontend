@@ -67,11 +67,11 @@ export default function DashboardPage() {
     };
 
     const { data: allProductsData, isLoading: isLoadingAll } = useGetProducts({
-        userId: user?.role === 'vendor' ? user?._id : undefined,
+        userId: user?.role === 'brand' ? user?._id : undefined,
         page: 1,
         limit: 1000,
         status: 'all',
-        enabled: mounted && (user?.role === 'vendor' || user?.role === 'admin')
+        enabled: mounted && (user?.role === 'brand' || user?.role === 'admin')
     });
 
     const allProducts = allProductsData?.data?.data || allProductsData?.data || [];
@@ -84,7 +84,7 @@ export default function DashboardPage() {
 
     const { data: ordersData, isLoading: isLoadingOrders } = useGetOrders({
         limit: 5,
-        enabled: mounted && (user?.role === 'vendor' || user?.role === 'admin')
+        enabled: mounted && (user?.role === 'brand' || user?.role === 'admin')
     });
     const recentOrders = ordersData?.data?.data || ordersData?.data || [];
 
@@ -96,11 +96,11 @@ export default function DashboardPage() {
     });
     const totalUsers = usersData?.pagination?.totalRecords || usersData?.users?.length || 0;
 
-    const { data: vendorsData } = useGetVendors({
+    const { data: brandsData } = useGetVendors({
         enabled: isAdmin,
         limit: 1
     });
-    const totalVendors = vendorsData?.pagination?.total || vendorsData?.data?.length || 0;
+    const totalBrands = brandsData?.pagination?.total || brandsData?.data?.length || 0;
 
     const { data: categoriesData } = useGetCategories({
         enabled: isAdmin,
@@ -133,7 +133,7 @@ export default function DashboardPage() {
         );
     }
 
-    if (user?.role === 'vendor' || user?.role === 'admin') {
+    if (user?.role === 'brand' || user?.role === 'admin') {
         return (
             <Container className="py-8">
                 <div className="mb-8">
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                             </div>
                             <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100 shadow-sm">
                                 <p className="text-sm font-medium text-purple-600 mb-1">Total Vendors</p>
-                                <h3 className="text-3xl font-bold text-purple-700">{totalVendors}</h3>
+                                <h3 className="text-3xl font-bold text-purple-700">{totalBrands}</h3>
                                 <div className="mt-2 text-xs text-purple-600/70">Active brands & sellers</div>
                             </div>
                             <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h4 className="text-sm font-medium text-gray-900 truncate">{product.product_name}</h4>
-                                            <p className="text-xs text-gray-500">Vendor: {product.createdBy?.name || 'N/A'}</p>
+                                            <p className="text-xs text-gray-500">Brand: {product.createdBy?.name || 'N/A'}</p>
                                         </div>
                                         <Link href={`/dashboard/products-list/${product.createdBy?._id || ''}/edit/${product._id}`} className="text-xs text-[#d9a88a] font-semibold hover:underline">
                                             Edit

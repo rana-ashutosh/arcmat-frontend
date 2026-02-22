@@ -274,7 +274,7 @@ const ProductCard = ({ product }) => {
             <div className="flex flex-col flex-1 px-3">
                 <h4 className="text-[13px] font-semibold text-gray-800 uppercase tracking-wider mb-0.5 group-hover:text-[#e09a74] transition-colors">{name}</h4>
                 <h3 className="text-[9px] font-semibold text-gray-400 leading-tight mb-1 ">
-                    {(typeof brand === 'object' ? (brand.name || brand.brand_name) : brand) || 'Unknown Vendor'}
+                    {(brand && typeof brand === 'object' ? (brand.name || brand.brand_name) : brand) || 'Unknown Vendor'}
                 </h3>
 
                 {displayAttrs.length > 0 && (
@@ -321,10 +321,10 @@ const ProductCard = ({ product }) => {
                     onClick={isOutOfStock && !isInCart ? undefined : handleCartToggle}
                     disabled={isOutOfStock && !isInCart}
                     className={`flex-1 h-9 flex items-center justify-center gap-1.5 rounded-lg border text-[11px] font-medium transition-all duration-300 ${isOutOfStock && !isInCart
-                            ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-                            : isInCart || isAdded
-                                ? 'bg-green-700 hover:border-red-600 text-white font-semibold hover:bg-white hover:text-red-600'
-                                : 'bg-[#e09a74] border-[#e09a74] text-white hover:bg-white hover:text-[#e09a74]'
+                        ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                        : isInCart || isAdded
+                            ? 'bg-green-700 hover:border-red-600 text-white font-semibold hover:bg-white hover:text-red-600'
+                            : 'bg-[#e09a74] border-[#e09a74] text-white hover:bg-white hover:text-[#e09a74]'
                         }`}
                 >
                     {isOutOfStock && !isInCart ? (

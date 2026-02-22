@@ -122,7 +122,7 @@ const Header = ({ variant = 'default' }) => {
                 </div>
 
                 {/* <div className="flex items-center gap-2 lg:gap-6 flex-shrink-0"></div> */}
-                {(!isDashboard || user?.role !== 'vendor') && (
+                {(!isDashboard || user?.role !== 'brand') && (
                     <div className='hidden md:flex flex-1 max-w-2xl mx-4 relative'>
                         <div className="relative w-full group">
                             <div className="flex items-center w-full bg-gray-100/80 hover:bg-gray-100 transition-colors rounded-full px-4 h-11 border border-transparent focus-within:border-gray-300 focus-within:bg-white focus-within:shadow-sm">
@@ -211,7 +211,7 @@ const Header = ({ variant = 'default' }) => {
                 )}
 
                 <div className="flex items-center gap-2 lg:gap-6 shrink-0">
-                    {(!isDashboard || user?.role !== 'vendor') && (
+                    {(!isDashboard || user?.role !== 'brand') && (
                         <>
                             <button className='p-2 hover:bg-gray-50 rounded-full transition-colors hidden sm:flex shrink-0'>
                                 <Image src="/Icons/ai_icon.png" alt="AI Tools" width={28} height={28} />
@@ -222,7 +222,7 @@ const Header = ({ variant = 'default' }) => {
                     )}
 
                     <div className='flex md:flex items-center sm:gap-4'>
-                        {(!user || user.role !== 'vendor') && (
+                        {(!user || user.role !== 'brand') && (
                             <>
                                 <Link href="/wishlist">
                                     <button className='p-2 hover:bg-gray-50 rounded-full transition-colors relative group/wishlist'>
@@ -239,7 +239,7 @@ const Header = ({ variant = 'default' }) => {
                                 </button>
                             </>
                         )}
-                        {(!user || user.role !== 'vendor') && (
+                        {(!user || user.role !== 'brand') && (
                             <Link href="/cart">
                                 <button className='p-2 hover:bg-gray-50 rounded-full transition-colors relative group/cart'>
                                     <ShoppingCart size={22} className="text-gray-600 group-hover/cart:text-[#e09a74] transition-colors" />
@@ -360,7 +360,7 @@ const Header = ({ variant = 'default' }) => {
                                             Profile
                                         </Link>
 
-                                        {(!user || user.role !== 'vendor') && (
+                                        {(!user || user.role !== 'brand') && (
                                             <Link
                                                 href="/dashboard"
                                                 onClick={() => setProfileOpen(false)}

@@ -40,12 +40,12 @@ export default function ProductsListPage() {
     const [isExporting, setIsExporting] = useState(false);
 
     const isAdmin = user?.role === 'admin';
-    const isVendor = user?.role === 'vendor';
+    const isBrand = user?.role === 'brand';
 
-    const effectiveVendorId = vendorIdFromRoute || (isVendor ? (user?._id || user?.id) : undefined);
+    const effectiveBrandId = vendorIdFromRoute || (isBrand ? (user?._id || user?.id) : undefined);
 
     const { data: apiResponse, isLoading: productsLoading } = useGetProducts({
-        userId: effectiveVendorId,
+        userId: effectiveBrandId,
         page: currentPage,
         limit: pageSize,
         search: searchTerm,
@@ -64,7 +64,7 @@ export default function ProductsListPage() {
         setIsExporting(true);
         try {
             const response = await productService.getAllProducts({
-                userid: effectiveVendorId,
+                userid: effectiveBrandId,
                 page: 1,
                 limit: 10000,
                 search: searchTerm,
@@ -114,7 +114,7 @@ export default function ProductsListPage() {
     const handleDataExport = async () => {
         setIsExporting(true);
         try {
-            const blob = await productService.exportProductData(effectiveVendorId);
+            const blob = await productService.exportProductData(effectiveBrandId);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -147,16 +147,16 @@ export default function ProductsListPage() {
         setCurrentPage(1);
     };
 
-    const showManagementUI = isVendor || isAdmin;
+    const showManagementUI = isBrand || isAdmin;
     const router = require('next/navigation').useRouter();
 
     require('react').useEffect(() => {
-        if (!authLoading && isVendor && user?._id && !vendorIdFromRoute) {
+        if (!authLoading && isBrand && user?._id && !vendorIdFromRoute) {
             router.replace(`/dashboard/products-list/${user._id}`);
         }
-    }, [authLoading, isVendor, user, vendorIdFromRoute, router]);
+    }, [authLoading, isBrand, user, vendorIdFromRoute, router]);
 
-    if (isVendor && !vendorIdFromRoute) {
+    if (isBrand && !vendorIdFromRoute) {
         return null;
     }
 
@@ -168,12 +168,12 @@ export default function ProductsListPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">
-                        {isAdmin ? 'Total System Products' : isVendor ? 'My Inventory' : 'All Products'}
+                        {isAdmin ? 'Total System Products' : isBrand ? 'My Inventory' : 'All Products'}
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">
                         {isAdmin
                             ? 'Manage all products across the platform.'
-                            : isVendor
+                            : isBrand
                                 ? 'Manage your prices, stock, and listings.'
                                 : 'Browse our latest collection.'}
                     </p>
@@ -199,7 +199,7 @@ export default function ProductsListPage() {
                                 CSV
                             </button>
                         </div> */}
-                        {isVendor && (
+                        {isBrand && (
                             <>
                                 <Button
                                     onClick={handleDataExport}
@@ -231,7 +231,7 @@ export default function ProductsListPage() {
 
             {showManagementUI ? (
                 <div className="space-y-4">
-                    {isVendor && <AttributeCompletionBanner />}
+                    {isBrand && <AttributeCompletionBanner />}
 
                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
                         <div className="flex flex-col w-full lg:flex-row gap-4 items-center flex-1">
@@ -282,7 +282,7 @@ export default function ProductsListPage() {
                         </div>
                     </div>
 
-                    {isVendor && <BulkActionsBar products={apiProducts} />}
+                    {isBrand && <BulkActionsBar products={apiProducts} />}
 
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <VendorProductTable products={apiProducts} />

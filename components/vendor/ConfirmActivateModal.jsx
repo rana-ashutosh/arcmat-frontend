@@ -32,7 +32,7 @@ export default function ConfirmActivateModal({ isOpen, onClose, onConfirm, isLoa
                 <div className="p-6 space-y-4">
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                         <p className="text-sm text-amber-900 font-medium">
-                            ⚠️ You are about to activate <strong>ALL products and variants</strong> for this vendor.
+                            ⚠️ You are about to activate <strong>ALL products and variants</strong> for this brand.
                         </p>
                     </div>
 

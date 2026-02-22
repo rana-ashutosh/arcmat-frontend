@@ -1,6 +1,6 @@
 import api from '@/lib/api';
 
-const brandService = {
+export const brandService = {
     getAllBrands: async (params = {}) => {
         const response = await api.get('/brand', { params });
         return response.data;
@@ -12,19 +12,17 @@ const brandService = {
     },
 
     createBrand: async (brandData) => {
-        const config = {};
-        if (brandData instanceof FormData) {
-            config.headers = { 'Content-Type': undefined };
-        }
+        const config = brandData instanceof FormData
+            ? { headers: { 'Content-Type': 'multipart/form-data' } }
+            : {};
         const response = await api.post('/brand', brandData, config);
         return response.data;
     },
 
     updateBrand: async (id, brandData) => {
-        const config = {};
-        if (brandData instanceof FormData) {
-            config.headers = { 'Content-Type': undefined };
-        }
+        const config = brandData instanceof FormData
+            ? { headers: { 'Content-Type': 'multipart/form-data' } }
+            : {};
         const response = await api.patch(`/brand/${id}`, brandData, config);
         return response.data;
     },
@@ -32,7 +30,5 @@ const brandService = {
     deleteBrand: async (id) => {
         const response = await api.delete(`/brand/${id}`);
         return response.data;
-    }
+    },
 };
-
-export default brandService;

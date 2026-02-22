@@ -14,12 +14,12 @@ const ProfilePage = () => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('basic');
 
-    const isVendorRole = user?.role === 'vendor';
+    const isBrandRole = user?.role === 'brand';
 
     const tabs = [
         { id: 'basic', label: 'Basic Information', icon: User },
         { id: 'address', label: 'Manage Addresses', icon: MapPin },
-        ...(isVendorRole ? [{ id: 'business', label: 'Business Profile', icon: Building2 }] : []),
+        ...(isBrandRole ? [{ id: 'business', label: 'Business Profile', icon: Building2 }] : []),
         { id: 'password', label: 'Change Password', icon: Lock },
     ];
 
@@ -59,7 +59,7 @@ const ProfilePage = () => {
                             <div className="transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
                                 {activeTab === 'basic' && <BasicInfoCard user={user} />}
                                 {activeTab === 'address' && <AddressList />}
-                                {activeTab === 'business' && isVendorRole && <BusinessProfileTab />}
+                                {activeTab === 'business' && isBrandRole && <BusinessProfileTab />}
                                 {activeTab === 'password' && <ChangePasswordCard />}
                             </div>
                         </div>

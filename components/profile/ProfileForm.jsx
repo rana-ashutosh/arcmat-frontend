@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import Button from '@/components/ui/Button';
 import { Loader2 } from 'lucide-react';
 
-const ProfileForm = ({ vendor, onSubmit, onCancel, isSubmitting }) => {
+const ProfileForm = ({ brand, onSubmit, onCancel, isSubmitting }) => {
     const {
         register,
         handleSubmit,
@@ -23,15 +23,15 @@ const ProfileForm = ({ vendor, onSubmit, onCancel, isSubmitting }) => {
     });
 
     useEffect(() => {
-        if (vendor) {
+        if (brand) {
             reset({
-                name: vendor.name || '',
-                country: vendor.country || 'India',
-                description: vendor.description || '',
-                website: vendor.website || '',
-                shippingAddress: vendor.shippingAddress || '',
-                billingAddress: vendor.billingAddress || '',
-                isActive: vendor.isActive ?? true,
+                name: brand.name || '',
+                country: brand.country || 'India',
+                description: brand.description || '',
+                website: brand.website || '',
+                shippingAddress: brand.shippingAddress || '',
+                billingAddress: brand.billingAddress || '',
+                isActive: brand.isActive ?? true,
             });
         } else {
             reset({
@@ -44,7 +44,7 @@ const ProfileForm = ({ vendor, onSubmit, onCancel, isSubmitting }) => {
                 billingAddress: ''
             });
         }
-    }, [vendor, reset]);
+    }, [brand, reset]);
 
     const logoFile = watch('logo');
     const [preview, setPreview] = useState(null);
@@ -55,9 +55,9 @@ const ProfileForm = ({ vendor, onSubmit, onCancel, isSubmitting }) => {
             setPreview(objectUrl);
             return () => URL.revokeObjectURL(objectUrl);
         } else {
-            setPreview(vendor?.logo || null);
+            setPreview(brand?.logo || null);
         }
-    }, [logoFile, vendor]);
+    }, [logoFile, brand]);
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -126,7 +126,6 @@ const ProfileForm = ({ vendor, onSubmit, onCancel, isSubmitting }) => {
                                         file:bg-[#e09a74]/10 file:text-[#e09a74]
                                         hover:file:bg-[#e09a74]/20
                                     "
-
                                 />
                                 <p className="mt-1 text-xs text-gray-500">PNG, JPG up to 70KB</p>
                                 {errors.logo && <p className="text-red-500 text-xs mt-1">{errors.logo.message}</p>}

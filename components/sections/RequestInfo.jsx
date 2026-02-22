@@ -105,7 +105,7 @@ const RequestInfo = ({ product, initialRequest = {}, onClose, isModal = false })
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Get directly in touch with</p>
                                     <h3 className="text-xl font-bold text-gray-900">
-                                        {typeof product.brand === 'object' ? (product.brand.name || product.brand.brand_name) : (product.brand || 'GHIDINI1961')}
+                                        {(product.brand && typeof product.brand === 'object') ? (product.brand.name || product.brand.brand_name) : (product.brand || 'Arcmat')}
                                     </h3>
                                 </div>
                             </div>
@@ -286,7 +286,7 @@ const RequestInfo = ({ product, initialRequest = {}, onClose, isModal = false })
                                     className="w-4 h-4 mt-1 rounded border-gray-300 text-[#e09a74] focus:ring-[#e09a74]"
                                 />
                                 <span className="text-xs text-gray-600 leading-relaxed">
-                                    I consent to the transfer of my data to {typeof product.brand === 'object' ? (product.brand.name || product.brand.brand_name) : (product.brand || 'GHIDINI1961')} and the brands featured on Archiproducts for marketing purposes
+                                    I consent to the transfer of my data to {(product.brand && typeof product.brand === 'object') ? (product.brand.name || product.brand.brand_name) : (product.brand || 'Arcmat')} and the brands featured on Archiproducts for marketing purposes
                                 </span>
                             </label>
                             <p className="text-xs text-gray-500 mt-2 ml-6">
