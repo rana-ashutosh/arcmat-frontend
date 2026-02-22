@@ -12,9 +12,14 @@ import { useGetVendors } from "@/hooks/useVendor";
 import { resolvePricing, formatCurrency } from "@/lib/productUtils";
 import { Loader2 } from "lucide-react";
 import CompareBar from "@/components/ui/CompareBar";
-import CompareModal from "@/components/ui/CompareModal";
+import Pagination from "@/components/ui/Pagination";
 import { parseFiltersFromURL, buildURLFromFilters } from "@/lib/urlParamsUtils";
+import dynamic from 'next/dynamic';
 
+const CompareModal = dynamic(() => import("@/components/ui/CompareModal"), {
+    ssr: false,
+    loading: () => <div className="fixed inset-0 bg-black/20 animate-pulse" />
+});
 export default function ProductListPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -36,24 +41,43 @@ export default function ProductListPage() {
     });
 
     const [isInitialized, setIsInitialized] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(12);
 
     const { data: apiData, isLoading } = useGetVariants({
         status: 1,
-        limit: 1000,
+        page: currentPage,
+        limit: pageSize,
+        categoryId: selectedCategory !== "All" ? selectedCategory : undefined,
+        brand: activeFilters.brands.join(','),
+        color: activeFilters.colors.join(','),
+        min_price: activeFilters.priceRange[0],
+        max_price: activeFilters.priceRange[1],
+        enabled: isInitialized
     });
 
     const { data: brandsData } = useGetVendors({ type: 'frontend' });
     const brands = Array.isArray(brandsData) ? brandsData : (brandsData?.data || []);
 
-    const products = apiData?.data?.data || [];
+    const products = apiData?.data?.data || apiData?.data || [];
+    const paginationData = apiData?.data?.pagination || apiData?.pagination;
+    const metadata = apiData?.data?.metadata || apiData?.metadata;
 
     const { minPrice, maxPrice, priceStep } = useMemo(() => {
+        if (metadata) {
+            return {
+                minPrice: metadata.minPrice,
+                maxPrice: metadata.maxPrice,
+                priceStep: 100
+            };
+        }
         if (!products.length) return { minPrice: 0, maxPrice: 100000, priceStep: 1000 };
         const prices = products.map(p => resolvePricing(p).price).filter(p => p > 0);
         const min = Math.floor(Math.min(...prices) / 100) * 100;
         const max = Math.ceil(Math.max(...prices) / 100) * 100;
         return { minPrice: min, maxPrice: max, priceStep: 100 };
-    }, [products]);
+    }, [products, metadata]);
+    Vinc:
 
     useEffect(() => {
         const parsed = parseFiltersFromURL(searchParams);
@@ -78,6 +102,7 @@ export default function ProductListPage() {
 
     const handleCategoryChange = (categoryId) => {
         setSelectedCategory(categoryId);
+        setCurrentPage(1);
         updateURL(categoryId, activeFilters);
     };
     const handleFiltersChange = (newFiltersOrCallback) => {
@@ -86,48 +111,12 @@ export default function ProductListPage() {
             : newFiltersOrCallback;
 
         setActiveFilters(newFilters);
+        setCurrentPage(1);
         updateURL(selectedCategory, newFilters);
     };
 
-    const filteredAndSortedProducts = useMemo(() => {
-        return products.filter(variant => {
-            const rootProduct = variant.productId;
-            if (!rootProduct) return false;
-
-            const { price } = resolvePricing(variant);
-
-            if (price < activeFilters.priceRange[0] || price > activeFilters.priceRange[1]) {
-                if (price > 0) return false;
-            }
-
-            if (selectedCategory !== "All") {
-                const catMatch =
-                    rootProduct.categoryId === selectedCategory ||
-                    rootProduct.categoryId?._id === selectedCategory ||
-                    rootProduct.subcategoryId === selectedCategory ||
-                    rootProduct.subcategoryId?._id === selectedCategory ||
-                    rootProduct.subsubcategoryId === selectedCategory ||
-                    rootProduct.subsubcategoryId?._id === selectedCategory;
-
-                if (!catMatch) return false;
-            }
-
-            if (activeFilters.brands.length > 0) {
-                const brandId = rootProduct.brand?._id || rootProduct.brand;
-                if (!activeFilters.brands.includes(brandId)) return false;
-            }
-
-            if (activeFilters.colors.length > 0) {
-                if (!activeFilters.colors.includes(variant.color)) return false;
-            }
-
-            return true;
-        });
-    }, [products, selectedCategory, activeFilters]);
-
-    const displayedProducts = useMemo(() => {
-        return filteredAndSortedProducts.slice(0, visibleItems);
-    }, [filteredAndSortedProducts, visibleItems]);
+    const filteredAndSortedProducts = products;
+    const displayedProducts = products;
 
     const categoryCounts = useMemo(() => {
         const counts = { All: products.length };
@@ -146,12 +135,13 @@ export default function ProductListPage() {
     }, [products]);
 
     const availableColors = useMemo(() => {
+        if (metadata?.availableColors) return metadata.availableColors;
         const colors = new Set();
         products.forEach(variant => {
             if (variant.color) colors.add(variant.color);
         });
         return Array.from(colors).sort();
-    }, [products]);
+    }, [products, metadata]);
 
     return (
         <div className="min-h-screen">
@@ -191,14 +181,22 @@ export default function ProductListPage() {
                         </div>
                     )}
 
-                    {displayedProducts.length < filteredAndSortedProducts.length && (
-                        <div className="flex justify-center mt-12 mb-8">
-                            <Button
-                                text="Load more products"
-                                onClick={() => setVisibleItems(prev => prev + 10)}
-                                className="px-10 py-3 border-2 border-gray-200 rounded-2xl font-bold bg-[#e09a74] hover:bg-white hover:border-[#e09a74] text-white hover:text-[#e09a74] transition-all transform active:scale-95 shadow-sm"
-                            >
-                            </Button>
+                    {paginationData?.totalItems > 0 && (
+                        <div className="mt-12 mb-8">
+                            <Pagination
+                                currentPage={paginationData.currentPage}
+                                totalPages={paginationData.totalPages}
+                                pageSize={paginationData.itemsPerPage}
+                                totalItems={paginationData.totalItems}
+                                onPageChange={(page) => {
+                                    setCurrentPage(page);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                onPageSizeChange={(size) => {
+                                    setPageSize(size);
+                                    setCurrentPage(1);
+                                }}
+                            />
                         </div>
                     )}
 

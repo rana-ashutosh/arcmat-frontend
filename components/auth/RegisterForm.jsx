@@ -61,7 +61,7 @@ export default function RegisterForm() {
         assignedRole = 'customer';
       }
     } else {
-      assignedRole = vendorType;
+      assignedRole = vendorType === 'brand' ? 'vendor' : 'retailer';
     }
 
     const finalData = {
@@ -118,14 +118,14 @@ export default function RegisterForm() {
         </div>
 
         <h2 className="text-3xl font-semibold text-[#4a5568] mb-2 px-0 sm:px-10 md:whitespace-nowrap">
-          Join as a {activeTab === 'professionals'
-            ? (userType === 'professional' ? 'Professional' : 'User')
-            : (vendorType === 'brand' ? 'Brand' : 'Retailer')}
+          Join as a {activeTab === 'professionals' ? 'User / Professional' : (vendorType === 'brand' ? 'Brand' : 'Retailer')}
         </h2>
         <p className="text-[#718096] text-base px-0 sm:px-10">
           {activeTab === 'professionals'
             ? "Free membership for homeowners, architects, designers and contractors."
-            : "Connect with professionals and showcase your products."}
+            : (vendorType === 'brand'
+              ? "Connect with professionals and showcase your products."
+              : "Register as a retailer to manage and sell high-quality materials.")}
         </p>
       </div>
 
@@ -171,6 +171,40 @@ export default function RegisterForm() {
           </div>
           {errors.email && <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>}
         </div>
+
+        {activeTab === 'brands' && (
+          <div className="flex gap-6 p-2 px-0 mt-4">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative flex items-center">
+                <input
+                  type="radio"
+                  name="vendorType"
+                  checked={vendorType === 'brand'}
+                  onChange={() => setVendorType('brand')}
+                  className="peer sr-only"
+                />
+                <div className="w-5 h-5 border-2 border-[#d9a88a] rounded-full peer-checked:bg-[#d9a88a] peer-checked:border-[#d9a88a] transition-all"></div>
+                <div className="absolute w-2.5 h-2.5 bg-white rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-all"></div>
+              </div>
+              <span className="text-gray-700 font-medium group-hover:text-[#d9a88a] transition-colors">Brand</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative flex items-center">
+                <input
+                  type="radio"
+                  name="vendorType"
+                  checked={vendorType === 'retailer'}
+                  onChange={() => setVendorType('retailer')}
+                  className="peer sr-only"
+                />
+                <div className="w-5 h-5 border-2 border-[#d9a88a] rounded-full peer-checked:bg-[#d9a88a] peer-checked:border-[#d9a88a] transition-all"></div>
+                <div className="absolute w-2.5 h-2.5 bg-white rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-all"></div>
+              </div>
+              <span className="text-gray-700 font-medium group-hover:text-[#d9a88a] transition-colors">Retailer</span>
+            </label>
+          </div>
+        )}
 
         {activeTab === 'professionals' && (
           <div className="space-y-4">
@@ -365,9 +399,7 @@ export default function RegisterForm() {
               <span>Creating Account...</span>
             </span>
           ) : (
-            `Create ${activeTab === 'professionals'
-              ? (userType === 'professional' ? 'Professional' : 'User')
-              : (vendorType === 'brand' ? 'Brand' : 'Retailer')} Account`
+            `Create ${activeTab === 'professionals' ? 'Professional' : (vendorType === 'brand' ? 'Brand' : 'Retailer')} Account`
           )}
         </button>
       </form>

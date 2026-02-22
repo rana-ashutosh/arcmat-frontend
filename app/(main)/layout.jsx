@@ -2,8 +2,11 @@
 import React from 'react';
 import Header from "@/components/layouts/Header";
 import Navbar from "@/components/navbar/navbar";
-import Footer from "@/components/layouts/Footer";
+import dynamic from 'next/dynamic';
 
+const Footer = dynamic(() => import("@/components/layouts/Footer"), {
+    ssr: true
+});
 export default function MainLayout({ children }) {
     return (
         <>

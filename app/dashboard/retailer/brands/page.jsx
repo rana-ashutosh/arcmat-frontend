@@ -144,7 +144,7 @@ export default function RetailerBrandsPage() {
                                     </div>
                                     <span className={clsx(
                                         "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
-                                        brand.isActive==1 ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"
+                                        brand.isActive == 1 ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"
                                     )}>
                                         {'Active '}
                                     </span>

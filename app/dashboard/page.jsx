@@ -58,7 +58,10 @@ export default function DashboardPage() {
     // Handle Redirection based on user role
     useEffect(() => {
         setMounted(true);
-    }, []);
+        if (user?.role === 'retailer') {
+            router.push('/dashboard/retailer');
+        }
+    }, [user, router]);
 
     // Helper to get First Name safely
     const getFirstName = () => {
@@ -69,14 +72,18 @@ export default function DashboardPage() {
     const { data: allProductsData, isLoading: isLoadingAll } = useGetProducts({
         userId: user?.role === 'brand' ? user?._id : undefined,
         page: 1,
-        limit: 1000,
+        limit: 50,
         status: 'all',
         enabled: mounted && (user?.role === 'brand' || user?.role === 'admin')
     });
 
     const allProducts = allProductsData?.data?.data || allProductsData?.data || [];
-    const activeProducts = allProducts.filter(p => p.status === 1 || p.status === '1');
-    const inactiveProducts = allProducts.filter(p => p.status === 0 || p.status === '0');
+    const stats = allProductsData?.data?.stats || allProductsData?.stats;
+    const pagination = allProductsData?.data?.pagination || allProductsData?.pagination;
+
+    const totalProductsCount = stats?.totalCount || pagination?.totalItems || allProducts.length;
+    const activeProductsCount = stats?.activeCount || allProducts.filter(p => p.status === 1 || p.status === '1').length;
+    const inactiveProductsCount = stats?.inactiveCount || allProducts.filter(p => p.status === 0 || p.status === '0').length;
 
     const recentProducts = [...allProducts]
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -100,7 +107,7 @@ export default function DashboardPage() {
         enabled: isAdmin,
         limit: 1
     });
-    const totalBrands = brandsData?.pagination?.total || brandsData?.data?.length || 0;
+    const totalVendors = brandsData?.pagination?.total || brandsData?.data?.length || 0;
 
     const { data: categoriesData } = useGetCategories({
         enabled: isAdmin,
@@ -144,7 +151,7 @@ export default function DashboardPage() {
                 <div className={clsx("grid gap-6 mb-8", isAdmin ? "grid-cols-1 md:grid-cols-4" : "grid-cols-1 md:grid-cols-3")}>
                     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
                         <p className="text-sm font-medium text-gray-500 mb-1">Total Products</p>
-                        <h3 className="text-3xl font-bold text-gray-900">{allProducts.length}</h3>
+                        <h3 className="text-3xl font-bold text-gray-900">{totalProductsCount}</h3>
                         <div className="mt-2 text-xs text-gray-400">{isAdmin ? "Total items in system" : "Total items in your inventory"}</div>
                     </div>
 
@@ -156,8 +163,8 @@ export default function DashboardPage() {
                                 <div className="mt-2 text-xs text-blue-600/70">Registered customers & pros</div>
                             </div>
                             <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100 shadow-sm">
-                                <p className="text-sm font-medium text-purple-600 mb-1">Total Vendors</p>
-                                <h3 className="text-3xl font-bold text-purple-700">{totalBrands}</h3>
+                                <p className="text-sm font-medium text-purple-600 mb-1">Total Brands</p>
+                                <h3 className="text-3xl font-bold text-purple-700">{totalVendors}</h3>
                                 <div className="mt-2 text-xs text-purple-600/70">Active brands & sellers</div>
                             </div>
                             <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
@@ -170,12 +177,12 @@ export default function DashboardPage() {
                         <>
                             <div className="bg-green-50 p-6 rounded-2xl border border-green-100 shadow-sm">
                                 <p className="text-sm font-medium text-green-600 mb-1">Active Products</p>
-                                <h3 className="text-3xl font-bold text-green-700">{activeProducts.length}</h3>
+                                <h3 className="text-3xl font-bold text-green-700">{activeProductsCount}</h3>
                                 <div className="mt-2 text-xs text-green-600/70">Currently visible to customers</div>
                             </div>
                             <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100 shadow-sm">
                                 <p className="text-sm font-medium text-orange-600 mb-1">Inactive Products</p>
-                                <h3 className="text-3xl font-bold text-orange-700">{inactiveProducts.length}</h3>
+                                <h3 className="text-3xl font-bold text-orange-700">{inactiveProductsCount}</h3>
                                 <div className="mt-2 text-xs text-orange-600/70">Drafts or hidden products</div>
                             </div>
                         </>
@@ -259,11 +266,11 @@ export default function DashboardPage() {
                     <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-8">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-semibold text-gray-800">Inactive Products (Needs Attention)</h2>
-                            <span className="text-xs text-gray-400">{inactiveProducts.length} products found</span>
+                            <span className="text-xs text-gray-400">{inactiveProductsCount} products found</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {inactiveProducts.length > 0 ? (
-                                inactiveProducts.slice(0, 6).map((product) => (
+                            {allProducts.filter(p => p.status === 0 || p.status === '0').length > 0 ? (
+                                allProducts.filter(p => p.status === 0 || p.status === '0').slice(0, 6).map((product) => (
                                     <div key={product._id} className="flex items-center gap-3 p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
                                         <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
                                             {product.product_images?.[0] ? (
@@ -287,7 +294,7 @@ export default function DashboardPage() {
                                 <p className="col-span-full text-center py-4 text-gray-500 text-sm">No inactive products found.</p>
                             )}
                         </div>
-                        {inactiveProducts.length > 6 && (
+                        {inactiveProductsCount > 6 && (
                             <div className="mt-4 text-center">
                                 <Link href="/dashboard/products-list" className="text-sm text-[#d9a88a] font-medium hover:underline">View all inactive products</Link>
                             </div>

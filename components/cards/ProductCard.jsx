@@ -274,7 +274,7 @@ const ProductCard = ({ product }) => {
             <div className="flex flex-col flex-1 px-3">
                 <h4 className="text-[13px] font-semibold text-gray-800 uppercase tracking-wider mb-0.5 group-hover:text-[#e09a74] transition-colors">{name}</h4>
                 <h3 className="text-[9px] font-semibold text-gray-400 leading-tight mb-1 ">
-                    {(brand && typeof brand === 'object' ? (brand.name || brand.brand_name) : brand) || 'Unknown Vendor'}
+                    {(typeof brand === 'object' ? (brand.name || brand.brand_name) : brand) || 'Unknown Brand'}
                 </h3>
 
                 {displayAttrs.length > 0 && (

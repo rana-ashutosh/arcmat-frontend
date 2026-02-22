@@ -80,7 +80,7 @@ export default function ProductFilters() {
 
       {/* Vendor - NOW CONNECTED TO STORE */}
       <div>
-        <h4 className="text-sm font-bold text-gray-900 mb-3">Vendor</h4>
+        <h4 className="text-sm font-bold text-gray-900 mb-3">Brand</h4>
         <select
           value={selectedVendors[0] || ''}
           onChange={(e) => setSelectedVendors(e.target.value ? [parseInt(e.target.value)] : [])}

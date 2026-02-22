@@ -1,5 +1,5 @@
 {
-    "VENDOR_MENU_ITEMS": [
+    "BRAND_MENU_ITEMS": [
         {
             "id": "dashboard",
             "label": "Dashboard",
@@ -48,7 +48,7 @@
             "label": "Architects",
             "icon": "HardHat",
             "href": "/dashboard/architects",
-            "vendorOnly": true
+            "brandOnly": true
         },
         {
             "id": "help",

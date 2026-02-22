@@ -34,15 +34,11 @@ const Header = ({ variant = 'default' }) => {
         return () => clearTimeout(timer)
     }, [searchText])
     const { data: searchResults, isLoading: isSearching } = useGetProducts({
-        limit: 1000,
+        search: debouncedSearch,
+        limit: 5,
         enabled: !!debouncedSearch
     });
-
-    const productsRaw = searchResults?.data?.data || searchResults?.data?.products || searchResults?.data || [];
-    const products = productsRaw
-        .filter(p => (p.name || p.product_name || '').toLowerCase().includes(debouncedSearch.toLowerCase()))
-        .slice(0, 5);
-
+    const products = searchResults?.data?.data || searchResults?.data?.products || searchResults?.data || [];
 
 
     useEffect(() => {
@@ -172,7 +168,6 @@ const Header = ({ variant = 'default' }) => {
                                                                 alt={product.name || product.product_name}
                                                                 fill
                                                                 className="object-cover"
-                                                                unoptimized
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-gray-300">

@@ -21,14 +21,19 @@ const SidebarUser = memo(({ isCollapsed, mounted }) => {
             return 'Guest';
         }
         switch (user.role) {
+            case 'vendor':
             case 'brand':
                 return 'Brand';
             case 'customer':
                 return 'Professional';
+            case 'retailer':
+                return 'Retailer';
+            case 'architect':
+                return 'Architect';
             case 'admin':
                 return 'Admin';
             default:
-                return 'User';
+                return user.role.charAt(0).toUpperCase() + user.role.slice(1);
         }
     };
 

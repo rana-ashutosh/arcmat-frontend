@@ -47,7 +47,7 @@ const mapIcons = (items) => items.map(item => ({
   icon: ICON_MAP[item.icon]
 }));
 
-const VENDOR_MENU_ITEMS = mapIcons(sidebarData.VENDOR_MENU_ITEMS);
+const BRAND_MENU_ITEMS = mapIcons(sidebarData.BRAND_MENU_ITEMS);
 const USER_MENU_ITEMS = mapIcons(sidebarData.USER_MENU_ITEMS);
 const RETAILER_MENU_ITEMS = mapIcons(sidebarData.RETAILER_MENU_ITEMS);
 
@@ -73,15 +73,15 @@ export default function Sidebar() {
   const safeCollapsed = isMobileOpen ? false : isCollapsed;
 
   // Determine menu items based on role
-  const isBrand = user?.role === 'brand';
+  const isBrand = user?.role === 'brand' || user?.role === 'vendor';
   const isAdmin = user?.role === 'admin';
   const isRetailer = user?.role === 'retailer';
 
-  let menuItems;
-  if (isBrand || isAdmin) menuItems = VENDOR_MENU_ITEMS;
-  else if (isRetailer) menuItems = RETAILER_MENU_ITEMS;
-  else menuItems = USER_MENU_ITEMS;
-
+  const menuItems = isAdmin || isBrand
+    ? BRAND_MENU_ITEMS
+    : isRetailer
+      ? RETAILER_MENU_ITEMS
+      : USER_MENU_ITEMS;
   const visibleItems = menuItems
     .map(item => {
       if (isBrand && item.id === 'products-list' && (user?._id || user?.id)) {
@@ -96,7 +96,11 @@ export default function Sidebar() {
         return false;
       }
 
-      if (item.vendorOnly && !isBrand) {
+      if (item.brandOnly && !isBrand) {
+        return false;
+      }
+
+      if (item.retailerOnly && !isRetailer) {
         return false;
       }
 
@@ -133,7 +137,7 @@ export default function Sidebar() {
 
           <SidebarUser isCollapsed={safeCollapsed} mounted={mounted} />
 
-          {/* {!isVendor && (
+          {/* {!isBrand && (
             <Link
               href="/dashboard/projects/create"
               className={clsx(

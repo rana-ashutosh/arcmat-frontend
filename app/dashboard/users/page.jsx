@@ -26,7 +26,8 @@ import clsx from 'clsx';
 const ROLES = [
     { label: 'All Users', value: 'all' },
     { label: 'Customers', value: 'customer' },
-    { label: 'Brands', value: 'brand' },
+    { label: 'Brands', value: 'vendor' },
+    { label: 'Retailers', value: 'retailer' },
     { label: 'Architects', value: 'architect' },
 ];
 
@@ -195,11 +196,12 @@ export default function UsersPage() {
                                             <span className={clsx(
                                                 "px-2.5 py-1 text-[10px] font-bold rounded-full uppercase",
                                                 u.role === 'admin' ? "bg-purple-50 text-purple-700 border border-purple-100" :
-                                                    u.role === 'brand' ? "bg-blue-50 text-blue-700 border border-blue-100" :
+                                                    (u.role === 'brand' || u.role === 'vendor') ? "bg-blue-50 text-blue-700 border border-blue-100" :
                                                         u.role === 'architect' ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
-                                                            "bg-gray-50 text-gray-700 border border-gray-100"
+                                                            u.role === 'retailer' ? "bg-amber-50 text-amber-700 border border-amber-100" :
+                                                                "bg-gray-50 text-gray-700 border border-gray-100"
                                             )}>
-                                                {u.role === 'customer' ? 'Professional' : u.role}
+                                                {u.role === 'customer' ? 'Professional' : (u.role === 'vendor' || u.role === 'brand' ? 'Brand' : u.role)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -222,7 +224,7 @@ export default function UsersPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="flex justify-end items-center gap-1.5">
-                                                {u.role === 'brand' && (
+                                                {(u.role === 'brand' || u.role === 'vendor') && (
                                                     <Link
                                                         href={`/dashboard/products-list/${u._id}`}
                                                         className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"

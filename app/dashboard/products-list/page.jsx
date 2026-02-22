@@ -88,7 +88,7 @@ export default function ProductsListPage() {
                 return {
                     'Product Name': p.product_name,
                     'SKU Code': p.skucode || '',
-                    'Vendor': p.userid?.name || 'N/A',
+                    'Brand': p.userid?.name || 'N/A',
                     'Price Range': minPrice === maxPrice ? minPrice : `${minPrice} - ${maxPrice}`,
                     'Total Stock': totalStock,
                     'Status': p.status === 1 ? 'Active' : 'Inactive',
