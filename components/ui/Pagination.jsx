@@ -5,17 +5,21 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 
 const Pagination = ({
-    currentPage,
-    totalPages,
-    pageSize,
+    currentPage = 1,
+    totalPages = 1,
+    pageSize = 10,
     onPageChange,
     onPageSizeChange,
-    totalItems
+    totalItems = 0
 }) => {
     const pageSizes = [10, 20, 50];
 
-    const startItem = (currentPage - 1) * pageSize + 1;
-    const endItem = Math.min(currentPage * pageSize, totalItems);
+    const safeCurrentPage = Number(currentPage) || 1;
+    const safePageSize = Number(pageSize) || 10;
+    const safeTotalItems = Number(totalItems) || 0;
+
+    const startItem = safeTotalItems === 0 ? 0 : (safeCurrentPage - 1) * safePageSize + 1;
+    const endItem = Math.min(safeCurrentPage * safePageSize, safeTotalItems);
 
     return (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-gray-100">

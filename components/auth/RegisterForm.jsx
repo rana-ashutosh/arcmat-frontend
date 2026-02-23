@@ -269,41 +269,6 @@ export default function RegisterForm() {
           </div>
         )}
 
-        {activeTab === 'brands' && (
-          <div className="space-y-4">
-            <div className="flex gap-6 p-2">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <div className="relative flex items-center">
-                  <input
-                    type="radio"
-                    name="vendorType"
-                    checked={vendorType === 'brand'}
-                    onChange={() => setVendorType('brand')}
-                    className="peer sr-only"
-                  />
-                  <div className="w-5 h-5 border-2 border-[#d9a88a] rounded-full peer-checked:bg-[#d9a88a] peer-checked:border-[#d9a88a] transition-all"></div>
-                  <div className="absolute w-2.5 h-2.5 bg-white rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-all"></div>
-                </div>
-                <span className="text-gray-700 font-medium group-hover:text-[#d9a88a] transition-colors">Brand</span>
-              </label>
-
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <div className="relative flex items-center">
-                  <input
-                    type="radio"
-                    name="vendorType"
-                    checked={vendorType === 'retailer'}
-                    onChange={() => setVendorType('retailer')}
-                    className="peer sr-only"
-                  />
-                  <div className="w-5 h-5 border-2 border-[#d9a88a] rounded-full peer-checked:bg-[#d9a88a] peer-checked:border-[#d9a88a] transition-all"></div>
-                  <div className="absolute w-2.5 h-2.5 bg-white rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-all"></div>
-                </div>
-                <span className="text-gray-700 font-medium group-hover:text-[#d9a88a] transition-colors">Retailer</span>
-              </label>
-            </div>
-          </div>
-        )}
 
         <div>
           <input

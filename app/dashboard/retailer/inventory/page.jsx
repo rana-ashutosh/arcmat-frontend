@@ -202,6 +202,8 @@ export default function RetailerProductsPage() {
                     <Pagination
                         currentPage={pagination.currentPage || 1}
                         totalPages={pagination.totalPages}
+                        pageSize={pagination.limit}
+                        totalItems={pagination.totalRecords}
                         onPageChange={setCurrentPage}
                     />
                 </div>
@@ -290,7 +292,7 @@ export default function RetailerProductsPage() {
                                 <Button
                                     type="submit"
                                     loading={upsertOverride.isPending}
-                                    className="flex-1 !py-4 bg-[#e09a74] text-white rounded-2xl text-sm font-black hover:bg-[#d08a64] uppercase tracking-widest shadow-lg shadow-[#e09a74]/20"
+                                    className="flex-1 py-4! bg-[#e09a74] text-white rounded-2xl text-sm font-black hover:bg-[#d08a64] uppercase tracking-widest shadow-lg shadow-[#e09a74]/20"
                                 >
                                     Save Changes
                                 </Button>

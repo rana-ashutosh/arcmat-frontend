@@ -204,8 +204,10 @@ export default function BrandInventoryPage() {
             {pagination?.totalPages > 1 && (
                 <div className="py-8 border-t border-gray-50">
                     <Pagination
-                        currentPage={pagination.currentPage}
+                        currentPage={pagination.currentPage || 1}
                         totalPages={pagination.totalPages}
+                        pageSize={pagination.limit}
+                        totalItems={pagination.totalItems}
                         onPageChange={setCurrentPage}
                     />
                 </div>

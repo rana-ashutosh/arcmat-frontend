@@ -111,7 +111,7 @@ const BusinessProfileTab = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white">
                 <h2 className="text-xl font-bold text-gray-800">
-                    {currentVendor ? 'Brand Profile' : 'Create Brand Profile'}
+                    {currentBrand ? 'Brand Profile' : 'Create Brand Profile'}
                 </h2>
             </div>
 

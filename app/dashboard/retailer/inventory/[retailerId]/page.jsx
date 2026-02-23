@@ -209,6 +209,8 @@ export default function RetailerAdminInventoryPage() {
                     <Pagination
                         currentPage={pagination.currentPage || 1}
                         totalPages={pagination.totalPages}
+                        pageSize={pagination.limit}
+                        totalItems={pagination.totalRecords}
                         onPageChange={setCurrentPage}
                     />
                 </div>
