@@ -259,7 +259,7 @@ export default function CreateProjectModal({ isOpen, onClose }) {
                     <Button
                         type="submit"
                         onClick={handleSubmit}
-                        className="w-full bg-[#4a4b57] hover:bg-white border border-[#4a4b57] hover:text-[#4a4b57] text-white py-5 rounded-2xl text-lg font-bold transition-all shadow-lg active:scale-[0.98]"
+                        className="w-full bg-[#d9a88a] hover:bg-white border hover:border-[#d9a88a] hover:text-[#d9a88a] text-white py-5 rounded-2xl text-lg font-bold transition-all shadow-lg active:scale-[0.98]"
                     >
                         Create Project
                     </Button>

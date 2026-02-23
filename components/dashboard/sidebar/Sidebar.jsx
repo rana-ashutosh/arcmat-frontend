@@ -27,6 +27,7 @@ import SidebarItem from './SidebarItem';
 import SidebarUser from './SidebarUser';
 import sidebarData from './sidebar-data.json';
 import CreateProjectModal from './CreateProjectModal';
+import Button from '@/components/ui/Button';
 
 const ICON_MAP = {
   Package,
@@ -144,10 +145,10 @@ export default function Sidebar() {
           <SidebarUser isCollapsed={safeCollapsed} mounted={mounted} />
 
           {isArchitect && (
-            <button
+            <Button
               onClick={() => setIsProjectModalOpen(true)}
               className={clsx(
-                "mb-8 flex items-center justify-center bg-[#d9a88a] hover:bg-[#d9a88a]/90 text-white rounded-full h-10 transition-all shadow-sm overflow-hidden",
+                "mb-8 flex items-center justify-center bg-[#d9a88a] hover:bg-white text-white hover:text-[#d9a88a] hover:border-[#d9a88a] border rounded-full h-10 transition-all shadow-sm overflow-hidden",
                 safeCollapsed ? "px-0 w-10 mx-auto" : "px-4 w-full"
               )}
             >
@@ -158,7 +159,7 @@ export default function Sidebar() {
               )}>
                 New project
               </span>
-            </button>
+            </Button>
           )}
 
           <nav className="flex-1 space-y-2">

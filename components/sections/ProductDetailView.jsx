@@ -626,30 +626,27 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                             )}
 
                             {/* Key Features */}
-                            <section className="bg-white rounded-xl border border-gray-100 p-5">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Features</h3>
-                                <ul className="space-y-2">
-                                    {(product.keyFeatures || [
-                                        'Premium high-quality construction',
-                                        'Easy installation & minimal maintenance',
-                                        'Versatile application support',
-                                        'Multiple aesthetic variants',
-                                    ]).map((feature, idx) => (
-                                        <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
-                                            <span className="mt-1 w-1.5 h-1.5 rounded-full bg-gray-400" />
-                                            <span>{feature}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </section>
+                            {product.keyFeatures && product.keyFeatures.length > 0 && (
+                                <section className="bg-white rounded-xl border border-gray-100 p-5">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Features</h3>
+                                    <ul className="space-y-2">
+                                        {product.keyFeatures.map((feature, idx) => (
+                                            <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
+                                                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                                <span>{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </section>
+                            )}
 
                             {/* Accordion */}
                             <section className="bg-white rounded-xl border border-gray-100 p-2">
                                 <Accordion items={[
-                                    {
+                                    ...(product.dimensions && product.dimensions.length > 0 ? [{
                                         title: 'Shipping & Dimensions', content: <div className="space-y-4 p-3">
                                             <ul className="space-y-2">
-                                                {(product.dimensions || ['Standard sizing applies', 'Contact brand for custom dimensions']).map((dim, idx) => (
+                                                {product.dimensions.map((dim, idx) => (
                                                     <li key={idx} className="flex items-start gap-3 text-sm text-gray-600">
                                                         <span className="mt-1 w-1.5 h-1.5 rounded-full bg-gray-400" />{dim}
                                                     </li>
@@ -662,44 +659,33 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                                 </div>
                                             )}
                                         </div>
-                                    },
+                                    }] : []),
                                     {
                                         title: 'Materials & Tags', content: <div className="flex flex-wrap gap-2 p-3">
-                                            {(product.tags || product.category_name || 'Arcmat Collection').split(',').map((tag, idx) => (
+                                            {(product.tags || product.category_name || '').split(',').filter(Boolean).map((tag, idx) => (
                                                 <span key={idx} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-100 hover:bg-[#e09a74] hover:text-white transition cursor-pointer">
                                                     #{tag.trim()}
                                                 </span>
                                             ))}
                                         </div>
-                                    }, {
+                                    },
+                                    ...(product.bim_files && product.bim_files.length > 0 ? [{
                                         title: 'BIM/CAD Files',
                                         content: (
                                             <div className="flex flex-wrap gap-2 p-3">
-                                                <a
-                                                    href="/download/demo.dwg"
-                                                    download
-                                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-50 text-gray-600 border border-gray-100 hover:bg-[#e09a74] hover:text-white transition cursor-pointer"
-                                                >
-                                                    2D CAD (.dwg)
-                                                </a>
-                                                <a
-                                                    href="/download/demo.obj"
-                                                    download
-                                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-50 text-gray-600 border border-gray-100 hover:bg-[#e09a74] hover:text-white transition cursor-pointer"
-                                                >
-                                                    3D Model (.obj)
-                                                </a>
-                                                <a
-                                                    href="/download/demo.rfa"
-                                                    download
-                                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-50 text-gray-600 border border-gray-100 hover:bg-[#e09a74] hover:text-white transition cursor-pointer"
-                                                >
-                                                    BIM Object (.rfa)
-                                                </a>
+                                                {product.bim_files.map((file, idx) => (
+                                                    <a
+                                                        key={idx}
+                                                        href={file.url}
+                                                        download
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-50 text-gray-600 border border-gray-100 hover:bg-[#e09a74] hover:text-white transition cursor-pointer"
+                                                    >
+                                                        {file.name || `BIM File ${idx + 1}`}
+                                                    </a>
+                                                ))}
                                             </div>
                                         )
-                                    }
-
+                                    }] : [])
                                 ]} />
                             </section>
                         </div>

@@ -263,7 +263,7 @@ export default function ProductsListPage() {
                                     onChange={(e) => { setOrderBy(e.target.value); setCurrentPage(1); }}
                                     className="px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-[#e09a74] bg-white text-sm"
                                 >
-                                    <option value="createdAt">Date Createdd</option>
+                                    <option value="createdAt">Date Created</option>
                                     <option value="product_name">Product Name</option>
                                 </select>
 
