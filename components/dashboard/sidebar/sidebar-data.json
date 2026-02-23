@@ -122,5 +122,31 @@
             "icon": "HelpCircle",
             "href": "/dashboard/help"
         }
+    ],
+    "ARCHITECT_MENU_ITEMS": [
+        {
+            "id": "dashboard",
+            "label": "Dashboard",
+            "icon": "LayoutDashboard",
+            "href": "/dashboard"
+        },
+        {
+            "id": "all-projects",
+            "label": "All projects",
+            "icon": "Package",
+            "href": "/dashboard/projects"
+        },
+        {
+            "id": "boards",
+            "label": "Boards",
+            "icon": "Layers",
+            "href": "/dashboard/boards"
+        },
+        {
+            "id": "help",
+            "label": "Help",
+            "icon": "HelpCircle",
+            "href": "/dashboard/help"
+        }
     ]
 }

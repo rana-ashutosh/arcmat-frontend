@@ -26,6 +26,7 @@ import { useSidebarStore } from '@/store/useSidebarStore';
 import SidebarItem from './SidebarItem';
 import SidebarUser from './SidebarUser';
 import sidebarData from './sidebar-data.json';
+import CreateProjectModal from './CreateProjectModal';
 
 const ICON_MAP = {
   Package,
@@ -50,6 +51,7 @@ const mapIcons = (items) => items.map(item => ({
 const BRAND_MENU_ITEMS = mapIcons(sidebarData.BRAND_MENU_ITEMS);
 const USER_MENU_ITEMS = mapIcons(sidebarData.USER_MENU_ITEMS);
 const RETAILER_MENU_ITEMS = mapIcons(sidebarData.RETAILER_MENU_ITEMS);
+const ARCHITECT_MENU_ITEMS = mapIcons(sidebarData.ARCHITECT_MENU_ITEMS);
 
 export default function Sidebar() {
   const { isCollapsed, toggleSidebar, isMobileOpen, setMobileOpen } = useSidebarStore();
@@ -57,6 +59,7 @@ export default function Sidebar() {
   const [mounted, setMounted] = useState(false);
 
   const pathname = usePathname();
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -76,12 +79,15 @@ export default function Sidebar() {
   const isBrand = user?.role === 'brand' || user?.role === 'vendor';
   const isAdmin = user?.role === 'admin';
   const isRetailer = user?.role === 'retailer';
+  const isArchitect = user?.role === 'architect';
 
   const menuItems = isAdmin || isBrand
     ? BRAND_MENU_ITEMS
     : isRetailer
       ? RETAILER_MENU_ITEMS
-      : USER_MENU_ITEMS;
+      : isArchitect
+        ? ARCHITECT_MENU_ITEMS
+        : USER_MENU_ITEMS;
   const visibleItems = menuItems
     .map(item => {
       if (isBrand && item.id === 'products-list' && (user?._id || user?.id)) {
@@ -137,9 +143,9 @@ export default function Sidebar() {
 
           <SidebarUser isCollapsed={safeCollapsed} mounted={mounted} />
 
-          {/* {!isBrand && (
-            <Link
-              href="/dashboard/projects/create"
+          {isArchitect && (
+            <button
+              onClick={() => setIsProjectModalOpen(true)}
               className={clsx(
                 "mb-8 flex items-center justify-center bg-[#d9a88a] hover:bg-[#d9a88a]/90 text-white rounded-full h-10 transition-all shadow-sm overflow-hidden",
                 safeCollapsed ? "px-0 w-10 mx-auto" : "px-4 w-full"
@@ -150,10 +156,10 @@ export default function Sidebar() {
                 "font-medium text-sm transition-all duration-300 overflow-hidden whitespace-nowrap",
                 safeCollapsed ? "max-w-0 opacity-0" : "max-w-[200px] opacity-100"
               )}>
-                Create project
+                New project
               </span>
-            </Link>
-          )} */}
+            </button>
+          )}
 
           <nav className="flex-1 space-y-2">
             {visibleItems.map((item) => (
@@ -166,6 +172,11 @@ export default function Sidebar() {
           </nav>
         </div>
       </aside>
+
+      <CreateProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+      />
     </>
   );
 }
