@@ -110,6 +110,12 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
         }
     }, [selectedVariant?._id, pathname, router])
 
+    // Fix for "classList of undefined" error: Reset thumbsSwiper when variant or product changes
+    useEffect(() => {
+        setThumbsSwiper(null);
+    }, [product?._id, selectedVariant?._id]);
+
+
     const handleAttributeSelect = (key, value) => {
         const newAttributes = { ...selectedAttributes, [key]: value }
         setSelectedAttributes(newAttributes)
