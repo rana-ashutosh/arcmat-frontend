@@ -22,8 +22,13 @@ const nextConfig = {
                 port: '8000',
                 pathname: '/api/public/uploads/**',
             },
+            {
+                protocol: 'https',
+                hostname: 'res.cloudinary.com',
+            },
         ],
     },
+
 };
 
 export default nextConfig;

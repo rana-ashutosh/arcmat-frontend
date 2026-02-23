@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import Button from '@/components/ui/Button';
 import { Loader2 } from 'lucide-react';
+import { getBrandImageUrl } from '@/lib/productUtils';
+
 
 const ProfileForm = ({ brand, onSubmit, onCancel, isSubmitting }) => {
     const {
@@ -55,9 +57,10 @@ const ProfileForm = ({ brand, onSubmit, onCancel, isSubmitting }) => {
             setPreview(objectUrl);
             return () => URL.revokeObjectURL(objectUrl);
         } else {
-            setPreview(brand?.logo || null);
+            setPreview(getBrandImageUrl(brand?.logo) || null);
         }
     }, [logoFile, brand]);
+
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -181,7 +184,7 @@ const ProfileForm = ({ brand, onSubmit, onCancel, isSubmitting }) => {
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-[#e09a74] text-white cursor-pointer hover:bg-[#d08963] min-w-[120px] py-2 px-4 hover:border-[#e09a74] border hover:text-[#e09a74] hover:bg-white"
+                    className="bg-[#e09a74] text-white cursor-pointer hover:bg-white min-w-[120px] py-2 px-4 hover:border-[#e09a74] border hover:text-[#e09a74]"
                     text={isSubmitting ? (
                         <div className="flex items-center gap-2">
                             <Loader2 className="animate-spin" size={16} />

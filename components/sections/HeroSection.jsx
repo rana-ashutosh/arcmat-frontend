@@ -10,6 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { toast } from '../ui/Toast';
 import bannerService from '@/services/bannerService';
+import { getBannerImageUrl } from '@/lib/productUtils';
+
 
 const HeroSection = () => {
   const { isAuthenticated } = useAuth();
@@ -40,16 +42,7 @@ const HeroSection = () => {
     }
   };
 
-  const getImageUrl = (filename) => {
-    if (!filename) return '/Images/Banner.png';
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-    const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
-
-    const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-
-    return `${baseUrl}/public/uploads/banner/${cleanFilename}`;
-  };
 
   return (
     <section className="relative w-full h-auto min-h-[80vh] sm:min-h-screen overflow-hidden">
@@ -72,7 +65,8 @@ const HeroSection = () => {
             <SwiperSlide key={banner._id || idx} className="h-full">
               <div className="relative w-full h-full min-h-[80vh] sm:min-h-screen">
                 <Image
-                  src={getImageUrl(banner.banner)}
+                  src={getBannerImageUrl(banner.banner) || '/Images/Banner.png'}
+
                   alt={banner.banner_alt || 'Hero Banner'}
                   fill
                   sizes="100dvw"

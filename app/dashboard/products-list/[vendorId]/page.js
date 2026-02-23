@@ -50,8 +50,8 @@ export default function ProductsListPage() {
   const [isActivating, setIsActivating] = useState(false);
   const [showActivateModal, setShowActivateModal] = useState(false);
 
-  // Use vendorId from URL if available, otherwise fallback to user ID
-  const effectiveVendorId = vendorId || user?._id || user?.id;
+  // Use vendorId from URL if available, otherwise fallback to activeBrand ID, then user ID
+  const effectiveVendorId = vendorId || activeBrand?._id || user?.brandId || user?._id || user?.id;
 
   const { data: apiResponse, isLoading: productsLoading } = useGetProducts({
     userId: effectiveVendorId,
@@ -72,7 +72,8 @@ export default function ProductsListPage() {
 
     setIsActivating(true);
     try {
-      const response = await productService.bulkActivateProducts(vendorId);
+      const response = await productService.bulkActivateProducts(effectiveVendorId);
+
       toast.success(
         `Successfully activated ${response.data.productsActivated} products and ${response.data.variantsActivated} variants!`
       );
@@ -89,7 +90,8 @@ export default function ProductsListPage() {
   const handleDataExport = async () => {
     setIsExporting(true);
     try {
-      const blob = await productService.exportProductData(vendorId);
+      const blob = await productService.exportProductData(effectiveVendorId);
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

@@ -10,6 +10,8 @@ import { Autoplay } from 'swiper/modules';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import bannerService from '@/services/bannerService';
+import { getBannerImageUrl } from '@/lib/productUtils';
+
 
 const HeroSection = () => {
     const { user } = useAuth();
@@ -34,13 +36,7 @@ const HeroSection = () => {
         fetchBanners();
     }, []);
 
-    const getImageUrl = (filename) => {
-        if (!filename) return '/Images/Inspiration_Gallery.jpeg';
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-        const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
-        const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-        return `${baseUrl}/public/uploads/banner/${cleanFilename}`;
-    };
+
 
     return (
         <section className="relative w-full h-[80vh] md:h-[80vh] overflow-hidden">
@@ -58,7 +54,8 @@ const HeroSection = () => {
                         <SwiperSlide key={banner._id || idx} className="h-full">
                             <div className="relative w-full h-full min-h-[80vh]">
                                 <Image
-                                    src={getImageUrl(banner.banner)}
+                                    src={getBannerImageUrl(banner.banner) || '/Images/Inspiration_Gallery.jpeg'}
+
                                     alt={banner.banner_alt || 'Inspiration Gallery Banner'}
                                     fill
                                     sizes="100vw"

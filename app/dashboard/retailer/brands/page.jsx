@@ -9,6 +9,8 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import clsx from 'clsx';
+import { getBrandImageUrl } from '@/lib/productUtils';
+
 
 export default function RetailerBrandsPage() {
     const searchParams = useSearchParams();
@@ -142,8 +144,9 @@ export default function RetailerBrandsPage() {
                                 <div className="flex items-start justify-between relative">
                                     <div className="w-20 h-20 rounded-2xl bg-white border border-gray-100 shadow-inner flex items-center justify-center overflow-hidden p-2">
                                         {brand.logo ? (
-                                            <img src={brand.logo} alt={brand.name} className="w-full h-full object-contain" />
+                                            <img src={getBrandImageUrl(brand.logo)} alt={brand.name} className="w-full h-full object-contain" />
                                         ) : (
+
                                             <Store className="w-8 h-8 text-gray-200" />
                                         )}
                                     </div>

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Edit } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { getBrandImageUrl } from '@/lib/productUtils';
+
 
 const ProfileDetails = ({ brand, onEdit }) => {
     if (!brand) return null;
@@ -29,11 +31,12 @@ const ProfileDetails = ({ brand, onEdit }) => {
                     <div className="w-32 h-32 shrink-0 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center p-2 relative overflow-hidden">
                         {brand.logo ? (
                             <img
-                                src={brand.logo}
+                                src={getBrandImageUrl(brand.logo)}
                                 alt={brand.name}
                                 className="w-full h-full object-contain rounded-lg"
                             />
                         ) : (
+
                             <span className="text-3xl font-bold text-gray-300">
                                 {brand.name?.charAt(0) || 'B'}
                             </span>

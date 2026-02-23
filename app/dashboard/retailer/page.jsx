@@ -4,6 +4,8 @@ import useAuthStore from '@/store/useAuthStore';
 import Link from 'next/link';
 import { useGetRetailerBrands, useGetRetailerProducts } from '@/hooks/useRetailer';
 import { useGetOrders } from '@/hooks/useOrder';
+import { getBrandImageUrl } from '@/lib/productUtils';
+
 
 export default function RetailerDashboardPage() {
     const { user } = useAuthStore();
@@ -120,8 +122,9 @@ export default function RetailerDashboardPage() {
                                     <div key={brand._id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-50 bg-gray-50/30">
                                         <div className="w-12 h-12 rounded-lg bg-white border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                                             {brand.logo ? (
-                                                <img src={brand.logo} alt={brand.name} className="w-full h-full object-contain p-1" />
+                                                <img src={getBrandImageUrl(brand.logo)} alt={brand.name} className="w-full h-full object-contain p-1" />
                                             ) : (
+
                                                 <Store className="w-6 h-6 text-gray-300" />
                                             )}
                                         </div>
