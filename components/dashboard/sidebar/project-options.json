@@ -59,5 +59,10 @@
         "October",
         "November",
         "December"
+    ],
+    "cities": [
+        "Delhi",
+        "Noida",
+        "Gurgaun"
     ]
 }
