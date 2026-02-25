@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { navItems as staticNavItems } from "./nav-data";
 import { NavbarItem } from "./navbar-item";
 import { MegaMenu } from "./mega-menu";
 import Container from "@/components/ui/Container";
@@ -16,16 +15,14 @@ const Navbar = () => {
 
     const navItems = useMemo(() => {
         const categories = categoryTree?.data || categoryTree;
-        if (!categories || !Array.isArray(categories)) return staticNavItems;
+        if (!categories || !Array.isArray(categories)) return [];
 
         const dynamicItems = categories.map(cat => {
-            const staticItem = staticNavItems.find(s => s.name?.toLowerCase() === cat.name?.toLowerCase());
-
             return {
                 name: cat.name,
                 id: cat._id || cat.id,
-                image: cat.image ? getCategoryImageUrl(cat.image) : (staticItem?.image || "/mega-Images/Furniture.jpg"),
-                isSpecial: staticItem?.isSpecial || false,
+                image: cat.image ? getCategoryImageUrl(cat.image) : null,
+                isSpecial: false,
                 hasDropdown: cat.children && cat.children.length > 0,
                 categoryData: cat,
                 categories: cat.children ? cat.children.map(subCat => {
@@ -46,7 +43,7 @@ const Navbar = () => {
             };
         });
 
-        return dynamicItems.length > 0 ? dynamicItems : staticNavItems;
+        return dynamicItems;
     }, [categoryTree]);
 
     const handleMouseEnter = (itemName) => {

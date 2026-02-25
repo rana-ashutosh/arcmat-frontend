@@ -30,6 +30,11 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [activeRequest, setActiveRequest] = useState({})
     const [quantity, setQuantity] = useState(1)
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const router = useRouter()
     const pathname = usePathname()
@@ -249,7 +254,9 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                         {/* LEFT: Images */}
                         <div className="space-y-4">
                             <div className="relative aspect-4/3 bg-white rounded-none overflow-hidden">
-                                {images.length > 1 ? (
+                                {!mounted ? (
+                                    <div className="w-full h-full bg-gray-50 animate-pulse" />
+                                ) : images.length > 1 ? (
                                     <Swiper
                                         key={selectedVariant?._id || 'main'}
                                         modules={[Navigation, Pagination, Thumbs]}
@@ -286,7 +293,7 @@ const ProductDetailView = ({ product, initialVariantId, categories = [], childCa
                                     </div>
                                 )}
                             </div>
-                            {images.length > 1 && (
+                            {mounted && images.length > 1 && (
                                 <Swiper
                                     key={selectedVariant?._id || 'thumbs-main'}
                                     onSwiper={setThumbsSwiper}

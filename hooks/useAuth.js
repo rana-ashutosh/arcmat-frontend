@@ -124,7 +124,7 @@ export const useVerifyOtpMutation = () => {
             }
 
             const role = user?.role;
-            if (role === 'brand' || role === 'vendor' || role === 'retailer' || role === 'admin') {
+            if (role === 'brand' || role === 'vendor' || role === 'retailer' || role === 'admin' || role === 'architect') {
                 router.push('/dashboard');
             } else {
                 router.push('/');
@@ -182,7 +182,7 @@ export const useLoginMutation = () => {
             } catch (error) {
             }
 
-            if (finalRole === 'brand' || finalRole === 'vendor' || finalRole === 'retailer' || finalRole === 'admin') {
+            if (finalRole === 'brand' || finalRole === 'vendor' || finalRole === 'retailer' || finalRole === 'admin' || finalRole === 'architect') {
                 setLoading(true);
                 router.push(`/dashboard`);
             } else {

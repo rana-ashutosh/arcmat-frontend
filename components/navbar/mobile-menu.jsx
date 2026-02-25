@@ -1,7 +1,6 @@
 "use client";
 
 import { useSidebarStore } from "@/store/useSidebarStore";
-import { navItems as staticNavItems } from "./nav-data";
 import { X, ChevronDown, ChevronRight, Search, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
@@ -24,16 +23,13 @@ export const MobileMenu = () => {
 
     const navItems = useMemo(() => {
         const categories = categoryTree?.data || categoryTree;
-        if (!categories || !Array.isArray(categories)) return staticNavItems;
+        if (!categories || !Array.isArray(categories)) return [];
 
         const dynamicItems = categories.map(cat => {
-            const staticItem = staticNavItems.find(s => s.name?.toLowerCase() === cat.name?.toLowerCase());
-
             return {
                 name: cat.name,
                 id: cat._id || cat.id,
-                // image: cat.image ? getCategoryImageUrl(cat.image) : (staticItem?.image || "/mega-Images/Furniture.jpg"), // Image not used in mobile menu top level yet, but good to have
-                isSpecial: staticItem?.isSpecial || false,
+                isSpecial: false,
                 hasDropdown: cat.children && cat.children.length > 0,
                 // categoryData: cat,
                 categories: cat.children ? cat.children.map(subCat => {
@@ -55,7 +51,7 @@ export const MobileMenu = () => {
             };
         });
 
-        return dynamicItems.length > 0 ? dynamicItems : staticNavItems;
+        return dynamicItems;
     }, [categoryTree]);
 
     // Close menu when clicking outside or on escape
