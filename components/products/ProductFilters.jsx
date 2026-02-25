@@ -101,16 +101,16 @@ export default function ProductFilters() {
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm text-gray-600 px-1">
             <span>${priceRange.min}</span>
-            <span>${priceRange.max === Infinity ? '1000+' : priceRange.max}</span>
+            <span>${priceRange.max}</span>
           </div>
-          <input
+          {/* <input
             type="range"
             min="0"
-            max="1000"
-            value={priceRange.max === Infinity ? 1000 : priceRange.max}
+            max={priceRange.max}
+            value={priceRange.max}
             onChange={(e) => setPriceRange({ min: 0, max: parseInt(e.target.value) })}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#d9a88a]"
-          />
+          /> */}
         </div>
       </div>
 

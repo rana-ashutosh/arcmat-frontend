@@ -184,7 +184,7 @@ const ProductSidebar = ({
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
+                                {/* <div className="space-y-2">
                                     <input
                                         type="range"
                                         min={minPrice}
@@ -198,7 +198,7 @@ const ProductSidebar = ({
                                         <span>{formatCurrency(activeFilters.priceRange[0])}</span>
                                         <span>{formatCurrency(activeFilters.priceRange[1])}</span>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         )}
 
