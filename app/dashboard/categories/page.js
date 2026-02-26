@@ -13,7 +13,7 @@ import { toast } from '@/components/ui/Toast';
 import { useGetCategories, useCreateCategory, useDeleteCategory } from '@/hooks/useCategory';
 
 import { useAuth } from '@/hooks/useAuth';
-import RoleGuard from '@/components/auth/RoleGaurd';
+import RoleGuard from '@/components/auth/RoleGuard';
 
 export default function CategoriesPage() {
     const { user } = useAuth();

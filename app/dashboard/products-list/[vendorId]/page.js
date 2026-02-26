@@ -27,7 +27,7 @@ import Pagination from '@/components/ui/Pagination';
 // Modals
 import ProductFormModal from '@/components/vendor/ProductFormModal';
 import BulkUploadModal from '@/components/vendor/BulkUploadModal';
-import RoleGuard from '@/components/auth/RoleGaurd';
+import RoleGuard from '@/components/auth/RoleGuard';
 
 import ConfirmActivateModal from '@/components/vendor/ConfirmActivateModal';
 

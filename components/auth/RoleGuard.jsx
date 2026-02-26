@@ -11,17 +11,25 @@ const RoleGuard = ({ children, allowedRoles = [] }) => {
   const { user, isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    if (loading) return; // Wait for auth check to complete
+    if (loading) return; // Wait for initial loading to complete
+
     // 1. Check if user is logged in
     if (!isAuthenticated) {
       router.replace('/auth/login');
       return;
     }
 
-    // 2. Check if user has the correct role (if roles are specified)
-    if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
-      router.replace('/unauthorized');
+    // 2. Wait if we are authenticated but user data is still being fetched
+    if (isAuthenticated && !user) {
       return;
+    }
+
+    // 3. Check if user has the correct role (if roles are specified)
+    if (allowedRoles.length > 0 && user?.role) {
+      if (!allowedRoles.includes(user.role)) {
+        router.replace('/unauthorized');
+        return;
+      }
     }
   }, [isAuthenticated, user, allowedRoles, router, loading]);
 

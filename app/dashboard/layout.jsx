@@ -1,6 +1,6 @@
 // app/dashboard/layout.jsx
 import Sidebar from '@/components/dashboard/sidebar/Sidebar';
-import RoleGuard from '@/components/auth/RoleGaurd';
+import RoleGuard from '@/components/auth/RoleGuard';
 import Footer from '@/components/layouts/Footer';
 import Header from '@/components/layouts/Header';
 import GlobalAddVariantModal from '@/components/vendor/GlobalAddVariantModal';

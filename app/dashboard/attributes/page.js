@@ -23,7 +23,7 @@ import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import clsx from 'clsx';
-import RoleGuard from '@/components/auth/RoleGaurd';
+import RoleGuard from '@/components/auth/RoleGuard';
 
 export default function AttributesPage() {
     const { data: attributesResponse, isLoading } = useGetAttributes();

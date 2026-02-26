@@ -110,13 +110,19 @@ export const useVerifyOtpMutation = () => {
 
     return useMutation({
         mutationFn: (data) => authService.verifyOtp(data),
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
             const user = data.data.user;
             const token = data.data.token;
 
             setAuthState(user, token);
 
             setLoading(true);
+
+            // Force a refresh of user info to ensure all stores are in sync
+            try {
+                const queryClient = useQueryClient();
+                await queryClient.invalidateQueries({ queryKey: ['user-info'] });
+            } catch (e) { }
 
             if (flow === 'reset') {
                 router.push('/reset-password');

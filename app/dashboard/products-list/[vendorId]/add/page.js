@@ -11,7 +11,7 @@ import Container from '@/components/ui/Container';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
-import RoleGuard from '@/components/auth/RoleGaurd';
+import RoleGuard from '@/components/auth/RoleGuard';
 
 export default function AddProductPage() {
     const router = useRouter();
